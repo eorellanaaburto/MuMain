@@ -456,7 +456,7 @@ constexpr int ITEM_GROUP_ETC = 15;
 
 #define MAX_CHARACTERS_CLIENT  400
 #define MAX_CHARACTERS_SERVER  10
-#define MAX_CHARACTERS_PER_ACCOUNT 6
+#define MAX_CHARACTERS_PER_ACCOUNT 6 // 6 slots (servidor mu-season8)
 
 #define MAX_PATH_FIND 15
 
