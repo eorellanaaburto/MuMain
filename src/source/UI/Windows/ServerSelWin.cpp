@@ -17,6 +17,7 @@
 
 #include "UI/NewUI/NewUISystem.h"
 #include "Network/Server/ServerListManager.h"
+#include "Data/GameConfig/GameConfig.h"
 
 #define	SSW_GAP_WIDTH	28
 #define	SSW_GAP_HEIGHT	5
@@ -458,6 +459,9 @@ bool CServerSelWin::ConnectToServer(CServerInfo* pServerInfo)
 
     g_ServerListManager->SetSelectServerInfo(m_pSelectServerGroup->m_szName, pServerInfo->m_iIndex,
                                              pServerInfo->m_byNonPvP);
+
+    GameConfig::GetInstance().SetPreferredServer(m_pSelectServerGroup->m_szName,
+                                                 pServerInfo->m_iSequence);
 
     return true;
 }

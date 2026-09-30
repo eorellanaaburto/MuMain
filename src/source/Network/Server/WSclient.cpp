@@ -24,6 +24,7 @@
 #include "Scenes/SceneCore.h"
 #include "Network/Reconnect/ReconnectManager.h"
 #include "Network/IncomingPacketQueue.h"
+#include "Data/GameConfig/GameConfig.h"
 #include "I18N/All.h"
 
 #include "Audio/DSPlaySound.h"
@@ -515,6 +516,16 @@ void ReceiveServerList(const BYTE* ReceiveBuffer)
         rUIMng.ShowWin(&rUIMng.m_ServerSelWin);
         rUIMng.m_ServerSelWin.UpdateDisplay();
         rUIMng.ShowWin(&rUIMng.m_LoginMainWin);
+
+        static bool attemptedPreferredServer = false;
+        if (!attemptedPreferredServer)
+        {
+            attemptedPreferredServer = true;
+            const auto& config = GameConfig::GetInstance();
+            if (!config.GetPreferredServerGroup().empty())
+                rUIMng.m_ServerSelWin.SelectServer(config.GetPreferredServerGroup().c_str(),
+                                                   config.GetPreferredServerIndex());
+        }
     }
 
     g_ErrorReport.Write(L"Success Receive Server List.\r\n");

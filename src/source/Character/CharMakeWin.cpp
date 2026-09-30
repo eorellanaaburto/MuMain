@@ -47,7 +47,7 @@ namespace
     constexpr int kStatLabelBaseId = 1701;
     constexpr int kStatLineSpacing = 17;
     constexpr int kStatYOffset = 10;
-    constexpr int kStatValueOffset = 54;
+    constexpr int kStatValueOffset = 94;
     constexpr int kStatTextOffsetX = 22;
     constexpr int kDarkLordStatHeight = 96;
     constexpr int kDefaultStatHeight = 80;
@@ -153,7 +153,7 @@ void CCharMakeWin::Create()
 
     m_asprBack[CMW_SPR_INPUT].Create(346, 38, BITMAP_LOG_IN);
 
-    m_asprBack[CMW_SPR_STAT].Create(108, 80);
+    m_asprBack[CMW_SPR_STAT].Create(148, 80);
 
     m_asprBack[CMW_SPR_DESC].Create(454, 51);
 
@@ -166,7 +166,7 @@ void CCharMakeWin::Create()
     std::array<DWORD, BTN_IMG_MAX> jobButtonColors = kJobButtonColors;
     for (int classIndex = 0; classIndex < MAX_CLASS; ++classIndex)
     {
-        m_abtnJob[classIndex].Create(108, 26, BITMAP_LOG_IN + 1, 4, 2, 1, 0, 3, 3, 3, 0);
+        m_abtnJob[classIndex].Create(148, 26, BITMAP_LOG_IN + 1, 4, 2, 1, 0, 3, 3, 3, 0);
         const int textId = kClassButtonTextIds[classIndex];
         m_abtnJob[classIndex].SetText(I18N::Game::Lookup(textId), jobButtonColors.data());
         CWin::RegisterButton(&m_abtnJob[classIndex]);
@@ -199,7 +199,7 @@ void CCharMakeWin::SetPosition(int nXCoord, int nYCoord)
 {
     m_winBack.SetPosition(nXCoord, nYCoord);
 
-    const int baseX = nXCoord + 346;
+    const int baseX = nXCoord + 306;
     m_asprBack[CMW_SPR_STAT].SetPosition(baseX, nYCoord + kStatSpriteOffsetY);
 
     const int buttonHeight = m_abtnJob[0].GetHeight();

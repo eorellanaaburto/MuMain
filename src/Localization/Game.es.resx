@@ -85,11 +85,11 @@
     <comment>legacy_id=20</comment>
   </data>
   <data name="Dark Knight" xml:space="preserve">
-    <value>caballero oscuro</value>
+    <value>Caballero oscuro</value>
     <comment>legacy_id=21</comment>
   </data>
   <data name="Elf" xml:space="preserve">
-    <value>Duende</value>
+    <value>Elfa</value>
     <comment>legacy_id=22</comment>
   </data>
   <data name="Magic Gladiator" xml:space="preserve">
@@ -97,7 +97,7 @@
     <comment>legacy_id=23</comment>
   </data>
   <data name="Dark Lord" xml:space="preserve">
-    <value>señor oscuro</value>
+    <value>Señor oscuro</value>
     <comment>legacy_id=24</comment>
   </data>
   <data name="Soul Master" xml:space="preserve">
@@ -1434,7 +1434,7 @@
     <value>Modo ventana</value>
   </data>
   <data name="Close388" xml:space="preserve">
-    <value>Cerca</value>
+    <value>Cerrar</value>
     <comment>legacy_id=388,1002</comment>
   </data>
   <data name="Volume" xml:space="preserve">

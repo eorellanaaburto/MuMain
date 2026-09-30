@@ -54,6 +54,9 @@ public:
     // Connection
     std::wstring GetServerIP() const { return m_serverIP; }
     int GetServerPort() const { return m_serverPort; }
+    const std::wstring& GetPreferredServerGroup() const { return m_preferredServerGroup; }
+    int GetPreferredServerIndex() const { return m_preferredServerIndex; }
+    void SetPreferredServer(const std::wstring& group, int index);
 
     void SetServerIP(const std::wstring& ip);
     void SetServerPort(int port);
@@ -124,6 +127,8 @@ private:
 
     std::wstring m_serverIP;
     int m_serverPort;
+    std::wstring m_preferredServerGroup;
+    int m_preferredServerIndex;
 
     std::wstring m_uiLocale;
     std::wstring m_fontSelection;

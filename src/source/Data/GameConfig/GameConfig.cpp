@@ -73,6 +73,8 @@ void GameConfig::Load()
         ReadString(CfgSectionConnectionSettings, CfgKeyServerIP, CfgDefaultServerIP), CfgDefaultServerIP);
     m_serverPort = GameConfigValidation::ValidateServerPort(
         ReadInt(CfgSectionConnectionSettings, CfgKeyServerPort, CfgDefaultServerPort), CfgDefaultServerPort);
+    m_preferredServerGroup = ReadString(CfgSectionConnectionSettings, CfgKeyPreferredServerGroup, L"");
+    m_preferredServerIndex = ReadInt(CfgSectionConnectionSettings, CfgKeyPreferredServerIndex, -1);
 
     m_chatCommandFavourites = ReadStringList(L"ChatCommands", L"Favourite");
     m_chatCommandTemplates = ReadStringList(L"ChatCommands", L"Template");
@@ -118,6 +120,8 @@ void GameConfig::Save()
 
     WriteString(CfgSectionConnectionSettings, CfgKeyServerIP, m_serverIP);
     WriteInt(CfgSectionConnectionSettings, CfgKeyServerPort, m_serverPort);
+    WriteString(CfgSectionConnectionSettings, CfgKeyPreferredServerGroup, m_preferredServerGroup);
+    WriteInt(CfgSectionConnectionSettings, CfgKeyPreferredServerIndex, m_preferredServerIndex);
 
     WriteStringList(L"ChatCommands", L"Favourite", m_chatCommandFavourites);
     WriteStringList(L"ChatCommands", L"Template", m_chatCommandTemplates);
@@ -244,6 +248,13 @@ void GameConfig::SetServerIP(const std::wstring& ip)
 void GameConfig::SetServerPort(int port)
 {
     m_serverPort = GameConfigValidation::ValidateServerPort(port, CfgDefaults::CfgDefaultServerPort);
+}
+
+void GameConfig::SetPreferredServer(const std::wstring& group, int index)
+{
+    m_preferredServerGroup = group;
+    m_preferredServerIndex = index;
+    Save();
 }
 
 void GameConfig::SetZoom(int zoom)

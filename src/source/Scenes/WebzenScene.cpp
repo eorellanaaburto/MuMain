@@ -53,21 +53,21 @@ static void LoadBackgroundTheme(BackgroundTheme theme)
 {
     if (theme == BackgroundTheme::Classic)
     {
-        LoadBitmap(L"Interface\\lo_back_im01.jpg", BITMAP_TITLE + 8, GL_LINEAR);
-        LoadBitmap(L"Interface\\lo_back_im02.jpg", BITMAP_TITLE + 9, GL_LINEAR);
-        LoadBitmap(L"Interface\\lo_back_im03.jpg", BITMAP_TITLE + 10, GL_LINEAR);
-        LoadBitmap(L"Interface\\lo_back_im04.jpg", BITMAP_TITLE + 11, GL_LINEAR);
-        LoadBitmap(L"Interface\\lo_back_im05.jpg", BITMAP_TITLE + 12, GL_LINEAR);
-        LoadBitmap(L"Interface\\lo_back_im06.jpg", BITMAP_TITLE + 13, GL_LINEAR);
+        LoadBitmap(L"Interface\\S8IntroA01.jpg", BITMAP_TITLE + 8, GL_LINEAR);
+        LoadBitmap(L"Interface\\S8IntroA02.jpg", BITMAP_TITLE + 9, GL_LINEAR);
+        LoadBitmap(L"Interface\\S8IntroA03.jpg", BITMAP_TITLE + 10, GL_LINEAR);
+        LoadBitmap(L"Interface\\S8IntroA04.jpg", BITMAP_TITLE + 11, GL_LINEAR);
+        LoadBitmap(L"Interface\\S8IntroA05.jpg", BITMAP_TITLE + 12, GL_LINEAR);
+        LoadBitmap(L"Interface\\S8IntroA06.jpg", BITMAP_TITLE + 13, GL_LINEAR);
     }
     else
     {
-        LoadBitmap(L"Interface\\lo_back_s5_im01.jpg", BITMAP_TITLE + 8, GL_LINEAR);
-        LoadBitmap(L"Interface\\lo_back_s5_im02.jpg", BITMAP_TITLE + 9, GL_LINEAR);
-        LoadBitmap(L"Interface\\lo_back_s5_im03.jpg", BITMAP_TITLE + 10, GL_LINEAR);
-        LoadBitmap(L"Interface\\lo_back_s5_im04.jpg", BITMAP_TITLE + 11, GL_LINEAR);
-        LoadBitmap(L"Interface\\lo_back_s5_im05.jpg", BITMAP_TITLE + 12, GL_LINEAR);
-        LoadBitmap(L"Interface\\lo_back_s5_im06.jpg", BITMAP_TITLE + 13, GL_LINEAR);
+        LoadBitmap(L"Interface\\S8IntroB01.jpg", BITMAP_TITLE + 8, GL_LINEAR);
+        LoadBitmap(L"Interface\\S8IntroB02.jpg", BITMAP_TITLE + 9, GL_LINEAR);
+        LoadBitmap(L"Interface\\S8IntroB03.jpg", BITMAP_TITLE + 10, GL_LINEAR);
+        LoadBitmap(L"Interface\\S8IntroB04.jpg", BITMAP_TITLE + 11, GL_LINEAR);
+        LoadBitmap(L"Interface\\S8IntroB05.jpg", BITMAP_TITLE + 12, GL_LINEAR);
+        LoadBitmap(L"Interface\\S8IntroB06.jpg", BITMAP_TITLE + 13, GL_LINEAR);
     }
 }
 

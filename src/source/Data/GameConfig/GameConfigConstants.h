@@ -33,6 +33,8 @@ namespace CfgKeys
     // Connection
     inline constexpr wchar_t CfgKeyServerIP[]   = L"ServerIP";
     inline constexpr wchar_t CfgKeyServerPort[] = L"ServerPort";
+    inline constexpr wchar_t CfgKeyPreferredServerGroup[] = L"PreferredServerGroup";
+    inline constexpr wchar_t CfgKeyPreferredServerIndex[] = L"PreferredServerIndex";
 
     // UI
     inline constexpr wchar_t CfgKeyUILocale[] = L"Locale";

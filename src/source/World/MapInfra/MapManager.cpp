@@ -866,6 +866,7 @@ void CMapManager::Load() // OK
     {
         LoadBitmap(L"Logo\\MU-logo.tga", BITMAP_LOG_IN + 16, GL_LINEAR);
         LoadBitmap(L"Logo\\MU-logo_g.jpg", BITMAP_LOG_IN + 17, GL_LINEAR);
+        LoadBitmap(L"Logo\\Season8Badge.tga", BITMAP_LOG_IN + 18, GL_LINEAR);
     }
     break;
     case WD_55LOGINSCENE:

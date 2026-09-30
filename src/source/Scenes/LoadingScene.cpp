@@ -77,10 +77,17 @@ void LoadingScene(HDC hDC)
         LoadingWorld = 9999999;
 
         InitLoading = true;
-        LoadBitmap(L"Interface\\LSBg01.JPG", BITMAP_TITLE, GL_LINEAR);
-        LoadBitmap(L"Interface\\LSBg02.JPG", BITMAP_TITLE + 1, GL_LINEAR);
-        LoadBitmap(L"Interface\\LSBg03.JPG", BITMAP_TITLE + 2, GL_LINEAR);
-        LoadBitmap(L"Interface\\LSBg04.JPG", BITMAP_TITLE + 3, GL_LINEAR);
+        // Alternate the supplied Season 8 artwork each time a world loads.
+        static unsigned int artwork = 0;
+        const bool secondArtwork = (artwork++ % 2) != 0;
+        const wchar_t* pieces[2][4] = {
+            {L"Interface\\S8LoadA01.jpg", L"Interface\\S8LoadA02.jpg",
+             L"Interface\\S8LoadA03.jpg", L"Interface\\S8LoadA04.jpg"},
+            {L"Interface\\S8LoadB01.jpg", L"Interface\\S8LoadB02.jpg",
+             L"Interface\\S8LoadB03.jpg", L"Interface\\S8LoadB04.jpg"}
+        };
+        for (int i = 0; i < 4; ++i)
+            LoadBitmap(pieces[secondArtwork ? 1 : 0][i], BITMAP_TITLE + i, GL_LINEAR);
 
         ::StopMp3(MUSIC_LOGIN_THEME);
 

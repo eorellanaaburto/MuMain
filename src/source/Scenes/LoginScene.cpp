@@ -451,6 +451,10 @@ bool NewRenderLogInScene(HDC hDC)
         RenderColorBitmap(BITMAP_LOG_IN + 16, 320.0f - 128.0f * 0.8f, 25.0f,
             256.0f * 0.8f, 128.0f * 0.8f, 0.f, 0.f, 1.f, 1.f,
             RGBA(logoLevel, logoLevel, logoLevel, logoLevel));
+        // Keep the original LaPosada emblem and add a smaller Season 8 mark.
+        RenderColorBitmap(BITMAP_LOG_IN + 18, 398.0f, 100.0f,
+            95.0f, 31.0f, 0.f, 0.f, 1.f, 1.f,
+            RGBA(logoLevel, logoLevel, logoLevel, logoLevel));
     }
 
     SIZE Size;
