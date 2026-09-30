@@ -20,7 +20,7 @@ El script cambia únicamente el terreno del mapa 6 y las coordenadas de los
 definiciones y los NPC. En cada instalación cliente, copiar los dos archivos
 `.att` de `src/bin/Data/World7` a `Data/World7` con el juego cerrado.
 
-El código fuente de esta rama todavía tiene lógica de cinco espacios en
-`CharSelMainWin.cpp`. El ejecutable S8 de seis espacios que se distribuyó
-separadamente no debe reemplazarse con una compilación de esta rama sin
-integrar primero esa lógica y verificar la interfaz de maestría S8.
+`CharSelMainWin.cpp` ya usa los seis espacios definidos por
+`MAX_CHARACTERS_PER_ACCOUNT`. La compilación Windows x64 Release pasó, pero
+la interfaz de maestría S8 y los cambios visuales aún requieren una prueba
+dentro del juego.
