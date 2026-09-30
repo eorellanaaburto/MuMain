@@ -52,7 +52,7 @@ void CSysMenuWin::Create()
     { CLRDW_BR_GRAY, CLRDW_BR_GRAY, CLRDW_WHITE, 0 };
     for (int i = 0; i < SMW_BTN_MAX; ++i)
     {
-        m_aBtn[i].Create(108, 30, BITMAP_TEXT_BTN, 4, 2, 1);
+        m_aBtn[i].Create(160, 30, BITMAP_TEXT_BTN, 4, 2, 1);
         m_aBtn[i].SetText(apszBtnText[i], adwBtnClr);
         CWin::RegisterButton(&m_aBtn[i]);
     }

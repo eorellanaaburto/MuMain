@@ -25,7 +25,7 @@
 
 namespace
 {
-    constexpr int kCharacterSlotCount = 5;
+    constexpr int kCharacterSlotCount = MAX_CHARACTERS_PER_ACCOUNT;
     constexpr int kStatPanelBaseXOffset = 346;
     constexpr int kStatPanelOffsetY = 24;
     constexpr int kJobButtonsStartY = 131;
