@@ -13061,6 +13061,7 @@ namespace
         case 453:
         case 464:
         case 465:
+        case 466: // Santa Claus in the CT124 server data.
         case 467:
         case 468:
         case 469:
@@ -13082,9 +13083,15 @@ namespace
         case 545:
         case 546:
         case 547:
+        case 566: // Mercenary Guild Felicia.
         case 577:
         case 578:
         case 579:
+        case 581: // Deruvish.
+        case 582: // Adniel.
+        case 583: // Jin.
+        case 584: // Sir Lesnar, Acheron guide.
+        case 604: // Jin's alternate server definition.
         case static_cast<int>(MONSTER_WANDERING_MERCHANT_ZYRO):
             return true;
         default:
@@ -13685,11 +13692,10 @@ CHARACTER* CreateMonster(EMonsterType Type, int PositionX, int PositionY, int Ke
         o = &c->Object;
         break;
     case MONSTER_EVIL_GOBLIN:
-        OpenMonsterModel(MONSTER_MODEL_EVIL_GOBLIN);
-        c = CreateCharacter(Key, MODEL_EVIL_GOBLIN, PositionX, PositionY);
-        c->Object.Scale = 0.9f;
-        wcscpy(c->ID, L"저주받은 고블린");
-        o = &c->Object;
+        // CT124 uses ID 466 for Santa Claus, overriding this legacy client ID.
+        OpenNpc(MODEL_XMAS2008_SANTA_NPC);
+        c = CreateCharacter(Key, MODEL_XMAS2008_SANTA_NPC, PositionX, PositionY);
+        wcscpy(c->ID, L"Santa Claus");
         break;
     case MONSTER_CURSED_SANTA:
         OpenMonsterModel(MONSTER_MODEL_CURSED_SANTA);
@@ -15024,6 +15030,22 @@ CHARACTER* CreateMonster(EMonsterType Type, int PositionX, int PositionY, int Ke
         c = CreateCharacter(Key, MODEL_KARUTAN_NPC_VOLVO, PositionX, PositionY);
         wcscpy(c->ID, L"무기상인 볼로");
         c->Object.Scale = 0.9f;
+        break;
+    case static_cast<EMonsterType>(581): // Deruvish has no dedicated S8 model in this client.
+    case static_cast<EMonsterType>(582): // Adniel has no dedicated S8 model in this client.
+        OpenNpc(MODEL_NPC_SEVINA);
+        c = CreateCharacter(Key, MODEL_NPC_SEVINA, PositionX, PositionY);
+        break;
+    case static_cast<EMonsterType>(583): // Jin, merchant.
+    case static_cast<EMonsterType>(604): // Alternate Jin definition.
+        OpenNpc(MODEL_KARUTAN_NPC_REINA);
+        c = CreateCharacter(Key, MODEL_KARUTAN_NPC_REINA, PositionX, PositionY);
+        break;
+    case static_cast<EMonsterType>(584): // Sir Lesnar has no dedicated model in this client.
+        OpenNpc(MODEL_NPC_DEVIN);
+        c = CreateCharacter(Key, MODEL_NPC_DEVIN, PositionX, PositionY);
+        wcscpy(c->ID, L"Sir Lesnar");
+        c->Object.Scale = 1.0f;
         break;
 
     }
