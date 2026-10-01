@@ -4224,6 +4224,7 @@ void OpenBasicData(HDC hDC)
     ::LoadBitmap(L"Interface\\op1_back3.jpg", BITMAP_SYS_WIN + 3, GL_NEAREST, GL_REPEAT);
     ::LoadBitmap(L"Interface\\op1_back4.jpg", BITMAP_SYS_WIN + 4, GL_NEAREST, GL_REPEAT);
     ::LoadBitmap(L"Interface\\op1_b_all.tga", BITMAP_TEXT_BTN);
+    ::LoadBitmap(L"Interface\\op1_b_wide.tga", BITMAP_TEXT_BTN_WIDE);
     ::LoadBitmap(L"Interface\\op2_back1.tga", BITMAP_OPTION_WIN);
     ::LoadBitmap(L"Interface\\op2_ch.tga", BITMAP_CHECK_BTN);
     ::LoadBitmap(L"Interface\\op2_volume3.tga", BITMAP_SLIDER);

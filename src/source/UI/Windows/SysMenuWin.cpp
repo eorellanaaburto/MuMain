@@ -20,6 +20,11 @@
 
 #define	SMW_BTN_GAP		4
 
+namespace
+{
+constexpr int kSystemMenuButtonWidth = 180;
+}
+
 extern EGameScene  SceneFlag;
 extern bool LogOut;
 
@@ -46,16 +51,12 @@ void CSysMenuWin::Create()
     };
     m_winBack.Create(aiiBack, 1, 10);
 
-    const wchar_t* apszBtnText[SMW_BTN_MAX] =
-    { I18N::Game::ExitGame, I18N::Game::SelectServer, I18N::Game::Option385, I18N::Game::Close388 };
-    DWORD adwBtnClr[4] =
-    { CLRDW_BR_GRAY, CLRDW_BR_GRAY, CLRDW_WHITE, 0 };
     for (int i = 0; i < SMW_BTN_MAX; ++i)
     {
-        m_aBtn[i].Create(160, 30, BITMAP_TEXT_BTN, 4, 2, 1);
-        m_aBtn[i].SetText(apszBtnText[i], adwBtnClr);
+        m_aBtn[i].Create(kSystemMenuButtonWidth, 30, BITMAP_TEXT_BTN_WIDE, 4, 2, 1);
         CWin::RegisterButton(&m_aBtn[i]);
     }
+    RefreshLabels();
 
     switch (SceneFlag)
     {
@@ -94,11 +95,22 @@ void CSysMenuWin::SetPosition(int nXCoord, int nYCoord)
 }
 void CSysMenuWin::Show(bool bShow)
 {
+    if (bShow)
+        RefreshLabels();
     CWin::Show(bShow);
 
     m_winBack.Show(bShow);
     for (int i = 0; i < SMW_BTN_MAX; ++i)
         m_aBtn[i].Show(bShow);
+}
+
+void CSysMenuWin::RefreshLabels()
+{
+    const wchar_t* labels[SMW_BTN_MAX] =
+    { I18N::Game::ExitGame, I18N::Game::SelectServer, I18N::Game::Option385, I18N::Game::Close388 };
+    DWORD colors[4] = { CLRDW_BR_GRAY, CLRDW_BR_GRAY, CLRDW_WHITE, 0 };
+    for (int i = 0; i < SMW_BTN_MAX; ++i)
+        m_aBtn[i].SetText(labels[i], colors);
 }
 
 bool CSysMenuWin::CursorInWin(int nArea)

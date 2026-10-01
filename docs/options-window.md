@@ -14,6 +14,9 @@ The options window is now **the same window in every scene** (login,
 character select, gameplay) - it shares one layout, one apply path, and one
 backing config object. There is no separate per-scene options dialog.
 
+The system menu uses wider buttons so translated labels fit, and it refreshes
+their text whenever the menu opens after a language change.
+
 What was added on top of that:
 
 - **Resolution and windowed/fullscreen toggle apply without restarting.**

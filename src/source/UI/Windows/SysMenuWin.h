@@ -25,6 +25,7 @@ public:
     bool CursorInWin(int nArea);
 
 protected:
+    void RefreshLabels();
     void PreRelease();
     void UpdateWhileActive(double dDeltaTick);
     void RenderControls();
