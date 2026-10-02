@@ -15031,22 +15031,63 @@ CHARACTER* CreateMonster(EMonsterType Type, int PositionX, int PositionY, int Ke
         wcscpy(c->ID, L"무기상인 볼로");
         c->Object.Scale = 0.9f;
         break;
-    case static_cast<EMonsterType>(581): // Deruvish has no dedicated S8 model in this client.
-    case static_cast<EMonsterType>(582): // Adniel has no dedicated S8 model in this client.
-        OpenNpc(MODEL_NPC_SEVINA);
-        c = CreateCharacter(Key, MODEL_NPC_SEVINA, PositionX, PositionY);
+    case static_cast<EMonsterType>(581):
+        OpenNpc(MODEL_AKERON_DERUVISH);
+        c = CreateCharacter(Key, MODEL_AKERON_DERUVISH, PositionX, PositionY);
+        break;
+    case static_cast<EMonsterType>(582):
+        OpenNpc(MODEL_AKERON_ADNIEL);
+        c = CreateCharacter(Key, MODEL_AKERON_ADNIEL, PositionX, PositionY);
         break;
     case static_cast<EMonsterType>(583): // Jin, merchant.
     case static_cast<EMonsterType>(604): // Alternate Jin definition.
-        OpenNpc(MODEL_KARUTAN_NPC_REINA);
-        c = CreateCharacter(Key, MODEL_KARUTAN_NPC_REINA, PositionX, PositionY);
+        OpenNpc(MODEL_AKERON_JIN);
+        c = CreateCharacter(Key, MODEL_AKERON_JIN, PositionX, PositionY);
         break;
-    case static_cast<EMonsterType>(584): // Sir Lesnar has no dedicated model in this client.
-        OpenNpc(MODEL_NPC_DEVIN);
-        c = CreateCharacter(Key, MODEL_NPC_DEVIN, PositionX, PositionY);
+    case static_cast<EMonsterType>(584):
+        OpenNpc(MODEL_AKERON_LESNAR);
+        c = CreateCharacter(Key, MODEL_AKERON_LESNAR, PositionX, PositionY);
         wcscpy(c->ID, L"Sir Lesnar");
         c->Object.Scale = 1.0f;
         break;
+    case static_cast<EMonsterType>(586): // Acheron Devil Fairy.
+    case static_cast<EMonsterType>(587): // Elemental Beast.
+    case static_cast<EMonsterType>(588): // Elemental Knight.
+    case static_cast<EMonsterType>(589): // Ubaid Devil Fairy.
+    case static_cast<EMonsterType>(590): // Ubaid Elemental Beast.
+    case static_cast<EMonsterType>(591): // Ubaid Elemental Knight.
+    case static_cast<EMonsterType>(592): // Undine.
+    case static_cast<EMonsterType>(593): // Salamander.
+    case static_cast<EMonsterType>(594): // Sylphid.
+    case static_cast<EMonsterType>(595): // Gnome.
+    case static_cast<EMonsterType>(596): // Hellraiser.
+    {
+        const int modelFile = 218 + static_cast<int>(Type) - 586;
+        OpenMonsterModel(static_cast<EMonsterModelType>(modelFile - 1));
+        c = CreateCharacter(Key, MODEL_MONSTER01 + modelFile - 1, PositionX, PositionY);
+        break;
+    }
+    case static_cast<EMonsterType>(608): // Debenter Devil Fairy.
+    case static_cast<EMonsterType>(609): // Debenter Elemental Beast.
+    case static_cast<EMonsterType>(610): // Debenter Elemental Knight.
+    {
+        const int modelFile = 240 + static_cast<int>(Type) - 608;
+        OpenMonsterModel(static_cast<EMonsterModelType>(modelFile - 1));
+        c = CreateCharacter(Key, MODEL_MONSTER01 + modelFile - 1, PositionX, PositionY);
+        break;
+    }
+    case static_cast<EMonsterType>(611): // Sellihoden, fire.
+    case static_cast<EMonsterType>(612): // Ukanva, water.
+    case static_cast<EMonsterType>(613): // Silla, earth.
+    case static_cast<EMonsterType>(614): // Normus, wind.
+    case static_cast<EMonsterType>(615): // Muff, darkness.
+    {
+        constexpr int elementalBossModelFiles[] = { 243, 244, 246, 245, 247 };
+        const int modelFile = elementalBossModelFiles[static_cast<int>(Type) - 611];
+        OpenMonsterModel(static_cast<EMonsterModelType>(modelFile - 1));
+        c = CreateCharacter(Key, MODEL_MONSTER01 + modelFile - 1, PositionX, PositionY);
+        break;
+    }
 
     }
 

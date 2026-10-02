@@ -31,6 +31,7 @@ void CCharInfoBalloonMng::Release()
 //*****************************************************************************
 void CCharInfoBalloonMng::Create()
 {
+    g_ErrorReport.Write(L"[SixthBalloon] manager create count=%zu\r\n", kBalloonCount);
     for (std::size_t i = 0; i < kBalloonCount; ++i)
         m_charInfoBalloons[i].Create(&CharactersClient[i]);
 
@@ -43,6 +44,12 @@ void CCharInfoBalloonMng::Create()
 //*****************************************************************************
 void CCharInfoBalloonMng::Render()
 {
+    static bool logged = false;
+    if (!logged)
+    {
+        g_ErrorReport.Write(L"[SixthBalloon] manager render initialized=%d count=%zu\r\n", m_isInitialized, kBalloonCount);
+        logged = true;
+    }
     if (!m_isInitialized)
         return;
 

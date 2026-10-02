@@ -110,6 +110,8 @@ void CUIMapName::InitImgPathMap()
     m_mapImgPath[71] = strFolderName + L"EmpireGuardian.tga";
     m_mapImgPath[72] = strFolderName + L"EmpireGuardian.tga";
     m_mapImgPath[79] = strFolderName + L"MapName_MarketRolen.tga";
+    m_mapImgPath[91] = strFolderName + L"MapName_Akeron.tga";
+    m_mapImgPath[95] = strFolderName + L"MapName_Akeron.tga";
 
 #ifdef ASG_ADD_MAP_KARUTAN
     m_mapImgPath[80] = strFolderName + L"MapName_Karutan.tga";
@@ -143,11 +145,16 @@ void CUIMapName::ShowMapName()
 
     if (m_nOldWorld != gMapManager.WorldActive)
     {
-        wchar_t szImgPath[128];
-        ::wcscpy(szImgPath, m_mapImgPath[gMapManager.WorldActive].data());
+        const auto image = m_mapImgPath.find(gMapManager.WorldActive);
+        if (image == m_mapImgPath.end() || image->second.empty())
+        {
+            m_eState = HIDE;
+            m_nOldWorld = gMapManager.WorldActive;
+            return;
+        }
 
         DeleteBitmap(BITMAP_INTERFACE_EX + 45);
-        LoadBitmap(szImgPath, BITMAP_INTERFACE_EX + 45);
+        LoadBitmap(image->second.c_str(), BITMAP_INTERFACE_EX + 45);
 
         m_nOldWorld = gMapManager.WorldActive;
 

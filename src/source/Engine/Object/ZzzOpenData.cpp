@@ -556,6 +556,12 @@ void DeleteNpcs()
 
     for (int i = SOUND_NPC; i < SOUND_NPC_END; i++)
         ReleaseBuffer(i);
+
+    for (int i = MODEL_AKERON_DERUVISH; i < MAX_MODELS; i++)
+    {
+        if (Models[i].Version)
+            Models[i].Release();
+    }
 }
 
 void OpenNpc(int Type)
@@ -969,6 +975,22 @@ void OpenNpc(int Type)
         gLoadData.AccessModel(MODEL_BENA, L"Data\\Npc\\", L"bena");
         gLoadData.OpenTexture(MODEL_BENA, L"Npc\\");
         break;
+    case MODEL_AKERON_DERUVISH:
+        gLoadData.AccessModel(Type, L"Data\\Npc\\Akeron\\", L"deruvish");
+        gLoadData.OpenTexture(Type, L"Npc\\Akeron\\");
+        break;
+    case MODEL_AKERON_ADNIEL:
+        gLoadData.AccessModel(Type, L"Data\\Npc\\", L"adniel");
+        gLoadData.OpenTexture(Type, L"Npc\\");
+        break;
+    case MODEL_AKERON_JIN:
+        gLoadData.AccessModel(Type, L"Data\\Npc\\Akeron\\", L"jinn");
+        gLoadData.OpenTexture(Type, L"Npc\\Akeron\\");
+        break;
+    case MODEL_AKERON_LESNAR:
+        gLoadData.AccessModel(Type, L"Data\\Npc\\Akeron\\", L"lesnar");
+        gLoadData.OpenTexture(Type, L"Npc\\Akeron\\");
+        break;
 
     }
 
@@ -1296,7 +1318,9 @@ void OpenMonsterModel(EMonsterModelType Type)
 {
     g_ConsoleDebug->Write(MCD_RECEIVE, L"OpenMonsterModel(%ls = %d)", GetMonsterModelName(Type), Type);
 
-    if (Type < 0 || Type >= MONSTER_MODEL_COUNT)   // guard the Models[] indexing below
+    // Season 8 monster files extend past the named Season 6 enum. The model
+    // allocation reserves MAX_MODEL_MONSTER slots for these later files.
+    if (Type < 0 || Type >= MAX_MODEL_MONSTER)
         return;
 
     int Index = static_cast<int>(MODEL_MONSTER01) + Type;

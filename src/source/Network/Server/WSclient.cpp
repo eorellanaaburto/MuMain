@@ -700,9 +700,12 @@ void ReceiveCharacterListExtended(const BYTE* ReceiveBuffer)
     SelectedCharacter = -1;
     SelectedHero = -1;
 
-    auto Data = (LPPHEADER_DEFAULT_CHARACTER_LIST)ReceiveBuffer;
+    // C2 uses a two-byte packet length.  The remaining character-list fields
+    // have the same layout as C1, shifted by one byte in the receive buffer.
+    const int HeaderShift = ReceiveBuffer[0] == 0xC2 ? 1 : 0;
+    auto Data = (LPPHEADER_DEFAULT_CHARACTER_LIST)(ReceiveBuffer + HeaderShift);
 
-    int Offset = sizeof(PHEADER_DEFAULT_CHARACTER_LIST);
+    int Offset = sizeof(PHEADER_DEFAULT_CHARACTER_LIST) + HeaderShift;
 
 #ifdef _DEBUG
     g_ConsoleDebug->Write(MCD_RECEIVE, L"[ReceiveList Count %d Max class %d]", Data->CharacterCount, Data->MaxClass);
@@ -726,21 +729,26 @@ void ReceiveCharacterListExtended(const BYTE* ReceiveBuffer)
             fAngle = 115.0f;
             break;
         case 1:
-            fPos[0] = 7986.0f;
-            fPos[1] = 19145.0f;
-            fAngle = 90.0f;
+            fPos[0] = 7988.0f;
+            fPos[1] = 19075.0f;
+            fAngle = 100.0f;
             break;
         case 2:
-            fPos[0] = 8046.0f;
-            fPos[1] = 19400.0f;
-            fAngle = 75.0f;
+            fPos[0] = 8016.0f;
+            fPos[1] = 19265.0f;
+            fAngle = 85.0f;
             break;
         case 3:
-            fPos[0] = 8133.0f;
-            fPos[1] = 19645.0f;
-            fAngle = 60.0f;
+            fPos[0] = 8073.0f;
+            fPos[1] = 19460.0f;
+            fAngle = 70.0f;
             break;
         case 4:
+            fPos[0] = 8164.0f;
+            fPos[1] = 19662.0f;
+            fAngle = 50.0f;
+            break;
+        case 5:
             fPos[0] = 8282.0f;
             fPos[1] = 19845.0f;
             fAngle = 35.0f;
@@ -807,21 +815,26 @@ void ReceiveCreateCharacter(const BYTE* ReceiveBuffer)
             fAngle = 115.0f;
             break;
         case 1:
-            fPos[0] = 7986.0f;
-            fPos[1] = 19145.0f;
-            fAngle = 90.0f;
+            fPos[0] = 7988.0f;
+            fPos[1] = 19075.0f;
+            fAngle = 100.0f;
             break;
         case 2:
-            fPos[0] = 8046.0f;
-            fPos[1] = 19400.0f;
-            fAngle = 75.0f;
+            fPos[0] = 8016.0f;
+            fPos[1] = 19265.0f;
+            fAngle = 85.0f;
             break;
         case 3:
-            fPos[0] = 8133.0f;
-            fPos[1] = 19645.0f;
-            fAngle = 60.0f;
+            fPos[0] = 8073.0f;
+            fPos[1] = 19460.0f;
+            fAngle = 70.0f;
             break;
         case 4:
+            fPos[0] = 8164.0f;
+            fPos[1] = 19662.0f;
+            fAngle = 50.0f;
+            break;
+        case 5:
             fPos[0] = 8282.0f;
             fPos[1] = 19845.0f;
             fAngle = 35.0f;
@@ -1767,6 +1780,11 @@ void ReceiveTradeInventoryExtended(std::span<const BYTE> ReceiveBuffer)
         assert(false);
         return;
     }
+
+    g_ErrorReport.Write(L"[NpcAudit] item-list subcode=%u count=%u shopVisible=%d storageVisible=%d\r\n",
+        Data->SubCode, Data->Value,
+        g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_NPCSHOP),
+        g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_STORAGE));
 
     int Offset = sizeof(PHEADER_DEFAULT_SUBCODE_WORD);
 
@@ -6474,6 +6492,8 @@ void ReceiveModifyItemExtended(std::span<const BYTE> ReceiveBuffer)
 BOOL ReceiveTalk(const BYTE* ReceiveBuffer, BOOL bEncrypted)
 {
     auto Data = (LPPHEADER_DEFAULT)ReceiveBuffer;
+
+    g_ErrorReport.Write(L"[NpcAudit] talk window=%u\r\n", Data->Value);
 
     g_pNewUISystem->HideAll();
 

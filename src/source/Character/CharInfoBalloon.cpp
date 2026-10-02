@@ -103,10 +103,23 @@ void CCharInfoBalloon::Create(CHARACTER* pCharInfo)
 
 void CCharInfoBalloon::Render()
 {
-    if (m_pCharInfo == nullptr || !CSprite::m_bShow)
+    const bool isSixthCharacter = m_pCharInfo == &CharactersClient[5];
+    static bool sixthBalloonLogged = false;
+    if (isSixthCharacter && !sixthBalloonLogged)
+    {
+        g_ErrorReport.Write(L"[SixthBalloon] created=%d live=%d show=%d name=%ls\r\n",
+            m_pCharInfo != nullptr, m_pCharInfo->Object.Live, CSprite::m_bShow, m_pCharInfo->ID);
+        sixthBalloonLogged = true;
+    }
+    if (m_pCharInfo == nullptr)
         return;
 
-    CSprite::Render();
+    // Character data can arrive before the sixth balloon is initialized.
+    // Refresh a hidden balloon when its character becomes available.
+    if (!CSprite::m_bShow && m_pCharInfo->Object.Live)
+        SetInfo();
+    if (!CSprite::m_bShow)
+        return;
 
     vec3_t afPos;
     VectorCopy(m_pCharInfo->Object.Position, afPos);
@@ -115,26 +128,43 @@ void CCharInfoBalloon::Render()
     int nPosX, nPosY;
     CameraProjection::WorldToScreen(g_Camera, afPos, &nPosX, &nPosY);
 
+    // Keep the entire balloon visible, including the sixth character's label.
+    const int spriteW = CSprite::GetWidth();
+    const int spriteH = CSprite::GetHeight();
+    const int halfWidth = spriteW / 2;
     CSprite::SetPosition(
-        int(nPosX * g_fScreenRate_x),
-        int(nPosY * g_fScreenRate_y)
+        std::clamp(int(nPosX * g_fScreenRate_x), halfWidth, std::max(halfWidth, int(WindowWidth) - halfWidth)),
+        std::clamp(int(nPosY * g_fScreenRate_y), 0, std::max(0, int(WindowHeight) - spriteH))
     );
+    if (isSixthCharacter && sixthBalloonLogged)
+    {
+        static bool sixthPositionLogged = false;
+        if (!sixthPositionLogged)
+        {
+            g_ErrorReport.Write(L"[SixthBalloon] projection=%d,%d sprite=%d,%d size=%d,%d window=%u,%u\r\n",
+                nPosX, nPosY, CSprite::GetXPos(), CSprite::GetYPos(), spriteW, spriteH,
+                WindowWidth, WindowHeight);
+            sixthPositionLogged = true;
+        }
+    }
+    CSprite::Render();
 
     g_pRenderText->SetFont(g_hFixFont);
     g_pRenderText->SetBgColor(0);
 
     const int spriteX = CSprite::GetXPos();
     const int spriteY = CSprite::GetYPos();
-    const int spriteW = CSprite::GetWidth();
-
-    const int nTextPosX = int(spriteX / g_fScreenRate_x);
+    // The bitmap is 118 pixels wide. Give the text renderer the width of its
+    // visible interior so long class names are scaled to fit the frame.
+    const int nTextPosX = int((spriteX + 5) / g_fScreenRate_x);
+    const int textWidth = int((spriteW - 10) / g_fScreenRate_x);
 
     g_pRenderText->SetTextColor(m_dwNameColor);
     g_pRenderText->RenderText(
         nTextPosX,
         int((spriteY + 6) / g_fScreenRate_y),
         m_szName,
-        spriteW / g_fScreenRate_x,
+        textWidth,
         0,
         RT3_SORT_CENTER
     );
@@ -144,7 +174,7 @@ void CCharInfoBalloon::Render()
         nTextPosX,
         int((spriteY + 22) / g_fScreenRate_y),
         m_szGuild,
-        spriteW / g_fScreenRate_x,
+        textWidth,
         0,
         RT3_SORT_CENTER
     );
@@ -154,7 +184,7 @@ void CCharInfoBalloon::Render()
         nTextPosX,
         int((spriteY + 38) / g_fScreenRate_y),
         m_szClass,
-        spriteW / g_fScreenRate_x,
+        textWidth,
         0,
         RT3_SORT_CENTER
     );

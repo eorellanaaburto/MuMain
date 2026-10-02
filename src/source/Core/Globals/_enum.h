@@ -1490,7 +1490,12 @@ enum
     MODEL_MULTI_SHOT2,
     MODEL_MULTI_SHOT3,
     MODEL_MASK_HELM = (MODEL_MULTI_SHOT3 + MAX_QUEST_ITEM),
-    MAX_MODELS = (MODEL_MASK_HELM + MAX_ITEM_INDEX),
+    // Append S8 NPCs after the legacy ranges so item and player model IDs stay stable.
+    MODEL_AKERON_DERUVISH = (MODEL_MASK_HELM + MAX_ITEM_INDEX),
+    MODEL_AKERON_ADNIEL,
+    MODEL_AKERON_JIN,
+    MODEL_AKERON_LESNAR,
+    MAX_MODELS,
 };
 // object end
 

@@ -19,7 +19,9 @@
 class CCharInfoBalloonMng
 {
 protected:
-    static constexpr std::size_t kBalloonCount = 5;
+    // Keep this scene-specific UI array independent from legacy five-slot
+    // constants in precompiled headers and other client subsystems.
+    static constexpr std::size_t kBalloonCount = 6;
     std::array<CCharInfoBalloon, kBalloonCount> m_charInfoBalloons{};
     bool m_isInitialized{false};
 
