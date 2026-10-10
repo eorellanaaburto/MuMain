@@ -89,6 +89,191 @@ verificados en juego, como el bono de pentagrama (requiere desplegar el servidor
   paquete extendido de lista de personajes (C2).
 * **Divinity y Gale** dejaron de mostrarse en el menú de Adniel; sus botones no se usaban.
 
+## Tabla de maestrías
+
+Árbol de maestrías del servidor (Season 6 / OpenMU) por clase. Cada fila es una
+maestría con su raíz (rama del árbol), su rango (nivel dentro de la rama), su nivel
+máximo y la maestría que debe estar aprendida antes.
+
+Fuente: definiciones de `Persistence/Initialization/VersionSeasonSix/SkillsInitializer.cs`
+del servidor OpenMU, 172 maestrías. Si la base de datos del servidor tiene valores
+distintos, prevalece la base de datos.
+
+| Clase | Raíz | Rango | Maestría | Nivel máx. | Requisito |
+| :--- | :--- | :---: | :--- | :---: | :--- |
+| Todas (excepto Fist Master) | Izquierda (común) | 1 | Durability Reduction (1) | 20 | — |
+| Todas (excepto Fist Master) | Izquierda (común) | 1 | PvP Defence Rate Inc | 20 | — |
+| Todas (excepto Fist Master) | Izquierda (común) | 2 | Automatic Mana Rec Inc | 20 | — |
+| Todas (excepto Fist Master) | Izquierda (común) | 2 | Ice Resistance Increase | 20 | Lightning Resistance Inc |
+| Todas (excepto Fist Master) | Izquierda (común) | 2 | Lightning Resistance Inc | 20 | Poison Resistance Inc |
+| Todas (excepto Fist Master) | Izquierda (común) | 2 | Maximum SD increase | 20 | — |
+| Todas (excepto Fist Master) | Izquierda (común) | 2 | Poison Resistance Inc | 20 | — |
+| Todas (excepto Fist Master) | Izquierda (común) | 3 | Automatic HP Rec Inc | 20 | Automatic Mana Rec Inc |
+| Todas (excepto Fist Master) | Izquierda (común) | 3 | Durability Reduction (2) | 20 | Durability Reduction (1) |
+| Todas (excepto Fist Master) | Izquierda (común) | 3 | SD Recovery Speed Inc | 20 | Maximum SD increase |
+| Todas (excepto Fist Master) | Izquierda (común) | 4 | Automatic AG Rec Inc | 20 | Automatic HP Rec Inc |
+| Todas (excepto Fist Master) | Izquierda (común) | 4 | Defense Increase | 20 | — |
+| Todas (excepto Fist Master) | Izquierda (común) | 5 | Defense Success Rate Inc | 20 | Defense Increase |
+| Todas (excepto Fist Master) | Izquierda (común) | 5 | Durability Reduction (3) | 20 | Durability Reduction (2) |
+| Blade Master | Central | 1 | Attack Succ Rate Inc | 20 | — |
+| Blade Master | Central | 2 | Cyclone Strengthener | 20 | Cyclone |
+| Blade Master | Central | 2 | Falling Slash Streng | 20 | Falling Slash |
+| Blade Master | Central | 2 | Lunge Strengthener | 20 | Lunge |
+| Blade Master | Central | 2 | Slash Strengthener | 20 | Slash |
+| Blade Master | Central | 3 | Rageful Blow Streng | 20 | Rageful Blow |
+| Blade Master | Central | 3 | Twisting Slash Streng | 20 | Twisting Slash |
+| Blade Master | Central | 4 | Maximum Life Increase | 20 | — |
+| Blade Master | Central | 4 | Rageful Blow Mastery | 20 | Rageful Blow Streng |
+| Blade Master | Central | 4 | Twisting Slash Mastery | 20 | Twisting Slash Streng |
+| Blade Master | Central | 4 | Weapon Mastery | 20 | — |
+| Blade Master | Central | 5 | Death Stab Strengthener | 20 | Death Stab |
+| Blade Master | Central | 5 | Maximum Mana Increase | 20 | Maximum Life Increase |
+| Blade Master | Central | 5 | Strike of Destr Str | 20 | Strike of Destruction |
+| Blade Master | Derecha | 1 | PvP Attack Rate | 20 | — |
+| Blade Master | Derecha | 2 | Mace Strengthener | 20 | — |
+| Blade Master | Derecha | 2 | One-handed Sword Stren | 20 | — |
+| Blade Master | Derecha | 2 | Spear Strengthener | 20 | — |
+| Blade Master | Derecha | 2 | Two-handed Sword Stren | 20 | — |
+| Blade Master | Derecha | 3 | Mace Mastery | 20 | Mace Strengthener |
+| Blade Master | Derecha | 3 | One-handed Sword Mast | 10 | One-handed Sword Stren |
+| Blade Master | Derecha | 3 | Spear Mastery | 20 | Spear Strengthener |
+| Blade Master | Derecha | 3 | Two-handed Sword Mast | 20 | Two-handed Sword Stren |
+| Blade Master | Derecha | 4 | Mana Reduction | 20 | — |
+| Blade Master | Derecha | 4 | Monster Attack Life Inc | 20 | — |
+| Blade Master | Derecha | 4 | Monster Attack SD Inc | 20 | — |
+| Blade Master | Derecha | 4 | Swell Life Strengt | 20 | Swell Life |
+| Blade Master | Derecha | 5 | Minimum Attack Power Inc | 20 | — |
+| Blade Master | Derecha | 5 | Monster Attack Mana Inc | 20 | Monster Attack Life Inc |
+| Blade Master | Derecha | 5 | Swell Life Proficiency | 20 | Swell Life Strengt |
+| Grand Master | Central | 2 | Expansion of Wiz Streng | 20 | Expansion of Wizardry |
+| Grand Master | Central | 2 | Flame Strengthener | 20 | Flame |
+| Grand Master | Central | 2 | Lightning Strengthener | 20 | Lightning |
+| Grand Master | Central | 3 | Blast Strengthener | 20 | Cometfall / Lightning Strengthener |
+| Grand Master | Central | 3 | Expansion of Wiz Mas | 20 | Expansion of Wiz Streng |
+| Grand Master | Central | 3 | Inferno Strengthener | 20 | Inferno / Flame Strengthener |
+| Grand Master | Central | 3 | Poison Strengthener | 20 | Poison |
+| Grand Master | Central | 4 | Decay Strengthener | 20 | Decay / Poison Strengthener |
+| Grand Master | Central | 4 | Evil Spirit Streng | 20 | Evil Spirit |
+| Grand Master | Central | 4 | Magic Mastery | 20 | Evil Spirit Streng |
+| Grand Master | Central | 5 | Hellfire Strengthener | 20 | Hellfire |
+| Grand Master | Central | 5 | Ice Strengthener | 20 | Ice |
+| Grand Master | Derecha | 2 | One-handed Staff Stren | 20 | — |
+| Grand Master | Derecha | 2 | Shield Strengthener | 20 | — |
+| Grand Master | Derecha | 2 | Two-handed Staff Stren | 20 | — |
+| Grand Master | Derecha | 3 | One-handed Staff Mast | 10 | One-handed Staff Stren |
+| Grand Master | Derecha | 3 | Shield Mastery | 20 | Shield Strengthener |
+| Grand Master | Derecha | 3 | Two-handed Staff Mast | 20 | Two-handed Staff Stren |
+| Grand Master | Derecha | 4 | Soul Barrier Strength | 20 | Soul Barrier |
+| Grand Master | Derecha | 5 | Minimum Wizardry Inc | 20 | — |
+| Grand Master | Derecha | 5 | Soul Barrier Proficie | 20 | Soul Barrier Strength |
+| High Elf | Central | 2 | Heal Strengthener | 20 | Heal |
+| High Elf | Central | 2 | Summoned Monster Str (1) | 20 | Summon Goblin |
+| High Elf | Central | 2 | Triple Shot Strengthener | 20 | Triple Shot |
+| High Elf | Central | 3 | Defense Increase Str | 20 | Greater Defense |
+| High Elf | Central | 3 | Penetration Strengthener | 20 | Penetration |
+| High Elf | Central | 3 | Summoned Monster Str (2) | 20 | Summon Goblin |
+| High Elf | Central | 3 | Triple Shot Mastery | 10 | Triple Shot Strengthener |
+| High Elf | Central | 4 | Attack Increase Str | 20 | Greater Damage |
+| High Elf | Central | 4 | Weapon Mastery | 20 | — |
+| High Elf | Central | 5 | Attack Increase Mastery | 20 | Attack Increase Str |
+| High Elf | Central | 5 | Defense Increase Mastery | 20 | Defense Increase Str |
+| High Elf | Central | 5 | Ice Arrow Strengthener | 20 | Ice Arrow |
+| High Elf | Derecha | 2 | Bow Strengthener | 20 | — |
+| High Elf | Derecha | 2 | Crossbow Strengthener | 20 | — |
+| High Elf | Derecha | 2 | Shield Strengthener | 20 | — |
+| High Elf | Derecha | 3 | Bow Mastery | 10 | Bow Strengthener |
+| High Elf | Derecha | 3 | Crossbow Mastery | 20 | Crossbow Strengthener |
+| High Elf | Derecha | 3 | Shield Mastery | 20 | Shield Strengthener |
+| High Elf | Derecha | 5 | Infinity Arrow Str | 20 | Infinity Arrow |
+| High Elf | Derecha | 5 | Minimum Att Power Inc | 20 | — |
+| Dimension Master | Central | 2 | Fire Tome Strengthener | 20 | — |
+| Dimension Master | Central | 2 | Lightning Tome Stren | 20 | — |
+| Dimension Master | Central | 2 | Wind Tome Strengthener | 20 | — |
+| Dimension Master | Central | 3 | Fire Tome Mastery | 20 | Fire Tome Strengthener |
+| Dimension Master | Central | 3 | Lightning Tome Mastery | 20 | Lightning Tome Stren |
+| Dimension Master | Central | 3 | Sleep Strengthener | 20 | Sleep |
+| Dimension Master | Central | 3 | Wind Tome Mastery | 20 | Wind Tome Strengthener |
+| Dimension Master | Central | 4 | Chain Lightning Str | 20 | Chain Lightning |
+| Dimension Master | Central | 4 | Lightning Shock Str | 20 | Lightning Shock |
+| Dimension Master | Central | 5 | Drain Life Strengthener | 20 | Drain Life |
+| Dimension Master | Central | 5 | Magic Mastery | 20 | — |
+| Dimension Master | Derecha | 2 | Other World Tome Streng | 20 | — |
+| Dimension Master | Derecha | 2 | Stick Strengthener | 20 | — |
+| Dimension Master | Derecha | 3 | Other World Tome Mastery | 10 | Other World Tome Streng |
+| Dimension Master | Derecha | 3 | Stick Mastery | 20 | Stick Strengthener |
+| Dimension Master | Derecha | 4 | Berserker Strengthener | 20 | Berserker |
+| Dimension Master | Derecha | 5 | Berserker Proficiency | 20 | Berserker Strengthener |
+| Dimension Master | Derecha | 5 | Minimum Wiz/Curse Inc | 20 | — |
+| Duel Master | Central | 2 | Cyclone Strengthener | 20 | Cyclone |
+| Duel Master | Central | 2 | Lightning Strengthener | 20 | Lightning |
+| Duel Master | Central | 2 | Power Slash Streng | 20 | Power Slash |
+| Duel Master | Central | 2 | Twisting Slash Stren | 20 | Twisting Slash |
+| Duel Master | Central | 3 | Blast Strengthener | 20 | Cometfall / Lightning Strengthener |
+| Duel Master | Central | 3 | Flame Strengthener | 20 | Flame |
+| Duel Master | Central | 3 | Weapon Mastery | 20 | Twisting Slash Stren / Power Slash Streng |
+| Duel Master | Central | 4 | Evil Spirit Strengthen | 20 | Evil Spirit |
+| Duel Master | Central | 4 | Inferno Strengthener | 20 | Inferno / Flame Strengthener |
+| Duel Master | Central | 4 | Magic Mastery | 20 | Evil Spirit Strengthen |
+| Duel Master | Central | 5 | Blood Attack Strengthen | 20 | Fire Slash |
+| Duel Master | Central | 5 | Ice Strengthener | 20 | Ice |
+| Lord Emperor | Central | 2 | Dark Horse Streng (1) | 20 | — |
+| Lord Emperor | Central | 2 | Fire Burst Streng | 20 | Fire Burst |
+| Lord Emperor | Central | 2 | Force Wave Streng | 20 | Force |
+| Lord Emperor | Central | 3 | Critical DMG Inc PowUp | 20 | Increase Critical Damage |
+| Lord Emperor | Central | 3 | Earthshake Streng | 20 | Earthshake / Dark Horse Streng (1) |
+| Lord Emperor | Central | 3 | Weapon Mastery | 20 | — |
+| Lord Emperor | Central | 4 | Crit DMG Inc PowUp (2) | 20 | Critical DMG Inc PowUp |
+| Lord Emperor | Central | 4 | Earthshake Mastery | 20 | Earthshake Streng |
+| Lord Emperor | Central | 4 | Fire Burst Mastery | 20 | Fire Burst Streng |
+| Lord Emperor | Central | 5 | Crit DMG Inc PowUp (3) | 20 | Crit DMG Inc PowUp (2) |
+| Lord Emperor | Central | 5 | Fire Scream Stren | 20 | Fire Scream |
+| Lord Emperor | Derecha | 2 | Dark Spirit Str | 20 | — |
+| Lord Emperor | Derecha | 2 | Scepter Strengthener | 20 | — |
+| Lord Emperor | Derecha | 2 | Shield Strengthener | 20 | — |
+| Lord Emperor | Derecha | 2 | Use Scepter : Pet Str | 20 | — |
+| Lord Emperor | Derecha | 3 | Command Attack Inc | 20 | — |
+| Lord Emperor | Derecha | 3 | Dark Spirit Str (2) | 20 | Dark Spirit Str |
+| Lord Emperor | Derecha | 3 | Scepter Mastery | 20 | Scepter Strengthener |
+| Lord Emperor | Derecha | 3 | Shield Mastery | 20 | Shield Strengthener |
+| Lord Emperor | Derecha | 5 | Dark Spirit Str (3) | 20 | Dark Spirit Str (2) |
+| Lord Emperor | Derecha | 5 | Pet Durability Str | 20 | — |
+| Fist Master | Izquierda (común) | 1 | Durability Reduction (1) | 20 | — |
+| Fist Master | Izquierda (común) | 1 | Increase PvP Defense Rate | 20 | — |
+| Fist Master | Izquierda (común) | 2 | Increase Mana Recovery Rate | 20 | — |
+| Fist Master | Izquierda (común) | 2 | Increase Maximum SD | 20 | — |
+| Fist Master | Izquierda (común) | 2 | Increase Poison Resistance | 20 | — |
+| Fist Master | Izquierda (común) | 3 | Durability Reduction (2) | 20 | Durability Reduction (1) |
+| Fist Master | Izquierda (común) | 3 | Increase HP Recovery Rate | 20 | Increase Mana Recovery Rate |
+| Fist Master | Izquierda (común) | 3 | Increase Lightning Resistance | 20 | Increase Poison Resistance |
+| Fist Master | Izquierda (común) | 3 | Increase SD Recovery Rate | 20 | Increase Maximum SD |
+| Fist Master | Izquierda (común) | 4 | Increase Ice Resistance | 20 | Increase Lightning Resistance |
+| Fist Master | Izquierda (común) | 4 | Increases AG Recovery Rate | 20 | Increase HP Recovery Rate |
+| Fist Master | Izquierda (común) | 4 | Increases Defense | 20 | — |
+| Fist Master | Izquierda (común) | 5 | Durability Reduction(3) | 20 | Durability Reduction (2) |
+| Fist Master | Izquierda (común) | 5 | Increase Defense Success Rate | 20 | Increases Defense |
+| Fist Master | Central | 1 | Increase Attack Success Rate | 20 | — |
+| Fist Master | Central | 2 | Beast Uppercut Strengthener | 20 | — |
+| Fist Master | Central | 2 | Killing Blow Strengthener | 20 | — |
+| Fist Master | Central | 3 | Beast Uppercut Mastery | 20 | Beast Uppercut Strengthener |
+| Fist Master | Central | 3 | Killing Blow Mastery | 20 | Killing Blow Strengthener |
+| Fist Master | Central | 4 | Increase Maximum HP | 20 | — |
+| Fist Master | Central | 4 | Weapon Mastery | 20 | — |
+| Fist Master | Central | 5 | Chain Drive Strengthener | 20 | Chain Drive |
+| Fist Master | Central | 5 | Dark Side Strengthener | 20 | Dark Side |
+| Fist Master | Central | 5 | Dragon Roar Strengthener | 20 | Dragon Roar |
+| Fist Master | Central | 5 | Increase Maximum Mana | 20 | Increase Maximum HP |
+| Fist Master | Derecha | 1 | Increase PvP Attack Rate | 20 | — |
+| Fist Master | Derecha | 2 | Def SuccessRate IncPowUp | 20 | Increase Block |
+| Fist Master | Derecha | 2 | Equipped Weapon Strengthener | 20 | — |
+| Fist Master | Derecha | 3 | DefSuccessRate IncMastery | 20 | Def SuccessRate IncPowUp |
+| Fist Master | Derecha | 3 | Equipped Weapon Mastery | 20 | Equipped Weapon Strengthener |
+| Fist Master | Derecha | 4 | Decrease Mana | 20 | — |
+| Fist Master | Derecha | 4 | Recover HP from Monster Kills | 20 | — |
+| Fist Master | Derecha | 4 | Recover SD from Monster Kills | 20 | — |
+| Fist Master | Derecha | 4 | Stamina Increase Strengthener | 20 | Increase Health |
+| Fist Master | Derecha | 5 | Increase Minimum Attack Power | 20 | — |
+| Fist Master | Derecha | 5 | Recover Mana Monster Kills | 20 | Recover HP from Monster Kills |
+
 ## Cómo compilar y ejecutar
 
 ### Requisitos
