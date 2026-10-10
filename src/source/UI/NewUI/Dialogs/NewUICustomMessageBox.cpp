@@ -6593,23 +6593,24 @@ SEASON3B::CAdnielErrtelMenuMsgBox::LButtonUp(
         recipe = 2;
     else if (pMsgBox->m_BtnIntegrity.IsMouseIn())
         recipe = 3;
-    else if (pMsgBox->m_BtnDivinity.IsMouseIn())
-        recipe = 4;
-    else if (pMsgBox->m_BtnGale.IsMouseIn())
-        recipe = 5;
 
     if (recipe != 0)
     {
+        static const std::wstring AdnielCraftCommands[] =
+        {
+            L"",
+            L"/ecraft mithril",
+            L"/ecraft elixir",
+            L"/ecraft errtel",
+        };
+
         PlayBuffer(SOUND_CLICK01);
 
-        g_pMixInventory->SetAdnielMix(recipe);
-
-        g_MessageBox->SendEvent(
-            pOwner,
-            MSGBOX_EVENT_DESTROY);
-
-        g_pNewUISystem->Show(
-            SEASON3B::INTERFACE_MIXINVENTORY);
+        SocketClient
+            ->ToGameServer()
+            ->SendPublicChatMessage(
+                MU_C16(Hero->ID),
+                MU_C16(AdnielCraftCommands[recipe].c_str()));
 
         return CALLBACK_BREAK;
     }
@@ -6666,7 +6667,7 @@ void SEASON3B::CAdnielErrtelMenuMsgBox::SetButtonInfo()
         height,
         CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
 
-    m_BtnAnger.SetText(L"Errtel of Anger");
+    m_BtnAnger.SetText(L"Crear Mithril (5 fragmentos)");
 
     y += 30.f;
 
@@ -6678,7 +6679,7 @@ void SEASON3B::CAdnielErrtelMenuMsgBox::SetButtonInfo()
         height,
         CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
 
-    m_BtnBlessing.SetText(L"Errtel of Blessing");
+    m_BtnBlessing.SetText(L"Crear Elixir (5 fragmentos)");
 
     y += 30.f;
 
@@ -6690,7 +6691,7 @@ void SEASON3B::CAdnielErrtelMenuMsgBox::SetButtonInfo()
         height,
         CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
 
-    m_BtnIntegrity.SetText(L"Errtel of Integrity");
+    m_BtnIntegrity.SetText(L"Crear Errtel (Mithril+Elixir+Bless)");
 
     y += 30.f;
 
@@ -6819,7 +6820,7 @@ void SEASON3B::CAdnielErrtelMenuMsgBox::RenderTexts()
     g_pRenderText->RenderText(
         GetPos().x + 10.f,
         GetPos().y + 35.f,
-        L"Select the Errtel you want to refine",
+        L"Elige la creacion (100.000 Zen)",
         MSGBOX_WIDTH - 20.f,
         0,
         RT3_SORT_CENTER);

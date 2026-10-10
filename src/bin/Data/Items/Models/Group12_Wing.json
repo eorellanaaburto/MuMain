@@ -1456,6 +1456,40 @@
       }
     },
     {
+      "number": 145,
+      "file": "Data/Item/ElixirPiece.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.002
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 147,
+      "file": "Data/Item/ElixirPiece.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.002
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
       "number": 150,
       "file": "Data/Item/penta01.bmd",
       "textureFolders": [

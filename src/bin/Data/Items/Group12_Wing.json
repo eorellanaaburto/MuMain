@@ -2010,6 +2010,28 @@
       "repairable": false
     },
     {
+      "number": 145,
+      "name": {
+        "en": "Mithril",
+        "es": "Mithril",
+        "pt": "Mithril"
+      },
+      "width": 1,
+      "height": 1,
+      "repairable": false
+    },
+    {
+      "number": 147,
+      "name": {
+        "en": "Elixir",
+        "es": "Elixir",
+        "pt": "Elixir"
+      },
+      "width": 1,
+      "height": 1,
+      "repairable": false
+    },
+    {
       "number": 150,
       "name": {
         "en": "Jewel Combination Frame",
