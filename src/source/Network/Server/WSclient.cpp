@@ -2,6 +2,7 @@
 #include "App/Control/ControlTaps.h"
 #include "Core/Utilities/Log/MuLogger.h"
 #include "UI/Chat/Chat.h"
+#include "UI/NewUI/Inventory/PentagramErrtelStatus.h"
 #include <memory>
 #include "UI/Legacy/UIManager.h"
 #include "Guild/GuildCache.h"
@@ -6537,6 +6538,65 @@ void ReceiveModifyItemExtended(std::span<const BYTE> ReceiveBuffer)
     }
 }
 
+namespace
+{
+// Layout of the 0x2A status packet sent by the server when talking to Adniel.
+// Offsets are relative to the start of the packet body after the sub-code.
+constexpr int kPentagramBodyOffset = 4;
+constexpr int kPentagramEquippedOffset = 0;
+constexpr int kPentagramLevelOffset = 1;
+constexpr int kPentagramRankOffset = 2;
+constexpr int kPentagramErrtelLevelOffset = 7;
+constexpr int kPentagramOptionOffset = 12;
+constexpr int kPentagramPacketLengthWithOptions = 21;
+constexpr int kPentagramPacketLengthIndex = 1;
+
+void LogPentagramStatus(const PentagramErrtelStatus& status)
+{
+    if (!status.Equipped)
+    {
+        g_pSystemLogBox->AddText(L"Pentagrama: no equipado.", SEASON3B::TYPE_SYSTEM_MESSAGE);
+        return;
+    }
+
+    wchar_t line[128];
+    mu_swprintf(line, L"Pentagrama nivel %d", static_cast<int>(status.PentagramLevel));
+    g_pSystemLogBox->AddText(line, SEASON3B::TYPE_SYSTEM_MESSAGE);
+    for (int i = 0; i < kErrtelSlotCount; ++i)
+    {
+        const PentagramErrtelSlotStatus& slot = status.Slots[i];
+        mu_swprintf(line, L"Errtel of %ls: Rank %d +%d", PentagramErrtelSlotNames[i],
+                    static_cast<int>(slot.Rank), static_cast<int>(slot.Level));
+        g_pSystemLogBox->AddText(line, SEASON3B::TYPE_SYSTEM_MESSAGE);
+    }
+}
+
+void ReceivePentagramErrtelStatus(const BYTE* packet)
+{
+    const BYTE* pentagram = packet + kPentagramBodyOffset;
+    PentagramErrtelStatus& status = g_PentagramErrtelStatus;
+    status = {};
+    status.Equipped = pentagram[kPentagramEquippedOffset] != 0;
+    status.PentagramLevel = pentagram[kPentagramLevelOffset];
+    if (!status.Equipped)
+    {
+        LogPentagramStatus(status);
+        return;
+    }
+
+    status.OptionsKnown = packet[kPentagramPacketLengthIndex] >= kPentagramPacketLengthWithOptions;
+    for (int i = 0; i < kErrtelSlotCount; ++i)
+    {
+        PentagramErrtelSlotStatus& slot = status.Slots[i];
+        slot.Rank = pentagram[kPentagramRankOffset + i];
+        slot.Level = pentagram[kPentagramErrtelLevelOffset + i];
+        slot.OptionNumber = status.OptionsKnown ? pentagram[kPentagramOptionOffset + i] : 0;
+    }
+
+    LogPentagramStatus(status);
+}
+}
+
 BOOL ReceiveTalk(const BYTE* ReceiveBuffer, BOOL bEncrypted)
 {
     auto Data = (LPPHEADER_DEFAULT)ReceiveBuffer;
@@ -6702,28 +6762,8 @@ BOOL ReceiveTalk(const BYTE* ReceiveBuffer, BOOL bEncrypted)
     }
     break;
     case 0x2A:
-    {
-        const BYTE* pentagram = (&Data->Value) + 1;
-        if (pentagram[0] == 0)
-        {
-            g_pSystemLogBox->AddText(L"Pentagrama: no equipado.", SEASON3B::TYPE_SYSTEM_MESSAGE);
-            break;
-        }
-
-        static const wchar_t* ErrtelNames[5] = { L"Anger", L"Blessing", L"Integrity", L"Divinity", L"Gale" };
-        const BYTE* ranks = pentagram + 2;
-        const BYTE* levels = pentagram + 7;
-
-        wchar_t line[128];
-        mu_swprintf(line, L"Pentagrama nivel %d", static_cast<int>(pentagram[1]));
-        g_pSystemLogBox->AddText(line, SEASON3B::TYPE_SYSTEM_MESSAGE);
-        for (int i = 0; i < 5; ++i)
-        {
-            mu_swprintf(line, L"Errtel of %ls: Rank %d +%d", ErrtelNames[i], static_cast<int>(ranks[i]), static_cast<int>(levels[i]));
-            g_pSystemLogBox->AddText(line, SEASON3B::TYPE_SYSTEM_MESSAGE);
-        }
-    }
-    break;
+        ReceivePentagramErrtelStatus(ReceiveBuffer);
+        break;
 default:
     {
         // Data->Value

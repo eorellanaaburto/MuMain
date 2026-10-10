@@ -13,6 +13,7 @@
 #include "Render/Textures/ZzzTexture.h"
 #include "Engine/Object/ZzzInterface.h"
 #include "Engine/Object/ZzzInventory.h"
+#include "UI/NewUI/Inventory/PentagramTooltip.h"
 #include "Engine/AI/ZzzAI.h"
 #include "Render/Effects/ZzzEffect.h"
 #include "Audio/DSPlaySound.h"
@@ -5340,6 +5341,11 @@ void RenderItemInfo(int sx, int sy, ITEM* ip, bool Sell, int Inventype, bool bIt
         TextNum = g_csItemOption.RenderSetOptionListInItem(ip, TextNum, bThisisEquippedItem);
 
         TextNum = g_SocketItemMgr.AttachToolTipForSocketItem(ip, TextNum);
+
+        if (ip->lineal_pos == PENTAGRAM_SERVER_SLOT)
+        {
+            TextNum = UI::Items::Tooltip::AppendPentagramErrtelBonus(TextNum);
+        }
 
         SIZE TextSize = { 0, 0 };
         int	Height = 0;
