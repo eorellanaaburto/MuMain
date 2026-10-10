@@ -34,18 +34,27 @@ void CLoadingScene::Create()
     CInput rInput = CInput::Instance();
     float fScaleX = (float)rInput.GetScreenWidth() / 800.0f;
     float fScaleY = (float)rInput.GetScreenHeight() / 600.0f;
+    float imageScaleX = (float)rInput.GetScreenWidth() / 1280.0f;
+    float imageScaleY = (float)rInput.GetScreenHeight() / 1024.0f;
 
-    int anHeight[LDS_BACK_MAX] = { 512, 512, 88, 88 };
-    for (int i = 0; i < LDS_BACK_MAX; ++i)
+    for (int i = 0; i < 6; ++i)
     {
-        m_asprBack[i].Create(400, anHeight[i], BITMAP_TITLE + i, 0, NULL, 0, 0, false,
-            SPR_SIZING_DATUMS_LT, fScaleX, fScaleY);
+        const int column = i % 3;
+        const int row = i / 3;
+        m_asprBack[i].Create(column == 2 ? 256 : 512, row == 0 ? 512 : 223,
+            BITMAP_TITLE + i, 0, NULL, 0, 0, false,
+            SPR_SIZING_DATUMS_LT, imageScaleX, imageScaleY);
+        m_asprBack[i].SetPosition(column * 512, 119 + row * 512);
         m_asprBack[i].Show(true);
     }
-
-    m_asprBack[1].SetPosition(400, 0, X);
-    m_asprBack[2].SetPosition(0, 512, Y);
-    m_asprBack[3].SetPosition(400, 512);
+    const int borderHeights[4] = { 69, 69, 100, 100 };
+    for (int i = 0; i < 4; ++i)
+    {
+        m_asprBack[6 + i].Create(400, borderHeights[i], BITMAP_TITLE + 6 + i,
+            0, NULL, 0, 0, false, SPR_SIZING_DATUMS_LT, fScaleX, fScaleY);
+        m_asprBack[6 + i].SetPosition((i % 2) * 400, i < 2 ? 0 : 500);
+        m_asprBack[6 + i].Show(true);
+    }
 }
 
 void CLoadingScene::Release()
@@ -77,17 +86,15 @@ void LoadingScene(HDC hDC)
         LoadingWorld = 9999999;
 
         InitLoading = true;
-        // Alternate the supplied Season 8 artwork each time a world loads.
-        static unsigned int artwork = 0;
-        const bool secondArtwork = (artwork++ % 2) != 0;
-        const wchar_t* pieces[2][4] = {
-            {L"Interface\\S8LoadA01.jpg", L"Interface\\S8LoadA02.jpg",
-             L"Interface\\S8LoadA03.jpg", L"Interface\\S8LoadA04.jpg"},
-            {L"Interface\\S8LoadB01.jpg", L"Interface\\S8LoadB02.jpg",
-             L"Interface\\S8LoadB03.jpg", L"Interface\\S8LoadB04.jpg"}
+        const wchar_t* pieces[LDS_BACK_MAX] = {
+            L"Interface\\S8IntroA01.jpg", L"Interface\\S8IntroA02.jpg",
+            L"Interface\\S8IntroA03.jpg", L"Interface\\S8IntroA04.jpg",
+            L"Interface\\S8IntroA05.jpg", L"Interface\\S8IntroA06.jpg",
+            L"Interface\\New_lo_back_01.jpg", L"Interface\\New_lo_back_02.jpg",
+            L"Interface\\lo_back_s5_03.jpg", L"Interface\\lo_back_s5_04.jpg"
         };
-        for (int i = 0; i < 4; ++i)
-            LoadBitmap(pieces[secondArtwork ? 1 : 0][i], BITMAP_TITLE + i, GL_LINEAR);
+        for (int i = 0; i < LDS_BACK_MAX; ++i)
+            LoadBitmap(pieces[i], BITMAP_TITLE + i, GL_LINEAR);
 
         ::StopMp3(MUSIC_LOGIN_THEME);
 
@@ -122,7 +129,7 @@ void LoadingScene(HDC hDC)
     SAFE_DELETE(rUIMng.m_pLoadingScene);
 
     SceneFlag = MAIN_SCENE;
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < LDS_BACK_MAX; ++i)
         ::DeleteBitmap(BITMAP_TITLE + i);
 
     ::ClearInput();

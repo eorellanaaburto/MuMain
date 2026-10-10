@@ -1420,6 +1420,414 @@
       "glow": {
         "level": 0
       }
+    },
+    {
+      "number": 144,
+      "file": "Data/Item/ElixirPiece.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.002
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 146,
+      "file": "Data/Item/ElixirPiece.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.002
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 150,
+      "file": "Data/Item/penta01.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 151,
+      "file": "Data/Item/PentaLiquid.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 200,
+      "file": "Data/Item/penta01.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 201,
+      "file": "Data/Item/penta02.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 202,
+      "file": "Data/Item/PentaExShi.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 203,
+      "file": "Data/Item/PentaExShi.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 204,
+      "file": "Data/Item/PentaLiquid.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 205,
+      "file": "Data/Item/PentaLiquid.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 206,
+      "file": "Data/Item/PentaExDan.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 207,
+      "file": "Data/Item/PentaExDan.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 208,
+      "file": "Data/Item/PentaExDan.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 209,
+      "file": "Data/Item/penta02.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 210,
+      "file": "Data/Item/PentaExShi.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 211,
+      "file": "Data/Item/penta02.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 212,
+      "file": "Data/Item/penta02.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 213,
+      "file": "Data/Item/PentaExDan.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 214,
+      "file": "Data/Item/penta02.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.0017
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 221,
+      "file": "Data/Item/RageErthel.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.002
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 231,
+      "file": "Data/Item/NobleErthel.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.002
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 241,
+      "file": "Data/Item/ExtremeErthel.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.002
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 251,
+      "file": "Data/Item/ExtremeErthel.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.002
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
+    },
+    {
+      "number": 261,
+      "file": "Data/Item/ExtremeErthel.bmd",
+      "textureFolders": [
+        "Item"
+      ],
+      "inventory": {
+        "scale": 0.002
+      },
+      "ground": {
+        "rotation": [
+          270,
+          0,
+          45
+        ]
+      }
     }
   ]
 }

@@ -678,6 +678,7 @@ if (DOTNET_EXECUTABLE)
 
   # 2. Tell CMake to watch ALL .cs files in the ClientLibrary folder
   file(GLOB_RECURSE DOTNET_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../ClientLibrary/*.cs")
+  list(FILTER DOTNET_SOURCES EXCLUDE REGEX "[/\\\\](obj|bin)[/\\\\]")
 
   # 3. Build to temp directory with Native AOT, then copy to build and bin directories
   # Override environment variables to avoid issues with umlauts in Windows username

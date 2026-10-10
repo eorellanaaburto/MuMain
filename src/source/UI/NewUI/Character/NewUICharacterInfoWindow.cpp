@@ -21,6 +21,9 @@
 #include "GameLogic/Items/ItemCategories.h"
 
 using namespace SEASON3B;
+// Filled by WSclient.cpp only upon receipt of extended 32-bit stat values.
+extern DWORD g_DarkFantasyStats32[5];
+extern bool g_DarkFantasyStats32Valid;
 
 namespace
 {
@@ -330,7 +333,10 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderTableTexts()
     wchar_t strExp[128];
     wchar_t strPoint[128];
 
-    mu_swprintf(strLevel, I18N::Game::LevelUResetsU, CharacterAttribute->Level, CharacterAttribute->Resets);
+    mu_swprintf(strLevel, L"Lv:%u | R:%u", CharacterAttribute->Level,
+                CharacterAttribute->Resets);
+    wchar_t strPts[48];
+    mu_swprintf(strPts, L"Pts:%u", CharacterAttribute->LevelUpPoint);
     mu_swprintf(strExp, I18N::Game::EXPI64dI64d, CharacterAttribute->Experience, CharacterAttribute->NextExperience);
 
     if (CharacterAttribute->Level > 9)
@@ -359,23 +365,9 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderTableTexts()
     g_pRenderText->SetFont(g_hFontBold);
     g_pRenderText->SetTextColor(230, 230, 0, 255);
     g_pRenderText->SetBgColor(0, 0, 0, 0);
-    g_pRenderText->RenderText(m_Pos.x + 18, m_Pos.y + 58, strLevel);
-
-    if (CharacterAttribute->LevelUpPoint > 0)
-    {
-        wchar_t strLevelUpPoint[128];
-
-        if (gCharacterManager.IsMasterLevel(CharacterAttribute->Class) == false || CharacterAttribute->LevelUpPoint > 0)
-        {
-            mu_swprintf(strLevelUpPoint, I18N::Game::PointD, CharacterAttribute->LevelUpPoint);
-        }
-        else
-            mu_swprintf(strLevelUpPoint, L"");
-        g_pRenderText->SetFont(g_hFontBold);
-        g_pRenderText->SetTextColor(255, 138, 0, 255);
-        g_pRenderText->SetBgColor(0, 0, 0, 0);
-        g_pRenderText->RenderText(m_Pos.x + 110, m_Pos.y + 58, strLevelUpPoint);
-    }
+    g_pRenderText->RenderText(m_Pos.x + 18, m_Pos.y + 58, strLevel, 112, 13);
+    g_pRenderText->SetTextColor(255, 156, 36, 255);
+    g_pRenderText->RenderText(m_Pos.x + 124, m_Pos.y + 58, strPts, 58, 13);
 
     g_pRenderText->SetFont(g_hFont);
     g_pRenderText->SetTextColor(255, 255, 255, 255);
@@ -459,9 +451,11 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
 {
     g_pRenderText->SetFont(g_hFontBold);
 
-    WORD wStrength;
-
-    wStrength = CharacterAttribute->Strength + CharacterAttribute->AddStrength;
+    // V12: avoid secondary WORD overflow while summing already received attributes.
+    // Server-provided base fields in CHARACTER_ATTRIBUTE remain 16-bit: values > 65535
+    // require a separately verified extended protocol, not a UI-only cast.
+    const unsigned int wStrength = (g_DarkFantasyStats32Valid ? static_cast<unsigned int>(g_DarkFantasyStats32[0]) : static_cast<unsigned int>(CharacterAttribute->Strength))
+        + static_cast<unsigned int>(CharacterAttribute->AddStrength);
 
     if (g_isCharacterBuff((&Hero->Object), eBuff_SecretPotion1))
     {
@@ -478,7 +472,7 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
         }
 
     wchar_t strStrength[32];
-    mu_swprintf(strStrength, L"%d", wStrength);
+    mu_swprintf(strStrength, L"%u", wStrength);
 
     g_pRenderText->SetBgColor(0);
     g_pRenderText->RenderText(m_Pos.x + 12, m_Pos.y + HEIGHT_STRENGTH + 6, I18N::Game::STR, 74, 0, RT3_SORT_CENTER);
@@ -517,7 +511,8 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
 
     if (g_isCharacterBuff((&Hero->Object), eBuff_AddAG))
     {
-        WORD wDexterity = CharacterAttribute->Dexterity + CharacterAttribute->AddDexterity;
+        unsigned int wDexterity = (g_DarkFantasyStats32Valid ? static_cast<unsigned int>(g_DarkFantasyStats32[1]) : static_cast<unsigned int>(CharacterAttribute->Dexterity))
+            + static_cast<unsigned int>(CharacterAttribute->AddDexterity);
         iAttackRating += wDexterity;
         iAttackRatingPK += wDexterity;
         if (PartyNumber >= 3)
@@ -823,8 +818,11 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
         }
 
     wchar_t strDexterity[32];
-    WORD wDexterity = CharacterAttribute->Dexterity + CharacterAttribute->AddDexterity;
-    mu_swprintf(strDexterity, L"%d", wDexterity);
+    unsigned int wDexterity = (g_DarkFantasyStats32Valid
+            ? static_cast<unsigned int>(g_DarkFantasyStats32[1])
+            : static_cast<unsigned int>(CharacterAttribute->Dexterity))
+            + static_cast<unsigned int>(CharacterAttribute->AddDexterity);
+    mu_swprintf(strDexterity, L"%u", wDexterity);
     g_pRenderText->RenderText(m_Pos.x + 12, m_Pos.y + HEIGHT_DEXTERITY + 6, I18N::Game::AGI, 74, 0, RT3_SORT_CENTER);
     g_pRenderText->RenderText(m_Pos.x + 86, m_Pos.y + HEIGHT_DEXTERITY + 6, strDexterity, 86, 0, RT3_SORT_CENTER);
 
@@ -1088,7 +1086,8 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
 
     g_pRenderText->SetFont(g_hFontBold);
 
-    WORD wVitality = CharacterAttribute->Vitality + CharacterAttribute->AddVitality;
+    unsigned int wVitality = (g_DarkFantasyStats32Valid ? static_cast<unsigned int>(g_DarkFantasyStats32[2]) : static_cast<unsigned int>(CharacterAttribute->Vitality))
+        + static_cast<unsigned int>(CharacterAttribute->AddVitality);
 
     if (g_isCharacterBuff((&Hero->Object), eBuff_SecretPotion3))
     {
@@ -1097,7 +1096,10 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
     else if (g_isCharacterBuff((&Hero->Object), eBuff_Hp_up_Ourforces))
     {
         CharacterMachine->CalculateAll();
-        wVitality = CharacterAttribute->Vitality + CharacterAttribute->AddVitality;
+        wVitality = (g_DarkFantasyStats32Valid
+            ? static_cast<unsigned int>(g_DarkFantasyStats32[2])
+            : static_cast<unsigned int>(CharacterAttribute->Vitality))
+            + static_cast<unsigned int>(CharacterAttribute->AddVitality);
         g_pRenderText->SetTextColor(100, 150, 255, 255);
     }
     else if (CharacterAttribute->AddVitality)
@@ -1110,7 +1112,7 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
     }
 
     wchar_t strVitality[256];
-    mu_swprintf(strVitality, L"%d", wVitality);
+    mu_swprintf(strVitality, L"%u", wVitality);
     g_pRenderText->SetBgColor(0);
     g_pRenderText->RenderText(m_Pos.x + 12, m_Pos.y + HEIGHT_VITALITY + 6, I18N::Game::STA, 74, 0, RT3_SORT_CENTER);
     g_pRenderText->RenderText(m_Pos.x + 86, m_Pos.y + HEIGHT_VITALITY + 6, strVitality, 86, 0, RT3_SORT_CENTER);
@@ -1166,7 +1168,8 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
 
     g_pRenderText->SetFont(g_hFontBold);
 
-    WORD wEnergy = CharacterAttribute->Energy + CharacterAttribute->AddEnergy;
+    unsigned int wEnergy = (g_DarkFantasyStats32Valid ? static_cast<unsigned int>(g_DarkFantasyStats32[3]) : static_cast<unsigned int>(CharacterAttribute->Energy))
+        + static_cast<unsigned int>(CharacterAttribute->AddEnergy);
 
     if (g_isCharacterBuff((&Hero->Object), eBuff_SecretPotion4))
     {
@@ -1183,7 +1186,7 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
         }
 
     wchar_t strEnergy[256];
-    mu_swprintf(strEnergy, L"%d", wEnergy);
+    mu_swprintf(strEnergy, L"%u", wEnergy);
 
     g_pRenderText->SetBgColor(0);
     g_pRenderText->RenderText(m_Pos.x + 12, m_Pos.y + HEIGHT_ENERGY + 6, I18N::Game::ENG, 74, 0, RT3_SORT_CENTER);
@@ -1500,9 +1503,8 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
         g_pRenderText->SetFont(g_hFontBold);
         g_pRenderText->SetBgColor(0);
 
-        WORD wCharisma;
-
-        wCharisma = CharacterAttribute->Charisma + CharacterAttribute->AddCharisma;
+    const unsigned int wCharisma = (g_DarkFantasyStats32Valid ? static_cast<unsigned int>(g_DarkFantasyStats32[4]) : static_cast<unsigned int>(CharacterAttribute->Charisma))
+        + static_cast<unsigned int>(CharacterAttribute->AddCharisma);
 
         if (g_isCharacterBuff((&Hero->Object), eBuff_SecretPotion5))
         {
@@ -1520,7 +1522,7 @@ void SEASON3B::CNewUICharacterInfoWindow::RenderAttribute()
             }
 
         wchar_t strCharisma[256];
-        mu_swprintf(strCharisma, L"%d", wCharisma);
+        mu_swprintf(strCharisma, L"%u", wCharisma);
         g_pRenderText->RenderText(m_Pos.x + 12, m_Pos.y + HEIGHT_CHARISMA + 6, I18N::Game::Command, 74, 0, RT3_SORT_CENTER);
         g_pRenderText->RenderText(m_Pos.x + 86, m_Pos.y + HEIGHT_CHARISMA + 6, strCharisma, 86, 0, RT3_SORT_CENTER);
     }

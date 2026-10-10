@@ -15,6 +15,11 @@ inline bool IsInventoryExtensionSlot(const int slot)
     return slot >= MAX_MY_INVENTORY_INDEX && slot < MAX_MY_INVENTORY_EX_INDEX;
 }
 
+inline bool IsPentagramSlot(const int slot)
+{
+    return slot == PENTAGRAM_SERVER_SLOT;
+}
+
 inline bool IsMyShopSlot(const int slot)
 {
     return slot >= MAX_MY_INVENTORY_EX_INDEX && slot < MAX_MY_SHOP_INVENTORY_INDEX;

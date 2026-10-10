@@ -1,4 +1,4 @@
-﻿// NewUIMyInventory.cpp: implementation of the CNewUIMyInventory class.
+// NewUIMyInventory.cpp: implementation of the CNewUIMyInventory class.
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
@@ -50,6 +50,12 @@ CNewUIMyInventory::CNewUIMyInventory()
     m_Pos.x = m_Pos.y = 0;
 
     memset(&m_EquipmentSlots, 0, sizeof(EQUIPMENT_ITEM) * MAX_EQUIPMENT_INDEX);
+    memset(&m_PentagramSlot, 0, sizeof(m_PentagramSlot));
+    memset(&m_PentagramItem, 0, sizeof(m_PentagramItem));
+    m_PentagramItem.Type = -1;
+    m_PentagramItem.Number = -1;
+    m_bPentagramPointed = false;
+    m_iPentagramSocketPointed = -1;
     m_iPointedSlot = -1;
 
     m_MyShopMode = MYSHOP_MODE_OPEN;
@@ -198,8 +204,70 @@ void CNewUIMyInventory::UnequipItem(int iIndex)
     }
 }
 
+bool CNewUIMyInventory::EquipPentagramItem(std::span<const BYTE> itemPacket)
+{
+    if (g_pNewItemMng == nullptr)
+        return false;
+
+    ITEM* decoded = g_pNewItemMng->CreateItem(itemPacket);
+    if (decoded == nullptr)
+        return false;
+
+    RestorePentagramItem(*decoded);
+    g_pNewItemMng->DeleteItem(decoded);
+    g_ErrorReport.Write(L"[PENTAGRAM-CLIENT] Stored equipped pentagram slot=%d type=%d level=%d\r\n",
+                        PENTAGRAM_SERVER_SLOT, m_PentagramItem.Type, m_PentagramItem.Level);
+    return true;
+}
+
+void CNewUIMyInventory::UnequipPentagramItem()
+{
+    if (m_PentagramItem.Type < 0)
+        return;
+
+    memset(&m_PentagramItem, 0, sizeof(m_PentagramItem));
+    m_PentagramItem.Type = -1;
+    m_PentagramItem.Number = -1;
+    g_ErrorReport.Write(L"[PENTAGRAM-CLIENT] Cleared equipped pentagram slot=%d\r\n", PENTAGRAM_SERVER_SLOT);
+}
+
+void CNewUIMyInventory::RestorePentagramItem(const ITEM& item)
+{
+    memcpy(&m_PentagramItem, &item, sizeof(ITEM));
+    m_PentagramItem.lineal_pos = PENTAGRAM_SERVER_SLOT;
+    m_PentagramItem.ex_src_type = ITEM_EX_SRC_EQUIPMENT;
+
+    g_ErrorReport.Write(L"[PENTAGRAM-CLIENT] Artifact sockets count=%d bonus=%d\r\n",
+                        static_cast<int>(m_PentagramItem.SocketCount),
+                        static_cast<int>(m_PentagramItem.SocketSeedSetOption));
+    for (int i = 0; i < MAX_SOCKETS; ++i)
+    {
+        const bool errtelDeclared =
+            i < static_cast<int>(m_PentagramItem.SocketCount);
+
+        const bool errtelOccupied =
+            errtelDeclared &&
+            m_PentagramItem.bySocketOption[i] != SOCKET_EMPTY;
+
+        g_ErrorReport.Write(
+            L"[PENTAGRAM-CLIENT] Errtel[%d] declared=%d raw=0x%02X seed=%d sphere=%d %ls\r\n",
+            i,
+            errtelDeclared ? 1 : 0,
+            static_cast<unsigned int>(m_PentagramItem.bySocketOption[i]),
+            static_cast<int>(m_PentagramItem.SocketSeedID[i]),
+            static_cast<int>(m_PentagramItem.SocketSphereLv[i]),
+            errtelOccupied ? L"OCCUPIED" : L"EMPTY");
+    }
+}
+
+const ITEM* CNewUIMyInventory::GetPentagramItem() const
+{
+    return &m_PentagramItem;
+}
+
 void CNewUIMyInventory::UnequipAllItems()
 {
+    UnequipPentagramItem();
     if (CharacterMachine)
     {
         for (int i = 0; i < MAX_EQUIPMENT_INDEX; i++)
@@ -217,6 +285,9 @@ bool CNewUIMyInventory::IsEquipable(int iIndex, ITEM* pItem) const
     const ITEM_ATTRIBUTE* pItemAttr = &ItemAttribute[pItem->Type];
     bool bEquipable = false;
     if (pItemAttr->RequireClass[gCharacterManager.GetBaseClass(Hero->Class)])
+        bEquipable = true;
+
+    else if (iIndex == PENTAGRAM_SERVER_SLOT && pItemAttr->m_byItemSlot == PENTAGRAM_SERVER_SLOT)
         bEquipable = true;
 
     else if (gCharacterManager.GetBaseClass(Hero->Class) == CLASS_DARK && pItemAttr->RequireClass[CLASS_WIZARD]
@@ -499,6 +570,16 @@ bool CNewUIMyInventory::UpdateMouseEvent()
             ResetMouseLButton();
             return false;
         }
+        // El slot Artifact/Pentagram debe procesarse antes que el drop al suelo.
+        if (CheckMouseIn(m_PentagramSlot.x, m_PentagramSlot.y,
+                         m_PentagramSlot.width, m_PentagramSlot.height))
+        {
+            if (PentagramWindowProcess())
+            {
+                return false;
+            }
+        }
+
         if (pItemObj && GameLogic::Items::IsHighValueItem(pItemObj) == true)
         {
             g_pSystemLogBox->AddText(I18N::Game::YouAreNotAllowedToDropThisExpensiveItem, TYPE_ERROR_MESSAGE);
@@ -682,15 +763,56 @@ bool CNewUIMyInventory::Update()
     if (IsVisible())
     {
         m_iPointedSlot = -1;
+        m_iPentagramSocketPointed = -1;
+        m_bPentagramPointed = !IsPentagramPanelBlocked() &&
+            CheckMouseIn(m_PentagramSlot.x, m_PentagramSlot.y,
+                         m_PentagramSlot.width, m_PentagramSlot.height);
+
+        // Five Pentagram/Errtel ranks are stored in the existing socket fields of ITEM.
+        // They are intentionally read-only in this stage until we confirm the exact
+        // OpenMU insert/remove packet semantics.
+        const int errtelSize = 22;
+        const int errtelGap = 3;
+        // Same coordinates as RenderPentagramErrtelSlots below.
+        const int errtelLeft = m_PentagramSlot.x - 34;
+        const int errtelTop = m_PentagramSlot.y + 98;
+        const int errtelX[MAX_SOCKETS] = {
+            errtelLeft, errtelLeft + 25, errtelLeft + 50,
+            errtelLeft + 75, errtelLeft + 100
+        };
+        const int errtelY[MAX_SOCKETS] = {
+            errtelTop, errtelTop, errtelTop, errtelTop, errtelTop
+        };
+
+        if (!IsPentagramPanelBlocked())
+        {
+            for (int i = 0; i < MAX_SOCKETS; ++i)
+            {
+                if (CheckMouseIn(errtelX[i], errtelY[i], errtelSize, errtelSize))
+                {
+                    m_iPentagramSocketPointed = i;
+                    m_bPentagramPointed = false;
+                    break;
+                }
+            }
+        }
+
         for (int i = 0; i < MAX_EQUIPMENT_INDEX; i++)
         {
             if (CheckMouseIn(m_EquipmentSlots[i].x + 1, m_EquipmentSlots[i].y,
                 m_EquipmentSlots[i].width - 4, m_EquipmentSlots[i].height - 4))
             {
                 m_iPointedSlot = i;
+                m_bPentagramPointed = false;
+                m_iPentagramSocketPointed = -1;
                 break;
             }
         }
+    }
+    else
+    {
+        m_bPentagramPointed = false;
+        m_iPentagramSocketPointed = -1;
     }
     return true;
 }
@@ -702,6 +824,11 @@ bool CNewUIMyInventory::Render()
     RenderInventoryDetails();
     RenderSetOption();
     RenderSocketOption();
+    if (!IsPentagramPanelBlocked())
+    {
+        RenderPentagramSlot();
+        RenderPentagramErrtelSlots();
+    }
     RenderButtons();
 
     if (m_pNewInventoryCtrl)
@@ -788,6 +915,14 @@ void CNewUIMyInventory::Render3D()
                 false);
         }
     }
+
+    if (m_PentagramItem.Type >= 0 && !IsPentagramPanelBlocked())
+    {
+        RenderItem3D(m_PentagramSlot.x + 3, m_PentagramSlot.y + 18,
+                     m_PentagramSlot.width - 6, m_PentagramSlot.height - 22,
+                     m_PentagramItem.Type, m_PentagramItem.Level,
+                     m_PentagramItem.ExcellentFlags, m_PentagramItem.AncientDiscriminator, false);
+    }
 }
 
 bool CNewUIMyInventory::IsVisible() const
@@ -842,6 +977,21 @@ void CNewUIMyInventory::ClosingProcess()
 float CNewUIMyInventory::GetLayerDepth()
 {
     return 4.2f;
+}
+
+bool CNewUIMyInventory::IsPentagramPanelBlocked() const
+{
+    // Same incompatible-window list RenderButtons() already uses to hide
+    // the repair/shop buttons; the Artifact panel needs the same gate so it
+    // stops covering trade/vault/shop/Chaos Machine windows.
+    return g_pNewUISystem->IsVisible(INTERFACE_NPCSHOP)
+        || g_pNewUISystem->IsVisible(INTERFACE_TRADE)
+        || g_pNewUISystem->IsVisible(INTERFACE_DEVILSQUARE)
+        || g_pNewUISystem->IsVisible(INTERFACE_BLOODCASTLE)
+        || g_pNewUISystem->IsVisible(INTERFACE_MIXINVENTORY)
+        || g_pNewUISystem->IsVisible(SEASON3B::INTERFACE_LUCKYITEMWND)
+        || g_pNewUISystem->IsVisible(INTERFACE_STORAGE)
+        || g_pNewUISystem->IsVisible(INTERFACE_INVENTORY_EXT);
 }
 
 CNewUIInventoryCtrl* CNewUIMyInventory::GetInventoryCtrl() const
@@ -1096,6 +1246,14 @@ void CNewUIMyInventory::DeleteEquippingEffect()
 
 void CNewUIMyInventory::SetEquipmentSlotInfo()
 {
+    // Dark Fantasy V10: art panel sits immediately to the left of inventory.
+    // The item hitbox remains 52x70. Recomputed by SetPos for all window layouts.
+    m_PentagramSlot.x = m_Pos.x >= 154 ? m_Pos.x - 108 : 48;
+    m_PentagramSlot.y = m_Pos.y + 88;
+    m_PentagramSlot.width = 52;
+    m_PentagramSlot.height = 70;
+    m_PentagramSlot.dwBgImage = 0;
+
     m_EquipmentSlots[EQUIPMENT_HELPER].x = m_Pos.x + 15;
     m_EquipmentSlots[EQUIPMENT_HELPER].y = m_Pos.y + 44;
     m_EquipmentSlots[EQUIPMENT_HELPER].width = 46;
@@ -1193,6 +1351,7 @@ void CNewUIMyInventory::LoadImages() const
     LoadBitmap(L"Interface\\newui_msgbox_back.jpg", IMAGE_INVENTORY_BACK, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_item_back01.tga", IMAGE_INVENTORY_BACK_TOP, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_item_back04.tga", IMAGE_INVENTORY_BACK_TOP2, GL_LINEAR);
+    LoadBitmap(L"Interface\\dark_fantasy_artifact_v13.tga", IMAGE_ARTIFACT_PANEL_BG, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_item_back02-L.tga", IMAGE_INVENTORY_BACK_LEFT, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_item_back02-R.tga", IMAGE_INVENTORY_BACK_RIGHT, GL_LINEAR);
     LoadBitmap(L"Interface\\newui_item_back03.tga", IMAGE_INVENTORY_BACK_BOTTOM, GL_LINEAR);
@@ -1233,6 +1392,7 @@ void CNewUIMyInventory::UnloadImages()
     DeleteBitmap(IMAGE_INVENTORY_ITEM_FAIRY);
     DeleteBitmap(IMAGE_INVENTORY_ITEM_HELM);
     DeleteBitmap(IMAGE_INVENTORY_ITEM_BOOT);
+    DeleteBitmap(IMAGE_ARTIFACT_PANEL_BG);
     DeleteBitmap(IMAGE_INVENTORY_BACK_BOTTOM);
     DeleteBitmap(IMAGE_INVENTORY_BACK_RIGHT);
     DeleteBitmap(IMAGE_INVENTORY_BACK_LEFT);
@@ -1335,6 +1495,219 @@ void CNewUIMyInventory::RenderEquippedItem()
     }
 }
 
+void CNewUIMyInventory::RenderPentagramSlot()
+{
+    EnableAlphaTest();
+    // V11: Artifact uses the inventory's transform and remains on its left side.
+    // The 52x70 equipment slot and all five Errtel hitboxes remain unchanged.
+    const float panelX = static_cast<float>(m_PentagramSlot.x - 46);
+    const float panelY = static_cast<float>(m_PentagramSlot.y - 66);
+    // Dark Fantasy design-master palette (2026-10-09 prompt):
+    // Fondo #10151C, Panel #1C232D, Relieve #303945, Borde #A5824C, Enfasis #EBCB89.
+    RenderColorQuadARGB(panelX, panelY, 145.f, 286.f, 0xFF1C232Du);
+    RenderImage(IMAGE_ARTIFACT_PANEL_BG, panelX, panelY, 145.f, 286.f);
+    RenderColorQuadARGB(panelX, panelY, 145.f, 2.f, 0xFFA5824Cu);
+    RenderColorQuadARGB(panelX, panelY + 284.f, 145.f, 2.f, 0xFFA5824Cu);
+    RenderColorQuadARGB(panelX, panelY, 2.f, 286.f, 0xFFA5824Cu);
+    RenderColorQuadARGB(panelX + 143.f, panelY, 2.f, 286.f, 0xFFA5824Cu);
+    RenderColorQuadARGB(panelX + 5.f, panelY + 8.f, 135.f, 32.f, 0xFF10151Cu);
+    RenderColorQuadARGB(panelX + 9.f, panelY + 42.f, 127.f, 1.f, 0xFFA5824Cu);
+    RenderColorQuadARGB(panelX + 30.f, panelY + 50.f, 84.f, 107.f, 0xFF10151Cu);
+    RenderColorQuadARGB(panelX + 30.f, panelY + 50.f, 84.f, 1.f, 0xFF303945u);
+    RenderColorQuadARGB(panelX + 30.f, panelY + 155.f, 84.f, 1.f, 0xFF303945u);
+    RenderColorQuadARGB(panelX + 7.f, panelY + 195.f, 131.f, 80.f, 0xFF10151Cu);
+    RenderColorQuadARGB(panelX + 7.f, panelY + 195.f, 131.f, 1.f, 0xFF303945u);
+    RenderColorQuadARGB(panelX + 7.f, panelY + 274.f, 131.f, 1.f, 0xFF303945u);
+    RenderColorQuadARGB(panelX + 3.f, panelY + 4.f, 2.f, 277.f, 0xFFA5824Cu);
+    RenderColorQuadARGB(panelX + 140.f, panelY + 4.f, 2.f, 277.f, 0xFFA5824Cu);
+    RenderColorQuadARGB(panelX + 7.f, panelY + 43.f, 131.f, 2.f, 0xFFA5824Cu);
+    RenderColorQuadARGB(panelX + 7.f, panelY + 187.f, 131.f, 1.f, 0xFFA5824Cu);
+    RenderColorQuadARGB(panelX + 7.f, panelY + 272.f, 131.f, 1.f, 0xFFA5824Cu);
+
+    if (m_bPentagramPointed)
+    {
+        RenderColorQuadARGB(m_PentagramSlot.x, m_PentagramSlot.y,
+                            m_PentagramSlot.width, 1.f, 0xFFEBCB89u);
+        RenderColorQuadARGB(m_PentagramSlot.x, m_PentagramSlot.y + m_PentagramSlot.height - 1,
+                            m_PentagramSlot.width, 1.f, 0xFFEBCB89u);
+    }
+
+    g_pRenderText->SetFont(g_hFontBold);
+    g_pRenderText->SetBgColor(0, 0, 0, 0);
+    g_pRenderText->SetTextColor(244, 190, 100, 255);
+    g_pRenderText->RenderText(static_cast<int>(panelX), static_cast<int>(panelY + 16),
+                              L"ARTIFACT", 145, 0, RT3_SORT_CENTER);
+    g_pRenderText->SetFont(g_hFont);
+    g_pRenderText->SetTextColor(199, 171, 115, 255);
+    g_pRenderText->RenderText(static_cast<int>(panelX), static_cast<int>(panelY + 147),
+                              L"PENTAGRAM", 145, 0, RT3_SORT_CENTER);
+    g_pRenderText->RenderText(static_cast<int>(panelX), static_cast<int>(panelY + 196),
+                              L"ERTTEL", 145, 0, RT3_SORT_CENTER);
+
+    if (m_bPentagramPointed && m_PentagramItem.Type >= 0)
+    {
+        m_PentagramItem.bySelectedSlotIndex = PENTAGRAM_SERVER_SLOT;
+        RenderItemInfo(m_PentagramSlot.x + m_PentagramSlot.width / 2,
+                       m_PentagramSlot.y + m_PentagramSlot.height / 2,
+                       &m_PentagramItem, false);
+    }
+    DisableAlphaBlend();
+}
+
+void CNewUIMyInventory::RenderPentagramErrtelSlots()
+{
+    static const wchar_t* kErrtelNames[MAX_SOCKETS] =
+    {
+        L"Anger", L"Blessing", L"Integrity", L"Divinity", L"Gale"
+    };
+    const int errtelSize = 22;
+    const int errtelGap = 3;
+    const int errtelLeft = m_PentagramSlot.x - 34;
+    const int errtelTop = m_PentagramSlot.y + 98;
+    const int errtelX[MAX_SOCKETS] = {
+        errtelLeft, errtelLeft + 25, errtelLeft + 50,
+        errtelLeft + 75, errtelLeft + 100
+    };
+    const int errtelY[MAX_SOCKETS] = {
+        errtelTop, errtelTop, errtelTop, errtelTop, errtelTop
+    };
+
+    EnableAlphaTest();
+    g_pRenderText->SetFont(g_hFontBold);
+    g_pRenderText->SetBgColor(0, 0, 0, 0);
+
+    for (int i = 0; i < MAX_SOCKETS; ++i)
+    {
+        const bool hasPentagram = m_PentagramItem.Type >= 0;
+        const bool inDeclaredSocketRange = hasPentagram && i < static_cast<int>(m_PentagramItem.SocketCount);
+        const BYTE raw = hasPentagram ? m_PentagramItem.bySocketOption[i] : SOCKET_EMPTY;
+        const bool occupied = inDeclaredSocketRange && raw != SOCKET_EMPTY;
+        const bool pointed = m_iPentagramSocketPointed == i;
+
+        // Dark Fantasy design-master palette: occupied = HP-red ember accent,
+        // empty = Panel, border = Borde, hover = Enfasis.
+        RenderColorQuadARGB(errtelX[i], errtelY[i], errtelSize, errtelSize,
+                            occupied ? 0xFFC9454Bu : 0xFF1C232Du);
+        RenderColorQuadARGB(errtelX[i], errtelY[i], errtelSize, 1.f, 0xFFA5824Cu);
+        RenderColorQuadARGB(errtelX[i], errtelY[i] + errtelSize - 1, errtelSize, 1.f, 0xFFA5824Cu);
+        RenderColorQuadARGB(errtelX[i], errtelY[i], 1.f, errtelSize, 0xFFA5824Cu);
+        RenderColorQuadARGB(errtelX[i] + errtelSize - 1, errtelY[i], 1.f, errtelSize, 0xFFA5824Cu);
+        if (occupied)
+        {
+            wchar_t rank[8] = {0};
+            mu_swprintf(rank, L"%d", i + 1);
+            g_pRenderText->SetTextColor(252, 213, 143, 255);
+            g_pRenderText->RenderText(errtelX[i], errtelY[i] + 5, rank,
+                                      errtelSize, 0, RT3_SORT_CENTER);
+        }
+        if (pointed)
+        {
+            RenderColorQuadARGB(errtelX[i], errtelY[i], errtelSize, 1.f, 0xFFEBCB89u);
+            RenderColorQuadARGB(errtelX[i], errtelY[i] + errtelSize - 1, errtelSize, 1.f, 0xFFEBCB89u);
+        }
+    }
+
+    // V12: Attribute summary from the equipped ITEM. These fields are real client
+    // data; they are NOT interpreted as the final elemental bonus calculated by OpenMU.
+    // A hovered Errtel replaces this summary with its detailed slot information.
+    if (m_iPentagramSocketPointed < 0)
+    {
+        const int tipX = errtelLeft - 5;
+        const int tipY = errtelTop + 39;
+        wchar_t line[128] = {0};
+        g_pRenderText->SetFont(g_hFont);
+        g_pRenderText->SetBgColor(0, 0, 0, 0);
+        if (m_PentagramItem.Type < 0)
+        {
+            g_pRenderText->SetTextColor(170, 170, 175, 255);
+            g_pRenderText->RenderText(tipX + 3, tipY + 7, L"Sin Pentagram", 128, 0, RT3_SORT_CENTER);
+            g_pRenderText->RenderText(tipX + 3, tipY + 23, L"Bono: no activo", 128, 0, RT3_SORT_CENTER);
+        }
+        else
+        {
+            int activeErrtel = 0;
+            const int declared = static_cast<int>(m_PentagramItem.SocketCount) > MAX_SOCKETS
+                ? MAX_SOCKETS : static_cast<int>(m_PentagramItem.SocketCount);
+            for (int j = 0; j < declared; ++j)
+            {
+                if (m_PentagramItem.bySocketOption[j] != SOCKET_EMPTY)
+                    ++activeErrtel;
+            }
+            g_pRenderText->SetTextColor(243, 195, 102, 255);
+            mu_swprintf(line, L"Nivel +%d / Errtel %d/%d", m_PentagramItem.Level,
+                        activeErrtel, declared);
+            g_pRenderText->RenderText(tipX + 2, tipY, line, 129, 0, RT3_SORT_CENTER);
+            g_pRenderText->SetTextColor(218, 222, 229, 255);
+            mu_swprintf(line, L"Ataque objeto: %u-%u",
+                        static_cast<unsigned int>(m_PentagramItem.DamageMin),
+                        static_cast<unsigned int>(m_PentagramItem.DamageMax));
+            g_pRenderText->RenderText(tipX + 2, tipY + 14, line, 129, 0, RT3_SORT_CENTER);
+            mu_swprintf(line, L"Defensa objeto: %u",
+                        static_cast<unsigned int>(m_PentagramItem.Defense));
+            g_pRenderText->RenderText(tipX + 2, tipY + 28, line, 129, 0, RT3_SORT_CENTER);
+            g_pRenderText->SetTextColor(250, 166, 84, 255);
+            if (activeErrtel == 0)
+            {
+                g_pRenderText->RenderText(tipX + 2, tipY + 44, L"Bonus efectivo: ninguno (sin Errtel)", 129, 0, RT3_SORT_CENTER);
+            }
+            else
+            {
+                // The final elemental damage/defense bonus is computed server-side
+                // (OpenMU attribute system) and is not synced to the client in a
+                // readable field, so it cannot be shown here without fabricating a
+                // number. The /pentagrama chat command prints the real value.
+                g_pRenderText->RenderText(tipX + 2, tipY + 44, L"Bonus efectivo: usa /pentagrama para verlo", 129, 0, RT3_SORT_CENTER);
+            }
+            g_pRenderText->SetTextColor(160, 174, 194, 255);
+            g_pRenderText->RenderText(tipX + 2, tipY + 57, L"Consulta detalles con mouse", 129, 0, RT3_SORT_CENTER);
+        }
+    }
+
+    if (m_iPentagramSocketPointed >= 0 && m_iPentagramSocketPointed < MAX_SOCKETS)
+    {
+        const int i = m_iPentagramSocketPointed;
+        const bool hasPentagram = m_PentagramItem.Type >= 0;
+        const bool inDeclaredSocketRange = hasPentagram && i < static_cast<int>(m_PentagramItem.SocketCount);
+        const BYTE raw = hasPentagram ? m_PentagramItem.bySocketOption[i] : SOCKET_EMPTY;
+        const bool occupied = inDeclaredSocketRange && raw != SOCKET_EMPTY;
+
+        wchar_t line1[128] = {0};
+        wchar_t line2[160] = {0};
+        mu_swprintf(line1, L"Errtel of %ls", kErrtelNames[i]);
+
+        if (!hasPentagram)
+        {
+            mu_swprintf(line2, L"No Pentagram equipped");
+        }
+        else if (!inDeclaredSocketRange)
+        {
+            mu_swprintf(line2, L"Rank unavailable (socket count %d)",
+                        static_cast<int>(m_PentagramItem.SocketCount));
+        }
+        else if (!occupied)
+        {
+            mu_swprintf(line2, L"Socket vacio");
+        }
+        else
+        {
+            mu_swprintf(line2, L"Seed %u / Nivel %u",
+                        static_cast<unsigned int>(m_PentagramItem.SocketSeedID[i]),
+                        static_cast<unsigned int>(m_PentagramItem.SocketSphereLv[i]));
+        }
+
+        const int tipX = errtelLeft - 5;
+        const int tipY = errtelTop + 38;
+        RenderColorQuadARGB(tipX, tipY, 132, 45, 0xF01C232Du);
+        g_pRenderText->SetTextColor(255, 204, 81, 255);
+        g_pRenderText->RenderText(tipX + 2, tipY + 3, line1, 128, 0, RT3_SORT_CENTER);
+        g_pRenderText->SetFont(g_hFont);
+        g_pRenderText->SetTextColor(220, 220, 220, 255);
+        g_pRenderText->RenderText(tipX + 2, tipY + 21, line2, 128, 0, RT3_SORT_CENTER);
+    }
+
+    DisableAlphaBlend();
+}
+
 void CNewUIMyInventory::RenderButtons()
 {
     EnableAlphaTest();
@@ -1386,8 +1759,78 @@ void CNewUIMyInventory::RenderInventoryDetails() const
     DisableAlphaBlend();
 }
 
+bool CNewUIMyInventory::PentagramWindowProcess()
+{
+    const bool pentagramHovered = !IsPentagramPanelBlocked() &&
+        CheckMouseIn(m_PentagramSlot.x, m_PentagramSlot.y,
+                     m_PentagramSlot.width, m_PentagramSlot.height);
+
+    m_bPentagramPointed = pentagramHovered;
+
+    if (!pentagramHovered)
+        return false;
+
+    if (IsRelease(VK_LBUTTON))
+    {
+        if (CNewUIPickedItem* picked = CNewUIInventoryCtrl::GetPickedItem())
+        {
+            ITEM* item = picked->GetItem();
+            if (item == nullptr || m_PentagramItem.Type >= 0 || !IsEquipable(PENTAGRAM_SERVER_SLOT, item))
+            {
+                CNewUIInventoryCtrl::BackupPickedItem();
+                return true;
+            }
+
+            const STORAGE_TYPE sourceType = picked->GetSourceStorageType();
+            const int sourceIndex = picked->GetSourceLinealPos();
+            if (sourceType != STORAGE_TYPE::INVENTORY || sourceIndex < MAX_EQUIPMENT_INDEX
+                || sourceIndex >= MAX_MY_INVENTORY_EX_INDEX)
+            {
+                CNewUIInventoryCtrl::BackupPickedItem();
+                return true;
+            }
+
+            picked->HidePickedItem();
+            g_ErrorReport.Write(L"[PENTAGRAM-CLIENT] Move inventory->236 from=%d type=%d\r\n",
+                                sourceIndex, item->Type);
+            if (!SendRequestEquipmentItem(sourceType, sourceIndex, item,
+                                          STORAGE_TYPE::INVENTORY, PENTAGRAM_SERVER_SLOT))
+                CNewUIInventoryCtrl::BackupPickedItem();
+            return true;
+        }
+
+        if (m_PentagramItem.Type >= 0 &&
+            CNewUIInventoryCtrl::CreatePickedItem(nullptr, &m_PentagramItem))
+        {
+            UnequipPentagramItem();
+            return true;
+        }
+    }
+
+    if (IsRelease(VK_RBUTTON) && m_PentagramItem.Type >= 0 && !EquipmentItem)
+    {
+        ResetMouseRButton();
+        const int destination = FindEmptySlot(&m_PentagramItem);
+        if (destination >= 0 && CNewUIInventoryCtrl::CreatePickedItem(nullptr, &m_PentagramItem))
+        {
+            CNewUIPickedItem* picked = CNewUIInventoryCtrl::GetPickedItem();
+            UnequipPentagramItem();
+            picked->HidePickedItem();
+            g_ErrorReport.Write(L"[PENTAGRAM-CLIENT] Move 236->inventory to=%d type=%d\r\n",
+                                destination, picked->GetItem()->Type);
+            if (!SendRequestEquipmentItem(STORAGE_TYPE::INVENTORY, PENTAGRAM_SERVER_SLOT,
+                                          picked->GetItem(), STORAGE_TYPE::INVENTORY, destination))
+                CNewUIInventoryCtrl::BackupPickedItem();
+        }
+    }
+    return true;
+}
+
 bool CNewUIMyInventory::EquipmentWindowProcess()
 {
+    if (PentagramWindowProcess())
+        return true;
+
     if (m_iPointedSlot != -1 && IsRelease(VK_LBUTTON))
     {
         if (CNewUIPickedItem* pPickedItem = CNewUIInventoryCtrl::GetPickedItem())
@@ -1810,6 +2253,9 @@ int CNewUIMyInventory::GetNumItemByType(short sItemType) const
 
 BYTE CNewUIMyInventory::GetDurabilityPointedItem() const
 {
+    if (m_bPentagramPointed && m_PentagramItem.Type >= 0)
+        return m_PentagramItem.Durability;
+
     const ITEM* pItem = nullptr;
 
     if (m_iPointedSlot != -1)
@@ -1832,6 +2278,9 @@ BYTE CNewUIMyInventory::GetDurabilityPointedItem() const
 
 int CNewUIMyInventory::GetPointedItemIndex() const
 {
+    if (m_bPentagramPointed)
+        return PENTAGRAM_SERVER_SLOT;
+
     if (m_iPointedSlot != -1)
     {
         return m_iPointedSlot;
@@ -1900,3 +2349,7 @@ BOOL SEASON3B::CNewUIMyInventory::IsInvenItem(const short sType)
     return bInvenItem;
 }
 #endif //LJH_ADD_SYSTEM_OF_EQUIPPING_ITEM_FROM_INVENTORY
+
+
+
+

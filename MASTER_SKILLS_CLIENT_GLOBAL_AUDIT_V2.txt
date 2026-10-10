@@ -1,0 +1,538 @@
+﻿============================================================
+ MASTER SKILLS CLIENT GLOBAL AUDIT V2
+============================================================
+ROOT=C:\Users\Usuario\Documents\Codex\2026-09-30\et\work\MuMain
+SOURCE=C:\Users\Usuario\Documents\Codex\2026-09-30\et\work\MuMain\src\source
+
+============================================================
+ ARCHIVOS ENCONTRADOS
+============================================================
+src\source\Core\Globals\_enum.h
+src\source\Engine\Object\ZzzCharacter.cpp
+src\source\Engine\Object\ZzzCharacter.h
+src\source\Engine\Object\ZzzInterface.cpp
+src\source\Engine\Object\ZzzInterface.h
+src\source\GameLogic\Automation\Skill.cpp
+src\source\GameLogic\Combat\ClassAttack.cpp
+src\source\GameLogic\Combat\ClassAttack.h
+src\source\GameLogic\Combat\SkillCast.cpp
+src\source\GameLogic\Combat\SkillCast.h
+src\source\GameLogic\Skills\SkillManager.cpp
+src\source\GameLogic\Skills\SkillManager.h
+src\source\Network\Server\WSclient.cpp
+src\source\Network\Server\WSclient.h
+
+============================================================
+ REFERENCIAS NUMERICAS 300-616
+============================================================
+300 | src\source\Core\Globals\_enum.h[3] ; src\source\Engine\Object\ZzzCharacter.cpp[8] ; src\source\Engine\Object\ZzzInterface.cpp[4] ; src\source\GameLogic\Skills\SkillManager.cpp[1] ; src\source\Network\Server\WSclient.cpp[1]
+301 | src\source\Core\Globals\_enum.h[2]
+302 | src\source\Core\Globals\_enum.h[2]
+303 | src\source\Core\Globals\_enum.h[2]
+304 | src\source\Core\Globals\_enum.h[2]
+305 | src\source\Core\Globals\_enum.h[2]
+306 | src\source\Core\Globals\_enum.h[2]
+307 | src\source\Core\Globals\_enum.h[2]
+308 | src\source\Core\Globals\_enum.h[2]
+309 | src\source\Core\Globals\_enum.h[2]
+310 | src\source\Core\Globals\_enum.h[2]
+311 | src\source\Core\Globals\_enum.h[2]
+312 | src\source\Core\Globals\_enum.h[2]
+313 | src\source\Core\Globals\_enum.h[2]
+314 | src\source\Core\Globals\_enum.h[1]
+315 | src\source\Core\Globals\_enum.h[1]
+316 | src\source\Core\Globals\_enum.h[1] ; src\source\Network\Server\WSclient.cpp[1]
+317 | src\source\Core\Globals\_enum.h[1]
+318 | src\source\Core\Globals\_enum.h[1]
+319 | src\source\Engine\Object\ZzzCharacter.cpp[1]
+320 | src\source\Engine\Object\ZzzInterface.cpp[2]
+321 | NO_REFERENCE
+322 | src\source\Network\Server\WSclient.cpp[1]
+323 | NO_REFERENCE
+324 | NO_REFERENCE
+325 | src\source\Core\Globals\_enum.h[1]
+326 | src\source\Core\Globals\_enum.h[1]
+327 | src\source\Core\Globals\_enum.h[1]
+328 | src\source\Core\Globals\_enum.h[1]
+329 | src\source\Core\Globals\_enum.h[1]
+330 | src\source\Core\Globals\_enum.h[1]
+331 | src\source\Core\Globals\_enum.h[2]
+332 | src\source\Core\Globals\_enum.h[2]
+333 | src\source\Core\Globals\_enum.h[2]
+334 | src\source\Core\Globals\_enum.h[2]
+335 | src\source\Core\Globals\_enum.h[2]
+336 | src\source\Core\Globals\_enum.h[2]
+337 | src\source\Core\Globals\_enum.h[2]
+338 | src\source\Core\Globals\_enum.h[2]
+339 | src\source\GameLogic\Skills\SkillManager.cpp[1]
+340 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+341 | src\source\Core\Globals\_enum.h[1]
+342 | src\source\GameLogic\Skills\SkillManager.cpp[1]
+343 | src\source\GameLogic\Skills\SkillManager.cpp[1]
+344 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+345 | src\source\Core\Globals\_enum.h[1]
+346 | src\source\GameLogic\Skills\SkillManager.cpp[1]
+347 | src\source\Core\Globals\_enum.h[1]
+348 | src\source\Core\Globals\_enum.h[2]
+349 | src\source\Core\Globals\_enum.h[2]
+350 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzInterface.cpp[2]
+351 | src\source\Core\Globals\_enum.h[2]
+352 | src\source\Core\Globals\_enum.h[2]
+353 | src\source\Core\Globals\_enum.h[2]
+354 | src\source\Core\Globals\_enum.h[2]
+355 | src\source\Core\Globals\_enum.h[2]
+356 | src\source\Core\Globals\_enum.h[2]
+357 | src\source\Core\Globals\_enum.h[2]
+358 | src\source\Core\Globals\_enum.h[2]
+359 | src\source\Core\Globals\_enum.h[2]
+360 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[68] ; src\source\Engine\Object\ZzzInterface.cpp[22] ; src\source\GameLogic\Combat\ClassAttack.cpp[29] ; src\source\GameLogic\Combat\SkillCast.cpp[12] ; src\source\Network\Server\WSclient.cpp[3]
+361 | src\source\Core\Globals\_enum.h[2]
+362 | src\source\Core\Globals\_enum.h[2]
+363 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+364 | src\source\Core\Globals\_enum.h[1]
+365 | src\source\Core\Globals\_enum.h[1]
+366 | NO_REFERENCE
+367 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+368 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+369 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+370 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+371 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+372 | src\source\Core\Globals\_enum.h[1]
+373 | src\source\Core\Globals\_enum.h[1]
+374 | src\source\Core\Globals\_enum.h[1]
+375 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+376 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+377 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+378 | src\source\Core\Globals\_enum.h[2]
+379 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+380 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[3] ; src\source\Network\Server\WSclient.cpp[1]
+381 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+382 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+383 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+384 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+385 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+386 | src\source\Core\Globals\_enum.h[2]
+387 | src\source\Core\Globals\_enum.h[2]
+388 | src\source\Core\Globals\_enum.h[2]
+389 | src\source\Core\Globals\_enum.h[2]
+390 | src\source\Core\Globals\_enum.h[2] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+391 | src\source\Core\Globals\_enum.h[2] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+392 | src\source\Core\Globals\_enum.h[2] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+393 | src\source\Core\Globals\_enum.h[2] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+394 | src\source\Core\Globals\_enum.h[2] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+395 | src\source\Core\Globals\_enum.h[1]
+396 | src\source\Core\Globals\_enum.h[1]
+397 | src\source\Core\Globals\_enum.h[2]
+398 | src\source\Core\Globals\_enum.h[2]
+399 | src\source\Core\Globals\_enum.h[2]
+400 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[3] ; src\source\Network\Server\WSclient.cpp[3]
+401 | src\source\Core\Globals\_enum.h[2]
+402 | src\source\Core\Globals\_enum.h[2]
+403 | src\source\Core\Globals\_enum.h[2]
+404 | src\source\Core\Globals\_enum.h[2]
+405 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+406 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+407 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+408 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+409 | src\source\Core\Globals\_enum.h[1]
+410 | src\source\Core\Globals\_enum.h[1]
+411 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+412 | src\source\Core\Globals\_enum.h[1]
+413 | src\source\Core\Globals\_enum.h[2]
+414 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+415 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1] ; src\source\Engine\Object\ZzzInterface.cpp[3]
+416 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+417 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+418 | src\source\Core\Globals\_enum.h[2]
+419 | src\source\Core\Globals\_enum.h[2]
+420 | src\source\Core\Globals\_enum.h[2]
+421 | src\source\Core\Globals\_enum.h[2]
+422 | src\source\Core\Globals\_enum.h[2]
+423 | src\source\Core\Globals\_enum.h[2]
+424 | src\source\Core\Globals\_enum.h[2]
+425 | src\source\Core\Globals\_enum.h[1]
+426 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+427 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+428 | src\source\Core\Globals\_enum.h[1]
+429 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+430 | src\source\Core\Globals\_enum.h[1]
+431 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+432 | src\source\Core\Globals\_enum.h[1]
+433 | src\source\Core\Globals\_enum.h[1]
+434 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+435 | src\source\Core\Globals\_enum.h[2]
+436 | src\source\Core\Globals\_enum.h[2]
+437 | src\source\Core\Globals\_enum.h[2]
+438 | src\source\Core\Globals\_enum.h[2]
+439 | src\source\Core\Globals\_enum.h[2]
+440 | src\source\Core\Globals\_enum.h[2]
+441 | src\source\Core\Globals\_enum.h[2]
+442 | src\source\Core\Globals\_enum.h[2]
+443 | src\source\Core\Globals\_enum.h[1]
+444 | src\source\Core\Globals\_enum.h[1]
+445 | src\source\Core\Globals\_enum.h[1]
+446 | src\source\Core\Globals\_enum.h[1]
+447 | src\source\Core\Globals\_enum.h[1]
+448 | src\source\Core\Globals\_enum.h[2]
+449 | src\source\Core\Globals\_enum.h[2]
+450 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[2]
+451 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+452 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+453 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+454 | src\source\Core\Globals\_enum.h[2]
+455 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+456 | src\source\Core\Globals\_enum.h[2]
+457 | src\source\Core\Globals\_enum.h[2]
+458 | src\source\Core\Globals\_enum.h[2]
+459 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+460 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+461 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+462 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+463 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+464 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+465 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+466 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[2]
+467 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+468 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[2]
+469 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+470 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+471 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+472 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+473 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+474 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+475 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+476 | src\source\Core\Globals\_enum.h[1]
+477 | src\source\Core\Globals\_enum.h[1]
+478 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+479 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[2]
+480 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+481 | src\source\Core\Globals\_enum.h[2]
+482 | src\source\Core\Globals\_enum.h[2]
+483 | src\source\Core\Globals\_enum.h[2]
+484 | src\source\Core\Globals\_enum.h[2]
+485 | src\source\Core\Globals\_enum.h[2]
+486 | src\source\Core\Globals\_enum.h[2]
+487 | src\source\Core\Globals\_enum.h[2]
+488 | src\source\Core\Globals\_enum.h[2]
+489 | src\source\Core\Globals\_enum.h[2]
+490 | src\source\Core\Globals\_enum.h[2]
+491 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+492 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+493 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+494 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+495 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+496 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+497 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+498 | src\source\Core\Globals\_enum.h[1]
+499 | src\source\Core\Globals\_enum.h[1]
+500 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[8] ; src\source\Network\Server\WSclient.cpp[2]
+501 | src\source\Core\Globals\_enum.h[1]
+502 | src\source\Core\Globals\_enum.h[1]
+503 | src\source\Core\Globals\_enum.h[1]
+504 | src\source\Core\Globals\_enum.h[1]
+505 | src\source\Core\Globals\_enum.h[1]
+506 | src\source\Core\Globals\_enum.h[1]
+507 | src\source\Core\Globals\_enum.h[1]
+508 | src\source\Core\Globals\_enum.h[2]
+509 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[2]
+510 | src\source\Core\Globals\_enum.h[2]
+511 | src\source\Core\Globals\_enum.h[2]
+512 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[9] ; src\source\Engine\Object\ZzzInterface.cpp[2]
+513 | src\source\Core\Globals\_enum.h[2]
+514 | src\source\Core\Globals\_enum.h[2]
+515 | src\source\Core\Globals\_enum.h[3]
+516 | src\source\Core\Globals\_enum.h[2]
+517 | src\source\Core\Globals\_enum.h[2]
+518 | src\source\Core\Globals\_enum.h[2] ; src\source\Network\Server\WSclient.cpp[1]
+519 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+520 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+521 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+522 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+523 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+524 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+525 | src\source\Core\Globals\_enum.h[1]
+526 | src\source\Core\Globals\_enum.h[2]
+527 | src\source\Core\Globals\_enum.h[2]
+528 | src\source\Core\Globals\_enum.h[2]
+529 | src\source\Core\Globals\_enum.h[2]
+530 | src\source\Core\Globals\_enum.h[2]
+531 | src\source\Core\Globals\_enum.h[2]
+532 | src\source\Core\Globals\_enum.h[2]
+533 | src\source\Core\Globals\_enum.h[2]
+534 | src\source\Core\Globals\_enum.h[2]
+535 | src\source\Core\Globals\_enum.h[2]
+536 | src\source\Core\Globals\_enum.h[1]
+537 | src\source\Core\Globals\_enum.h[1]
+538 | src\source\Core\Globals\_enum.h[1]
+539 | src\source\Core\Globals\_enum.h[1]
+540 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+541 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+542 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+543 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+544 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+545 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+546 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+547 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+548 | src\source\Core\Globals\_enum.h[1]
+549 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[2]
+550 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[2] ; src\source\Engine\Object\ZzzInterface.cpp[1]
+551 | src\source\Core\Globals\_enum.h[2]
+552 | src\source\Core\Globals\_enum.h[2]
+553 | src\source\Core\Globals\_enum.h[1]
+554 | src\source\Core\Globals\_enum.h[2]
+555 | src\source\Core\Globals\_enum.h[2]
+556 | src\source\Core\Globals\_enum.h[1]
+557 | src\source\Core\Globals\_enum.h[2]
+558 | src\source\Core\Globals\_enum.h[2]
+559 | src\source\Core\Globals\_enum.h[2]
+560 | src\source\Core\Globals\_enum.h[2]
+561 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+562 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+563 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+564 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+565 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+566 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+567 | src\source\Core\Globals\_enum.h[1] ; src\source\GameLogic\Skills\SkillManager.cpp[1]
+568 | src\source\Core\Globals\_enum.h[2]
+569 | src\source\Core\Globals\_enum.h[2]
+570 | src\source\Core\Globals\_enum.h[1]
+571 | src\source\Core\Globals\_enum.h[2]
+572 | src\source\Core\Globals\_enum.h[2]
+573 | src\source\Core\Globals\_enum.h[2]
+574 | src\source\Core\Globals\_enum.h[1]
+575 | src\source\Core\Globals\_enum.h[1]
+576 | src\source\Core\Globals\_enum.h[1]
+577 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+578 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+579 | src\source\Core\Globals\_enum.h[2] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+580 | src\source\Core\Globals\_enum.h[1]
+581 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[2]
+582 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[2] ; src\source\Network\Server\WSclient.cpp[1]
+583 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[2] ; src\source\Network\Server\WSclient.cpp[1]
+584 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[2]
+585 | src\source\Core\Globals\_enum.h[1]
+586 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[2]
+587 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+588 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+589 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+590 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+591 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+592 | src\source\Engine\Object\ZzzCharacter.cpp[1]
+593 | src\source\Engine\Object\ZzzCharacter.cpp[1]
+594 | src\source\Engine\Object\ZzzCharacter.cpp[1]
+595 | src\source\Engine\Object\ZzzCharacter.cpp[1]
+596 | src\source\Engine\Object\ZzzCharacter.cpp[1] ; src\source\GameLogic\Combat\ClassAttack.cpp[1]
+597 | NO_REFERENCE
+598 | NO_REFERENCE
+599 | src\source\Core\Globals\_enum.h[1]
+600 | src\source\Core\Globals\_enum.h[1]
+601 | src\source\Core\Globals\_enum.h[1]
+602 | NO_REFERENCE
+603 | src\source\Core\Globals\_enum.h[1]
+604 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[2]
+605 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[1]
+606 | src\source\Core\Globals\_enum.h[1]
+607 | src\source\Core\Globals\_enum.h[1]
+608 | src\source\Core\Globals\_enum.h[1] ; src\source\Engine\Object\ZzzCharacter.cpp[2]
+609 | src\source\Engine\Object\ZzzCharacter.cpp[1]
+610 | src\source\Engine\Object\ZzzCharacter.cpp[1]
+611 | src\source\Engine\Object\ZzzCharacter.cpp[2]
+612 | src\source\Engine\Object\ZzzCharacter.cpp[1]
+613 | src\source\Engine\Object\ZzzCharacter.cpp[1]
+614 | src\source\Engine\Object\ZzzCharacter.cpp[1]
+615 | src\source\Engine\Object\ZzzCharacter.cpp[1]
+616 | src\source\Core\Globals\_enum.h[1]
+
+============================================================
+ ENUM AT_SKILL
+============================================================
+AT_SKILL_MASTER_BEGIN = 300,
+AT_SKILL_DurabilityReduction1 = 300,
+AT_SKILL_PvPDefenceRateInc = 301,
+AT_SKILL_MaximumSDincrease = 302,
+AT_SKILL_AutomaticManaRecInc = 303,
+AT_SKILL_PoisonResistanceInc = 304,
+AT_SKILL_DurabilityReduction2 = 305,
+AT_SKILL_SdRecoverySpeedInc = 306,
+AT_SKILL_AutomaticHpRecInc = 307,
+AT_SKILL_LightningResistanceInc = 308,
+AT_SKILL_DefenseIncrease = 309,
+AT_SKILL_AutomaticAgRecInc = 310,
+AT_SKILL_IceResistanceIncrease = 311,
+AT_SKILL_DurabilityReduction3 = 312,
+AT_SKILL_DefenseSuccessRateInc = 313,
+AT_SKILL_AttackSuccRateInc = 325,
+AT_SKILL_CYCLONE_STR = 326,
+AT_SKILL_SLASH_STR = 327,
+AT_SKILL_FALLING_SLASH_STR = 328,
+AT_SKILL_LUNGE_STR = 329,
+AT_SKILL_TWISTING_SLASH_STR = 330,
+AT_SKILL_RAGEFUL_BLOW_STR = 331,
+AT_SKILL_TWISTING_SLASH_MASTERY = 332,
+AT_SKILL_RAGEFUL_BLOW_MASTERY = 333,
+AT_SKILL_MaximumLifeIncrease = 334,
+AT_SKILL_WeaponMasteryBladeMaster = 335,
+AT_SKILL_DEATHSTAB_STR = 336,
+AT_SKILL_STRIKE_OF_DESTRUCTION_STR = 337,
+AT_SKILL_MaximumManaIncrease = 338,
+AT_SKILL_PvPAttackRate = 347,
+AT_SKILL_TwoHandedSwordStrengthener = 348,
+AT_SKILL_OneHandedSwordStrengthener = 349,
+AT_SKILL_MaceStrengthener = 350,
+AT_SKILL_SpearStrengthener = 351,
+AT_SKILL_TwoHandedSwordMaster = 352,
+AT_SKILL_OneHandedSwordMaster = 353,
+AT_SKILL_MaceMastery = 354,
+AT_SKILL_SpearMastery = 355,
+AT_SKILL_SWELL_LIFE_STR = 356,
+AT_SKILL_ManaReduction = 357,
+AT_SKILL_MonsterAttackSdInc = 358,
+AT_SKILL_MonsterAttackLifeInc = 359,
+AT_SKILL_SWELL_LIFE_PROFICIENCY = 360,
+AT_SKILL_MinimumAttackPowerInc = 361,
+AT_SKILL_MonsterAttackManaInc = 362,
+AT_SKILL_FLAME_STR = 378,
+AT_SKILL_LIGHTNING_STR = 379,
+AT_SKILL_EXPANSION_OF_WIZARDRY_STR = 380,
+AT_SKILL_INFERNO_STR = 381,
+AT_SKILL_BLAST_STR = 382,
+AT_SKILL_EXPANSION_OF_WIZARDRY_MASTERY = 383,
+AT_SKILL_POISON_STR = 384,
+AT_SKILL_EVIL_SPIRIT_STR = 385,
+AT_SKILL_MagicMasteryGrandMaster = 386,
+AT_SKILL_DECAY_STR = 387,
+AT_SKILL_HELL_FIRE_STR = 388,
+AT_SKILL_ICE_STR = 389,
+AT_SKILL_METEO_STR = 390,
+AT_SKILL_ICE_STORM_STR = 391,
+AT_SKILL_NOVA_STR = 392,
+AT_SKILL_ICE_STORM_MASTERY = 393,
+AT_SKILL_METEO_MASTERY = 394,
+AT_SKILL_OneHandedStaffStrengthener = 397,
+AT_SKILL_TwoHandedStaffStrengthener = 398,
+AT_SKILL_ShieldStrengthenerGrandMaster = 399,
+AT_SKILL_OneHandedStaffMaster = 400,
+AT_SKILL_TwoHandedStaffMaster = 401,
+AT_SKILL_ShieldMasteryGrandMaster = 402,
+AT_SKILL_SOUL_BARRIER_STR = 403,
+AT_SKILL_SOUL_BARRIER_PROFICIENCY = 404,
+AT_SKILL_MinimumWizardryInc = 405,
+AT_SKILL_HEALING_STR = 413,
+AT_SKILL_TRIPLE_SHOT_STR = 414,
+AT_SKILL_SummonedMonsterStr1 = 415,
+AT_SKILL_PENETRATION_STR = 416,
+AT_SKILL_DEFENSE_STR = 417,
+AT_SKILL_TRIPLE_SHOT_MASTERY = 418,
+AT_SKILL_SummonedMonsterStr2 = 419,
+AT_SKILL_ATTACK_STR = 420,
+AT_SKILL_WeaponMasteryHighElf = 421,
+AT_SKILL_ATTACK_MASTERY = 422,
+AT_SKILL_DEFENSE_MASTERY = 423,
+AT_SKILL_ICE_ARROW_STR = 424,
+AT_SKILL_BowStrengthener = 435,
+AT_SKILL_CrossbowStrengthener = 436,
+AT_SKILL_ShieldStrengthenerHighElf = 437,
+AT_SKILL_BowMastery = 438,
+AT_SKILL_CrossbowMastery = 439,
+AT_SKILL_ShieldMasteryHighElf = 440,
+AT_SKILL_INFINITY_ARROW_STR = 441,
+AT_SKILL_MinimumAttPowerInc = 442,
+AT_SKILL_FireTomeStrengthener = 448,
+AT_SKILL_WindTomeStrengthener = 449,
+AT_SKILL_LightningTomeStren = 450,
+AT_SKILL_FireTomeMastery = 451,
+AT_SKILL_WindTomeMastery = 452,
+AT_SKILL_LightningTomeMastery = 453,
+AT_SKILL_ALICE_SLEEP_STR = 454,
+AT_SKILL_ALICE_CHAINLIGHTNING_STR = 455,
+AT_SKILL_LIGHTNING_SHOCK_STR = 456,
+AT_SKILL_MagicMasterySummoner = 457,
+AT_SKILL_ALICE_DRAINLIFE_STR = 458,
+AT_SKILL_StickStrengthener = 465,
+AT_SKILL_OtherWorldTomeStreng = 466,
+AT_SKILL_StickMastery = 467,
+AT_SKILL_OtherWorldTomeMastery = 468,
+AT_SKILL_ALICE_BERSERKER_STR = 469,
+AT_SKILL_BerserkerProficiency = 470,
+AT_SKILL_MinimumWizCurseInc = 471,
+AT_SKILL_CYCLONE_STR_MG = 479,
+AT_SKILL_LIGHTNING_STR_MG = 480,
+AT_SKILL_TWISTING_SLASH_STR_MG = 481,
+AT_SKILL_POWER_SLASH_STR = 482,
+AT_SKILL_FLAME_STR_MG = 483,
+AT_SKILL_BLAST_STR_MG = 484,
+AT_SKILL_WeaponMasteryDuelMaster = 485,
+AT_SKILL_INFERNO_STR_MG = 486,
+AT_SKILL_EVIL_SPIRIT_STR_MG = 487,
+AT_SKILL_MagicMasteryDuelMaster = 488,
+AT_SKILL_ICE_STR_MG = 489,
+AT_SKILL_FIRE_SLASH_STR = 490,
+AT_SKILL_FIREBURST_STR = 508,
+AT_SKILL_FORCE_WAVE_STR = 509,
+AT_SKILL_DarkHorseStreng1 = 510,
+AT_SKILL_ADD_CRITICAL_STR1 = 511,
+AT_SKILL_EARTHSHAKE_STR = 512,
+AT_SKILL_WeaponMasteryLordEmperor = 513,
+AT_SKILL_FIREBURST_MASTERY = 514,
+AT_SKILL_ADD_CRITICAL_STR2 = 515,
+AT_SKILL_EARTHSHAKE_MASTERY = 516,
+AT_SKILL_ADD_CRITICAL_STR3 = 517,
+AT_SKILL_FIRE_SCREAM_STR = 518,
+AT_SKILL_DarkSpiritStr = 526,
+AT_SKILL_ScepterStrengthener = 527,
+AT_SKILL_ShieldStrengthenerLordEmperor = 528,
+AT_SKILL_UseScepterPetStr = 529,
+AT_SKILL_DarkSpiritStr2 = 530,
+AT_SKILL_ScepterMastery = 531,
+AT_SKILL_ShieldMastery = 532,
+AT_SKILL_CommandAttackInc = 533,
+AT_SKILL_DarkSpiritStr3 = 534,
+AT_SKILL_PetDurabilityStr = 535,
+AT_SKILL_KILLING_BLOW_STR = 551,
+AT_SKILL_BEAST_UPPERCUT_STR = 552,
+AT_SKILL_KILLING_BLOW_MASTERY = 554,
+AT_SKILL_BEAST_UPPERCUT_MASTERY = 555,
+AT_SKILL_WeaponMasteryFistMaster = 557,
+AT_SKILL_CHAIN_DRIVE_STR = 558,
+AT_SKILL_DARKSIDE_STR = 559,
+AT_SKILL_DRAGON_ROAR_STR = 560,
+AT_SKILL_EquippedWeaponStrengthener = 568,
+AT_SKILL_DEF_UP_OURFORCES_STR = 569,
+AT_SKILL_EquippedWeaponMastery = 571,
+AT_SKILL_DEF_UP_OURFORCES_MASTERY = 572,
+AT_SKILL_HP_UP_OURFORCES_STR = 573,
+AT_SKILL_DurabilityReduction1FistMaster = 578,
+AT_SKILL_IncreasePvPDefenseRate = 579,
+AT_SKILL_IncreaseMaximumSd = 580,
+AT_SKILL_IncreaseManaRecoveryRate = 581,
+AT_SKILL_IncreasePoisonResistance = 582,
+AT_SKILL_DurabilityReduction2FistMaster = 583,
+AT_SKILL_IncreaseSdRecoveryRate = 584,
+AT_SKILL_IncreaseHpRecoveryRate = 585,
+AT_SKILL_IncreaseLightningResistance = 586,
+AT_SKILL_IncreasesDefense = 587,
+AT_SKILL_IncreasesAgRecoveryRate = 588,
+AT_SKILL_IncreaseIceResistance = 589,
+AT_SKILL_DurabilityReduction3FistMaster = 590,
+AT_SKILL_IncreaseDefenseSuccessRate = 591,
+AT_SKILL_IncreaseAttackSuccessRate = 599,
+AT_SKILL_IncreaseMaximumHp = 600,
+AT_SKILL_IncreaseMaximumMana = 601,
+AT_SKILL_IncreasePvPAttackRate = 603,
+AT_SKILL_DecreaseMana = 604,
+AT_SKILL_RecoverSDfromMonsterKills = 605,
+AT_SKILL_RecoverHPfromMonsterKills = 606,
+AT_SKILL_IncreaseMinimumAttackPower = 607,
+AT_SKILL_RecoverManaMonsterKills = 608,
+AT_SKILL_MASTER_END = 616,
+
+============================================================
+ SKILL_REPLACEMENTS
+============================================================
+255: if (auto search = SKILL_REPLACEMENTS.find(baseSkill); search != SKILL_REPLACEMENTS.end())
+
+============================================================
+ RESUMEN
+============================================================
+IDs_CON_REFERENCIA=310
+IDs_SIN_REFERENCIA=7

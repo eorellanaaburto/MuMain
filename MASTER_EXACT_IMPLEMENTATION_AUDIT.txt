@@ -1,0 +1,265 @@
+﻿============================================================
+ MASTER EXACT IMPLEMENTATION AUDIT
+============================================================
+
+300 | AT_SKILL_DurabilityReduction1                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+300 | AT_SKILL_MASTER_BEGIN                         | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+301 | AT_SKILL_PvPDefenceRateInc                    | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+302 | AT_SKILL_MaximumSDincrease                    | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+303 | AT_SKILL_AutomaticManaRecInc                  | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+304 | AT_SKILL_PoisonResistanceInc                  | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+305 | AT_SKILL_DurabilityReduction2                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+306 | AT_SKILL_SdRecoverySpeedInc                   | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+307 | AT_SKILL_AutomaticHpRecInc                    | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+308 | AT_SKILL_LightningResistanceInc               | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+309 | AT_SKILL_DefenseIncrease                      | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+310 | AT_SKILL_AutomaticAgRecInc                    | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+311 | AT_SKILL_IceResistanceIncrease                | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+312 | AT_SKILL_DurabilityReduction3                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+313 | AT_SKILL_DefenseSuccessRateInc                | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+325 | AT_SKILL_AttackSuccRateInc                    | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+326 | AT_SKILL_CYCLONE_STR                          | CASES=4  | REF=2  | EXACT_CASE
+      SkillCast.cpp:91:REF ; SkillCast.cpp:92:REF ; SkillCast.cpp:241:CASE ; ClassAttack.cpp:1285:CASE ; ZzzInterface.cpp:1336:CASE ; WSclient.cpp:4476:CASE
+327 | AT_SKILL_SLASH_STR                            | CASES=4  | REF=1  | EXACT_CASE
+      SkillCast.cpp:93:REF ; SkillCast.cpp:244:CASE ; ClassAttack.cpp:1288:CASE ; ZzzInterface.cpp:1339:CASE ; WSclient.cpp:4484:CASE
+328 | AT_SKILL_FALLING_SLASH_STR                    | CASES=4  | REF=1  | EXACT_CASE
+      SkillCast.cpp:89:REF ; SkillCast.cpp:236:CASE ; ClassAttack.cpp:1280:CASE ; ZzzInterface.cpp:1331:CASE ; WSclient.cpp:4456:CASE
+329 | AT_SKILL_LUNGE_STR                            | CASES=4  | REF=1  | EXACT_CASE
+      SkillCast.cpp:90:REF ; SkillCast.cpp:238:CASE ; ClassAttack.cpp:1282:CASE ; ZzzInterface.cpp:1333:CASE ; WSclient.cpp:4463:CASE
+330 | AT_SKILL_TWISTING_SLASH_STR                   | CASES=5  | REF=6  | EXACT_CASE
+      SkillCast.cpp:132:REF ; SkillCast.cpp:133:REF ; SkillCast.cpp:310:CASE ; SkillCast.cpp:396:REF ; SkillCast.cpp:397:REF ; ClassAttack.cpp:507:REF ; ClassAttack.cpp:508:REF ; ClassAttack.cpp:603:CASE ; ZzzInterface.cpp:1462:CASE ; ZzzCharacter.cpp:4409:CASE ; WSclient.cpp:5304:CASE
+331 | AT_SKILL_RAGEFUL_BLOW_STR                     | CASES=3  | REF=0  | EXACT_CASE
+      ClassAttack.cpp:966:CASE ; ZzzCharacter.cpp:4158:CASE ; WSclient.cpp:5360:CASE
+332 | AT_SKILL_TWISTING_SLASH_MASTERY               | CASES=5  | REF=3  | EXACT_CASE
+      SkillCast.cpp:134:REF ; SkillCast.cpp:312:CASE ; SkillCast.cpp:398:REF ; ClassAttack.cpp:509:REF ; ClassAttack.cpp:605:CASE ; ZzzInterface.cpp:1463:CASE ; ZzzCharacter.cpp:4411:CASE ; WSclient.cpp:5305:CASE
+333 | AT_SKILL_RAGEFUL_BLOW_MASTERY                 | CASES=3  | REF=0  | EXACT_CASE
+      ClassAttack.cpp:967:CASE ; ZzzCharacter.cpp:4159:CASE ; WSclient.cpp:5361:CASE
+334 | AT_SKILL_MaximumLifeIncrease                  | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+335 | AT_SKILL_WeaponMasteryBladeMaster             | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+336 | AT_SKILL_DEATHSTAB_STR                        | CASES=8  | REF=2  | EXACT_CASE
+      SkillCast.cpp:136:REF ; SkillCast.cpp:159:CASE ; SkillCast.cpp:306:CASE ; SkillCast.cpp:453:REF ; SkillCast.cpp:482:CASE ; ZzzInterface.cpp:1328:CASE ; ZzzCharacter.cpp:2620:CASE ; ZzzCharacter.cpp:5277:CASE ; WSclient.cpp:4513:CASE ; WSclient.cpp:5402:CASE
+337 | AT_SKILL_STRIKE_OF_DESTRUCTION_STR            | CASES=5  | REF=0  | EXACT_CASE
+      ClassAttack.cpp:994:CASE ; ZzzCharacter.cpp:3013:CASE ; ZzzCharacter.cpp:4168:CASE ; WSclient.cpp:3977:CASE ; WSclient.cpp:5366:CASE
+338 | AT_SKILL_MaximumManaIncrease                  | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+347 | AT_SKILL_PvPAttackRate                        | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+348 | AT_SKILL_TwoHandedSwordStrengthener           | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+349 | AT_SKILL_OneHandedSwordStrengthener           | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+350 | AT_SKILL_MaceStrengthener                     | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+351 | AT_SKILL_SpearStrengthener                    | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+352 | AT_SKILL_TwoHandedSwordMaster                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+353 | AT_SKILL_OneHandedSwordMaster                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+354 | AT_SKILL_MaceMastery                          | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+355 | AT_SKILL_SpearMastery                         | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+356 | AT_SKILL_SWELL_LIFE_STR                       | CASES=6  | REF=1  | EXACT_CASE
+      ClassAttack.cpp:489:REF ; ClassAttack.cpp:959:CASE ; ZzzCharacter.cpp:2850:CASE ; ZzzCharacter.cpp:4189:CASE ; ZzzCharacter.cpp:5280:CASE ; WSclient.cpp:4012:CASE ; WSclient.cpp:4886:CASE
+357 | AT_SKILL_ManaReduction                        | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+358 | AT_SKILL_MonsterAttackSdInc                   | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+359 | AT_SKILL_MonsterAttackLifeInc                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+360 | AT_SKILL_SWELL_LIFE_PROFICIENCY               | CASES=6  | REF=1  | EXACT_CASE
+      ClassAttack.cpp:490:REF ; ClassAttack.cpp:960:CASE ; ZzzCharacter.cpp:2851:CASE ; ZzzCharacter.cpp:4190:CASE ; ZzzCharacter.cpp:5281:CASE ; WSclient.cpp:4013:CASE ; WSclient.cpp:4887:CASE
+361 | AT_SKILL_MinimumAttackPowerInc                | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+362 | AT_SKILL_MonsterAttackManaInc                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+378 | AT_SKILL_FLAME_STR                            | CASES=4  | REF=0  | EXACT_CASE
+      ClassAttack.cpp:1381:CASE ; ZzzCharacter.cpp:4483:CASE ; ZzzCharacter.cpp:5041:CASE ; WSclient.cpp:4379:CASE
+379 | AT_SKILL_LIGHTNING_STR                        | CASES=3  | REF=1  | EXACT_CASE
+      SkillCast.cpp:512:CASE ; ZzzInterface.cpp:1374:CASE ; ZzzCharacter.cpp:2251:REF ; WSclient.cpp:4360:CASE
+380 | AT_SKILL_EXPANSION_OF_WIZARDRY_STR            | CASES=3  | REF=0  | EXACT_CASE
+      ClassAttack.cpp:1292:CASE ; WSclient.cpp:4062:CASE ; WSclient.cpp:5037:CASE
+381 | AT_SKILL_INFERNO_STR                          | CASES=3  | REF=2  | EXACT_CASE
+      ClassAttack.cpp:1213:CASE ; ZzzCharacter.cpp:4577:CASE ; WSclient.cpp:5299:CASE ; Skill.cpp:31:REF ; Skill.cpp:32:REF
+382 | AT_SKILL_BLAST_STR                            | CASES=2  | REF=0  | EXACT_CASE
+      SkillCast.cpp:551:CASE ; ZzzCharacter.cpp:4560:CASE
+383 | AT_SKILL_EXPANSION_OF_WIZARDRY_MASTERY        | CASES=3  | REF=0  | EXACT_CASE
+      ClassAttack.cpp:1293:CASE ; WSclient.cpp:4063:CASE ; WSclient.cpp:5038:CASE
+384 | AT_SKILL_POISON_STR                           | CASES=5  | REF=0  | EXACT_CASE
+      SkillCast.cpp:507:CASE ; ZzzInterface.cpp:1367:CASE ; ZzzCharacter.cpp:4996:CASE ; WSclient.cpp:3968:CASE ; WSclient.cpp:4377:CASE
+385 | AT_SKILL_EVIL_SPIRIT_STR                      | CASES=2  | REF=0  | EXACT_CASE
+      ClassAttack.cpp:1358:CASE ; ZzzCharacter.cpp:4588:CASE
+386 | AT_SKILL_MagicMasteryGrandMaster              | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+387 | AT_SKILL_DECAY_STR                            | CASES=4  | REF=0  | EXACT_CASE
+      ClassAttack.cpp:1387:CASE ; ZzzCharacter.cpp:4441:CASE ; WSclient.cpp:4030:CASE ; WSclient.cpp:5279:CASE
+388 | AT_SKILL_HELL_FIRE_STR                        | CASES=3  | REF=1  | EXACT_CASE
+      ClassAttack.cpp:1203:CASE ; ZzzCharacter.cpp:4422:CASE ; WSclient.cpp:5294:CASE ; Skill.cpp:31:REF
+389 | AT_SKILL_ICE_STR                              | CASES=5  | REF=0  | EXACT_CASE
+      SkillCast.cpp:517:CASE ; ZzzInterface.cpp:1379:CASE ; ZzzCharacter.cpp:4959:CASE ; WSclient.cpp:3972:CASE ; WSclient.cpp:4372:CASE
+390 | AT_SKILL_METEO_STR                            | CASES=4  | REF=0  | EXACT_CASE
+      SkillCast.cpp:509:CASE ; ZzzInterface.cpp:1369:CASE ; ZzzCharacter.cpp:5011:CASE ; WSclient.cpp:4369:CASE
+391 | AT_SKILL_ICE_STORM_STR                        | CASES=2  | REF=0  | EXACT_CASE
+      ZzzCharacter.cpp:4458:CASE ; WSclient.cpp:4034:CASE
+392 | AT_SKILL_NOVA_STR                             | CASES=3  | REF=3  | EXACT_CASE
+      ClassAttack.cpp:1077:REF ; ClassAttack.cpp:1081:REF ; ClassAttack.cpp:1110:REF ; ClassAttack.cpp:1140:CASE ; ZzzCharacter.cpp:4435:CASE ; WSclient.cpp:4924:CASE
+393 | AT_SKILL_ICE_STORM_MASTERY                    | CASES=2  | REF=0  | EXACT_CASE
+      ZzzCharacter.cpp:4459:CASE ; WSclient.cpp:4035:CASE
+394 | AT_SKILL_METEO_MASTERY                        | CASES=4  | REF=0  | EXACT_CASE
+      SkillCast.cpp:510:CASE ; ZzzInterface.cpp:1370:CASE ; ZzzCharacter.cpp:5012:CASE ; WSclient.cpp:4370:CASE
+397 | AT_SKILL_OneHandedStaffStrengthener           | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+398 | AT_SKILL_TwoHandedStaffStrengthener           | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+399 | AT_SKILL_ShieldStrengthenerGrandMaster        | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+400 | AT_SKILL_OneHandedStaffMaster                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+401 | AT_SKILL_TwoHandedStaffMaster                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+402 | AT_SKILL_ShieldMasteryGrandMaster             | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+403 | AT_SKILL_SOUL_BARRIER_STR                     | CASES=5  | REF=0  | EXACT_CASE
+      ClassAttack.cpp:1154:CASE ; ZzzCharacter.cpp:4976:CASE ; ZzzCharacter.cpp:5274:CASE ; WSclient.cpp:4025:CASE ; WSclient.cpp:4350:CASE
+404 | AT_SKILL_SOUL_BARRIER_PROFICIENCY             | CASES=5  | REF=0  | EXACT_CASE
+      ClassAttack.cpp:1155:CASE ; ZzzCharacter.cpp:4977:CASE ; ZzzCharacter.cpp:5275:CASE ; WSclient.cpp:4026:CASE ; WSclient.cpp:4351:CASE
+405 | AT_SKILL_MinimumWizardryInc                   | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+413 | AT_SKILL_HEALING_STR                          | CASES=7  | REF=1  | EXACT_CASE
+      SkillCast.cpp:585:CASE ; ClassAttack.cpp:156:CASE ; ClassAttack.cpp:212:REF ; ClassAttack.cpp:251:CASE ; ZzzInterface.cpp:1432:CASE ; ZzzCharacter.cpp:4914:CASE ; ZzzCharacter.cpp:5258:CASE ; WSclient.cpp:4328:CASE
+414 | AT_SKILL_TRIPLE_SHOT_STR                      | CASES=4  | REF=3  | EXACT_CASE
+      SkillCast.cpp:1181:REF ; SkillCast.cpp:1217:CASE ; ZzzCharacter.cpp:4818:REF ; ZzzCharacter.cpp:4897:CASE ; WSclient.cpp:1555:REF ; WSclient.cpp:4522:CASE ; WSclient.cpp:5271:CASE
+415 | AT_SKILL_SummonedMonsterStr1                  | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+416 | AT_SKILL_PENETRATION_STR                      | CASES=5  | REF=1  | EXACT_CASE
+      ClassAttack.cpp:130:CASE ; ZzzCharacter.cpp:2761:CASE ; ZzzCharacter.cpp:4902:CASE ; ZzzCharacter.cpp:6968:REF ; WSclient.cpp:4559:CASE ; WSclient.cpp:5285:CASE
+417 | AT_SKILL_DEFENSE_STR                          | CASES=8  | REF=2  | EXACT_CASE
+      SkillCast.cpp:590:CASE ; ClassAttack.cpp:161:CASE ; ClassAttack.cpp:217:REF ; ClassAttack.cpp:256:CASE ; ZzzInterface.cpp:1437:CASE ; ZzzCharacter.cpp:4918:CASE ; ZzzCharacter.cpp:5263:CASE ; WSclient.cpp:3986:CASE ; WSclient.cpp:4224:REF ; WSclient.cpp:4333:CASE
+418 | AT_SKILL_TRIPLE_SHOT_MASTERY                  | CASES=4  | REF=3  | EXACT_CASE
+      SkillCast.cpp:1181:REF ; SkillCast.cpp:1218:CASE ; ZzzCharacter.cpp:4819:REF ; ZzzCharacter.cpp:4898:CASE ; WSclient.cpp:1556:REF ; WSclient.cpp:4523:CASE ; WSclient.cpp:5272:CASE
+419 | AT_SKILL_SummonedMonsterStr2                  | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+420 | AT_SKILL_ATTACK_STR                           | CASES=8  | REF=2  | EXACT_CASE
+      SkillCast.cpp:587:CASE ; ClassAttack.cpp:158:CASE ; ClassAttack.cpp:214:REF ; ClassAttack.cpp:253:CASE ; ZzzInterface.cpp:1434:CASE ; ZzzCharacter.cpp:4949:CASE ; ZzzCharacter.cpp:5260:CASE ; WSclient.cpp:3981:CASE ; WSclient.cpp:4223:REF ; WSclient.cpp:4330:CASE
+421 | AT_SKILL_WeaponMasteryHighElf                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+422 | AT_SKILL_ATTACK_MASTERY                       | CASES=7  | REF=2  | EXACT_CASE
+      ClassAttack.cpp:159:CASE ; ClassAttack.cpp:215:REF ; ClassAttack.cpp:254:CASE ; ZzzInterface.cpp:1435:CASE ; ZzzCharacter.cpp:4950:CASE ; ZzzCharacter.cpp:5261:CASE ; WSclient.cpp:3982:CASE ; WSclient.cpp:4224:REF ; WSclient.cpp:4331:CASE
+423 | AT_SKILL_DEFENSE_MASTERY                      | CASES=8  | REF=2  | EXACT_CASE
+      SkillCast.cpp:591:CASE ; ClassAttack.cpp:162:CASE ; ClassAttack.cpp:218:REF ; ClassAttack.cpp:257:CASE ; ZzzInterface.cpp:1438:CASE ; ZzzCharacter.cpp:4919:CASE ; ZzzCharacter.cpp:5264:CASE ; WSclient.cpp:3987:CASE ; WSclient.cpp:4225:REF ; WSclient.cpp:4334:CASE
+424 | AT_SKILL_ICE_ARROW_STR                        | CASES=5  | REF=1  | EXACT_CASE
+      SkillCast.cpp:597:CASE ; ClassAttack.cpp:264:REF ; ZzzInterface.cpp:1408:CASE ; ZzzCharacter.cpp:4906:CASE ; WSclient.cpp:4017:CASE ; WSclient.cpp:4565:CASE
+435 | AT_SKILL_BowStrengthener                      | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+436 | AT_SKILL_CrossbowStrengthener                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+437 | AT_SKILL_ShieldStrengthenerHighElf            | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+438 | AT_SKILL_BowMastery                           | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+439 | AT_SKILL_CrossbowMastery                      | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+440 | AT_SKILL_ShieldMasteryHighElf                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+441 | AT_SKILL_INFINITY_ARROW_STR                   | CASES=2  | REF=0  | EXACT_CASE
+      ClassAttack.cpp:275:CASE ; WSclient.cpp:4969:CASE
+442 | AT_SKILL_MinimumAttPowerInc                   | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+448 | AT_SKILL_FireTomeStrengthener                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+449 | AT_SKILL_WindTomeStrengthener                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+450 | AT_SKILL_LightningTomeStren                   | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+451 | AT_SKILL_FireTomeMastery                      | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+452 | AT_SKILL_WindTomeMastery                      | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+453 | AT_SKILL_LightningTomeMastery                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+454 | AT_SKILL_ALICE_SLEEP_STR                      | CASES=4  | REF=9  | EXACT_CASE
+      SkillCast.cpp:713:CASE ; ClassAttack.cpp:1695:CASE ; ZzzCharacter.cpp:5165:CASE ; ZzzCharacter.cpp:5171:REF ; ZzzCharacter.cpp:5183:REF ; ZzzCharacter.cpp:5192:REF ; ZzzCharacter.cpp:10611:REF ; ZzzCharacter.cpp:10638:REF ; ZzzCharacter.cpp:10657:REF ; ZzzCharacter.cpp:10684:REF ; ZzzCharacter.cpp:10703:REF ; ZzzCharacter.cpp:10731:REF ; WSclient.cpp:4984:CASE
+455 | AT_SKILL_ALICE_CHAINLIGHTNING_STR             | CASES=4  | REF=0  | EXACT_CASE
+      SkillCast.cpp:681:CASE ; ClassAttack.cpp:1665:CASE ; ZzzCharacter.cpp:5213:CASE ; WSclient.cpp:4977:CASE
+456 | AT_SKILL_LIGHTNING_SHOCK_STR                  | CASES=4  | REF=0  | EXACT_CASE
+      ClassAttack.cpp:1629:CASE ; ZzzCharacter.cpp:3006:CASE ; ZzzCharacter.cpp:4784:CASE ; WSclient.cpp:5627:CASE
+457 | AT_SKILL_MagicMasterySummoner                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+458 | AT_SKILL_ALICE_DRAINLIFE_STR                  | CASES=4  | REF=1  | EXACT_CASE
+      SkillCast.cpp:632:CASE ; SkillCast.cpp:636:REF ; ClassAttack.cpp:1662:CASE ; ZzzCharacter.cpp:5219:CASE ; WSclient.cpp:5574:CASE
+465 | AT_SKILL_StickStrengthener                    | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+466 | AT_SKILL_OtherWorldTomeStreng                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+467 | AT_SKILL_StickMastery                         | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+468 | AT_SKILL_OtherWorldTomeMastery                | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+469 | AT_SKILL_ALICE_BERSERKER_STR                  | CASES=5  | REF=7  | EXACT_CASE
+      SkillCast.cpp:730:CASE ; ClassAttack.cpp:1335:REF ; ClassAttack.cpp:1623:CASE ; ZzzCharacter.cpp:4720:CASE ; ZzzCharacter.cpp:10624:REF ; ZzzCharacter.cpp:10641:REF ; ZzzCharacter.cpp:10670:REF ; ZzzCharacter.cpp:10687:REF ; ZzzCharacter.cpp:10716:REF ; ZzzCharacter.cpp:10734:REF ; WSclient.cpp:4067:CASE ; WSclient.cpp:5026:CASE
+470 | AT_SKILL_BerserkerProficiency                 | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+471 | AT_SKILL_MinimumWizCurseInc                   | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+479 | AT_SKILL_CYCLONE_STR_MG                       | CASES=4  | REF=1  | EXACT_CASE
+      SkillCast.cpp:92:REF ; SkillCast.cpp:242:CASE ; ClassAttack.cpp:1286:CASE ; ZzzInterface.cpp:1337:CASE ; WSclient.cpp:4477:CASE
+480 | AT_SKILL_LIGHTNING_STR_MG                     | CASES=3  | REF=1  | EXACT_CASE
+      SkillCast.cpp:513:CASE ; ZzzInterface.cpp:1375:CASE ; ZzzCharacter.cpp:2251:REF ; WSclient.cpp:4361:CASE
+481 | AT_SKILL_TWISTING_SLASH_STR_MG                | CASES=4  | REF=3  | EXACT_CASE
+      SkillCast.cpp:133:REF ; SkillCast.cpp:311:CASE ; SkillCast.cpp:397:REF ; ClassAttack.cpp:508:REF ; ClassAttack.cpp:604:CASE ; ZzzCharacter.cpp:4410:CASE ; WSclient.cpp:5306:CASE
+482 | AT_SKILL_POWER_SLASH_STR                      | CASES=5  | REF=1  | EXACT_CASE
+      ClassAttack.cpp:659:CASE ; ZzzCharacter.cpp:2818:CASE ; ZzzCharacter.cpp:4184:CASE ; WSclient.cpp:1555:REF ; WSclient.cpp:4499:CASE ; WSclient.cpp:5398:CASE
+483 | AT_SKILL_FLAME_STR_MG                         | CASES=4  | REF=0  | EXACT_CASE
+      ClassAttack.cpp:1382:CASE ; ZzzCharacter.cpp:4484:CASE ; ZzzCharacter.cpp:5042:CASE ; WSclient.cpp:4380:CASE
+484 | AT_SKILL_BLAST_STR_MG                         | CASES=2  | REF=0  | EXACT_CASE
+      SkillCast.cpp:552:CASE ; ZzzCharacter.cpp:4561:CASE
+485 | AT_SKILL_WeaponMasteryDuelMaster              | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+486 | AT_SKILL_INFERNO_STR_MG                       | CASES=3  | REF=1  | EXACT_CASE
+      ClassAttack.cpp:1214:CASE ; ZzzCharacter.cpp:4578:CASE ; WSclient.cpp:5300:CASE ; Skill.cpp:32:REF
+487 | AT_SKILL_EVIL_SPIRIT_STR_MG                   | CASES=2  | REF=0  | EXACT_CASE
+      ClassAttack.cpp:1359:CASE ; ZzzCharacter.cpp:4589:CASE
+488 | AT_SKILL_MagicMasteryDuelMaster               | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+489 | AT_SKILL_ICE_STR_MG                           | CASES=5  | REF=0  | EXACT_CASE
+      SkillCast.cpp:518:CASE ; ZzzInterface.cpp:1380:CASE ; ZzzCharacter.cpp:4960:CASE ; WSclient.cpp:3973:CASE ; WSclient.cpp:4373:CASE
+490 | AT_SKILL_FIRE_SLASH_STR                       | CASES=8  | REF=3  | EXACT_CASE
+      SkillCast.cpp:130:REF ; SkillCast.cpp:314:CASE ; SkillCast.cpp:400:REF ; ClassAttack.cpp:629:CASE ; ZzzInterface.cpp:1465:CASE ; ZzzCharacter.cpp:2781:CASE ; ZzzCharacter.cpp:2800:REF ; ZzzCharacter.cpp:4179:CASE ; WSclient.cpp:4021:CASE ; WSclient.cpp:4540:CASE ; WSclient.cpp:5376:CASE
+508 | AT_SKILL_FIREBURST_STR                        | CASES=5  | REF=3  | EXACT_CASE
+      SkillCast.cpp:142:REF ; SkillCast.cpp:332:CASE ; SkillCast.cpp:364:REF ; SkillCast.cpp:459:REF ; ZzzInterface.cpp:1344:CASE ; ZzzCharacter.cpp:2874:CASE ; ZzzCharacter.cpp:5070:CASE ; WSclient.cpp:4437:CASE
+509 | AT_SKILL_FORCE_WAVE_STR                       | CASES=5  | REF=4  | EXACT_CASE
+      SkillCast.cpp:140:REF ; SkillCast.cpp:330:CASE ; SkillCast.cpp:362:REF ; SkillCast.cpp:423:REF ; SkillCast.cpp:457:REF ; ZzzInterface.cpp:1342:CASE ; ZzzCharacter.cpp:2865:CASE ; ZzzCharacter.cpp:5063:CASE ; WSclient.cpp:4420:CASE
+510 | AT_SKILL_DarkHorseStreng1                     | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+511 | AT_SKILL_ADD_CRITICAL_STR1                    | CASES=4  | REF=1  | EXACT_CASE
+      ClassAttack.cpp:492:REF ; ClassAttack.cpp:854:CASE ; ZzzCharacter.cpp:4365:CASE ; ZzzCharacter.cpp:5285:CASE ; WSclient.cpp:4006:CASE
+512 | AT_SKILL_EARTHSHAKE_STR                       | CASES=3  | REF=5  | EXACT_CASE
+      ClassAttack.cpp:498:REF ; ClassAttack.cpp:534:REF ; ClassAttack.cpp:544:REF ; ClassAttack.cpp:556:REF ; ClassAttack.cpp:906:CASE ; ClassAttack.cpp:946:REF ; ZzzCharacter.cpp:2894:CASE ; WSclient.cpp:5354:CASE
+513 | AT_SKILL_WeaponMasteryLordEmperor             | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+514 | AT_SKILL_FIREBURST_MASTERY                    | CASES=5  | REF=3  | EXACT_CASE
+      SkillCast.cpp:143:REF ; SkillCast.cpp:333:CASE ; SkillCast.cpp:365:REF ; SkillCast.cpp:460:REF ; ZzzInterface.cpp:1345:CASE ; ZzzCharacter.cpp:2875:CASE ; ZzzCharacter.cpp:5071:CASE ; WSclient.cpp:4438:CASE
+515 | AT_SKILL_ADD_CRITICAL_STR2                    | CASES=4  | REF=1  | EXACT_CASE
+      ClassAttack.cpp:493:REF ; ClassAttack.cpp:855:CASE ; ZzzCharacter.cpp:4366:CASE ; ZzzCharacter.cpp:5286:CASE ; WSclient.cpp:4007:CASE
+516 | AT_SKILL_EARTHSHAKE_MASTERY                   | CASES=3  | REF=5  | EXACT_CASE
+      ClassAttack.cpp:499:REF ; ClassAttack.cpp:534:REF ; ClassAttack.cpp:545:REF ; ClassAttack.cpp:556:REF ; ClassAttack.cpp:907:CASE ; ClassAttack.cpp:946:REF ; ZzzCharacter.cpp:2895:CASE ; WSclient.cpp:5355:CASE
+517 | AT_SKILL_ADD_CRITICAL_STR3                    | CASES=4  | REF=1  | EXACT_CASE
+      ClassAttack.cpp:494:REF ; ClassAttack.cpp:856:CASE ; ZzzCharacter.cpp:4367:CASE ; ZzzCharacter.cpp:5287:CASE ; WSclient.cpp:4008:CASE
+518 | AT_SKILL_FIRE_SCREAM_STR                      | CASES=5  | REF=5  | EXACT_CASE
+      SkillCast.cpp:254:REF ; SkillCast.cpp:324:CASE ; SkillCast.cpp:368:REF ; SkillCast.cpp:414:REF ; ClassAttack.cpp:221:REF ; ClassAttack.cpp:503:REF ; ClassAttack.cpp:865:CASE ; ZzzCharacter.cpp:4503:CASE ; WSclient.cpp:4937:CASE ; WSclient.cpp:5329:CASE
+526 | AT_SKILL_DarkSpiritStr                        | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+527 | AT_SKILL_ScepterStrengthener                  | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+528 | AT_SKILL_ShieldStrengthenerLordEmperor        | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+529 | AT_SKILL_UseScepterPetStr                     | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+530 | AT_SKILL_DarkSpiritStr2                       | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+531 | AT_SKILL_ScepterMastery                       | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+532 | AT_SKILL_ShieldMastery                        | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+533 | AT_SKILL_CommandAttackInc                     | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+534 | AT_SKILL_DarkSpiritStr3                       | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+535 | AT_SKILL_PetDurabilityStr                     | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+551 | AT_SKILL_KILLING_BLOW_STR                     | CASES=5  | REF=1  | EXACT_CASE
+      SkillCast.cpp:370:REF ; SkillCast.cpp:803:CASE ; SkillCast.cpp:1033:CASE ; ZzzInterface.cpp:1471:CASE ; ZzzCharacter.cpp:4798:CASE ; WSclient.cpp:5115:CASE
+552 | AT_SKILL_BEAST_UPPERCUT_STR                   | CASES=6  | REF=2  | EXACT_CASE
+      SkillCast.cpp:373:REF ; SkillCast.cpp:864:CASE ; SkillCast.cpp:1036:CASE ; ZzzInterface.cpp:1474:CASE ; ZzzCharacter.cpp:3036:CASE ; ZzzCharacter.cpp:4806:CASE ; WSclient.cpp:5194:CASE ; WSclient.cpp:13449:REF
+554 | AT_SKILL_KILLING_BLOW_MASTERY                 | CASES=5  | REF=1  | EXACT_CASE
+      SkillCast.cpp:371:REF ; SkillCast.cpp:804:CASE ; SkillCast.cpp:1034:CASE ; ZzzInterface.cpp:1472:CASE ; ZzzCharacter.cpp:4799:CASE ; WSclient.cpp:5116:CASE
+555 | AT_SKILL_BEAST_UPPERCUT_MASTERY               | CASES=6  | REF=2  | EXACT_CASE
+      SkillCast.cpp:374:REF ; SkillCast.cpp:865:CASE ; SkillCast.cpp:1037:CASE ; ZzzInterface.cpp:1475:CASE ; ZzzCharacter.cpp:3037:CASE ; ZzzCharacter.cpp:4807:CASE ; WSclient.cpp:5195:CASE ; WSclient.cpp:13450:REF
+557 | AT_SKILL_WeaponMasteryFistMaster              | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+558 | AT_SKILL_CHAIN_DRIVE_STR                      | CASES=5  | REF=0  | EXACT_CASE
+      SkillCast.cpp:879:CASE ; SkillCast.cpp:1039:CASE ; ZzzInterface.cpp:1477:CASE ; ZzzCharacter.cpp:3034:CASE ; WSclient.cpp:5201:CASE
+559 | AT_SKILL_DARKSIDE_STR                         | CASES=4  | REF=2  | EXACT_CASE
+      SkillCast.cpp:910:CASE ; SkillCast.cpp:1077:CASE ; WSclient.cpp:5233:CASE ; WSclient.cpp:13428:REF ; WSclient.cpp:13466:CASE ; WSclient.cpp:13485:REF
+560 | AT_SKILL_DRAGON_ROAR_STR                      | CASES=5  | REF=0  | EXACT_CASE
+      SkillCast.cpp:926:CASE ; SkillCast.cpp:1042:CASE ; ZzzInterface.cpp:1480:CASE ; WSclient.cpp:5217:CASE ; WSclient.cpp:5631:CASE
+568 | AT_SKILL_EquippedWeaponStrengthener           | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+569 | AT_SKILL_DEF_UP_OURFORCES_STR                 | CASES=6  | REF=1  | EXACT_CASE
+      SkillCast.cpp:945:CASE ; SkillCast.cpp:1084:CASE ; ZzzCharacter.cpp:3022:CASE ; WSclient.cpp:4054:CASE ; WSclient.cpp:5132:CASE ; WSclient.cpp:5158:REF ; WSclient.cpp:5185:CASE
+571 | AT_SKILL_EquippedWeaponMastery                | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+572 | AT_SKILL_DEF_UP_OURFORCES_MASTERY             | CASES=6  | REF=1  | EXACT_CASE
+      SkillCast.cpp:946:CASE ; SkillCast.cpp:1085:CASE ; ZzzCharacter.cpp:3023:CASE ; WSclient.cpp:4055:CASE ; WSclient.cpp:5133:CASE ; WSclient.cpp:5159:REF ; WSclient.cpp:5186:CASE
+573 | AT_SKILL_HP_UP_OURFORCES_STR                  | CASES=6  | REF=1  | EXACT_CASE
+      SkillCast.cpp:943:CASE ; SkillCast.cpp:1082:CASE ; ZzzCharacter.cpp:3020:CASE ; WSclient.cpp:4050:CASE ; WSclient.cpp:5130:CASE ; WSclient.cpp:5153:REF ; WSclient.cpp:5181:CASE
+578 | AT_SKILL_DurabilityReduction1FistMaster       | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+579 | AT_SKILL_IncreasePvPDefenseRate               | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+580 | AT_SKILL_IncreaseMaximumSd                    | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+581 | AT_SKILL_IncreaseManaRecoveryRate             | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+582 | AT_SKILL_IncreasePoisonResistance             | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+583 | AT_SKILL_DurabilityReduction2FistMaster       | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+584 | AT_SKILL_IncreaseSdRecoveryRate               | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+585 | AT_SKILL_IncreaseHpRecoveryRate               | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+586 | AT_SKILL_IncreaseLightningResistance          | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+587 | AT_SKILL_IncreasesDefense                     | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+588 | AT_SKILL_IncreasesAgRecoveryRate              | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+589 | AT_SKILL_IncreaseIceResistance                | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+590 | AT_SKILL_DurabilityReduction3FistMaster       | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+591 | AT_SKILL_IncreaseDefenseSuccessRate           | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+599 | AT_SKILL_IncreaseAttackSuccessRate            | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+600 | AT_SKILL_IncreaseMaximumHp                    | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+601 | AT_SKILL_IncreaseMaximumMana                  | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+603 | AT_SKILL_IncreasePvPAttackRate                | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+604 | AT_SKILL_DecreaseMana                         | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+605 | AT_SKILL_RecoverSDfromMonsterKills            | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+606 | AT_SKILL_RecoverHPfromMonsterKills            | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+607 | AT_SKILL_IncreaseMinimumAttackPower           | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+608 | AT_SKILL_RecoverManaMonsterKills              | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+616 | AT_SKILL_MASTER_END                           | CASES=0  | REF=0  | NO_EXECUTION_REFERENCE
+
+============================================================
+ EXACT_CASE IDS
+============================================================
+326,327,328,329,330,331,332,333,336,337,356,360,378,379,380,381,382,383,384,385,387,388,389,390,391,392,393,394,403,404,413,414,416,417,418,420,422,423,424,441,454,455,456,458,469,479,480,481,482,483,484,486,487,489,490,508,509,511,512,514,515,516,517,518,551,552,554,555,558,559,560,569,572,573
+
+TOTAL_ENUM=179
+TOTAL_EXACT=74

@@ -9,7 +9,7 @@ namespace Data::Items
 namespace
 {
 // ItemSlot::None has no name: items that cannot be equipped have no slot.
-constexpr std::array<EnumName<ItemSlot>, 11> ItemSlotNames = {{
+constexpr std::array<EnumName<ItemSlot>, 12> ItemSlotNames = {{
     {ItemSlot::MainHand, "mainHand"},
     {ItemSlot::OffHand, "offHand"},
     {ItemSlot::Helm, "helm"},
@@ -21,6 +21,7 @@ constexpr std::array<EnumName<ItemSlot>, 11> ItemSlotNames = {{
     {ItemSlot::Pet, "pet"},
     {ItemSlot::Pendant, "pendant"},
     {ItemSlot::Ring, "ring"},
+    {ItemSlot::Pentagram, "pentagram"},
 }};
 
 constexpr std::array<EnumName<WingTier>, 4> WingTierNames = {{

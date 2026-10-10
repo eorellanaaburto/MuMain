@@ -1681,6 +1681,14 @@ void SEASON3B::CNewUIInventoryCtrl::BackupPickedItem()
         }
         else if (pItemObj->ex_src_type == ITEM_EX_SRC_EQUIPMENT)
         {
+            if (pItemObj->lineal_pos == PENTAGRAM_SERVER_SLOT)
+            {
+                g_pMyInventory->RestorePentagramItem(*pItemObj);
+                g_ErrorReport.Write(L"[PENTAGRAM-CLIENT] Restored equipped pentagram after failed move\r\n");
+                DeletePickedItem();
+                return;
+            }
+
             ITEM* pEquipmentItemSlot = &CharacterMachine->Equipment[pItemObj->lineal_pos];
             memcpy(pEquipmentItemSlot, pItemObj, sizeof(ITEM));
 

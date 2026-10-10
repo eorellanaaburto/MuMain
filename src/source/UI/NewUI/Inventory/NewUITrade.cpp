@@ -121,6 +121,14 @@ void CNewUITrade::SetPos(int x, int y)
     m_Pos.x = x;
     m_Pos.y = y;
 
+    if (m_pYourInvenCtrl)
+        m_pYourInvenCtrl->SetPos(x + 16, y + 68);
+    if (m_pMyInvenCtrl)
+        m_pMyInvenCtrl->SetPos(x + 16, y + 274);
+
+    m_abtn[BTN_CLOSE].ChangeButtonInfo(x + 13, y + 390, 36, 29);
+    m_abtn[BTN_ZEN_INPUT].ChangeButtonInfo(x + 104, y + 390, 36, 29);
+
     m_posMyConfirm.x = m_Pos.x + 144;
     m_posMyConfirm.y = m_Pos.y + 390;
 }

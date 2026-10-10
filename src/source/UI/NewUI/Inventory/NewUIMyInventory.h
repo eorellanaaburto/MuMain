@@ -1,4 +1,4 @@
-// NewUIPersonalInventory.h: interface for the CNewUIMyInventory class.
+﻿// NewUIPersonalInventory.h: interface for the CNewUIMyInventory class.
 //////////////////////////////////////////////////////////////////////
 
 #if !defined(AFX_NEWUIMYINVENTORY_H__74DA6D7A_CF5A_46E9_8C72_9D38F0DC95EC__INCLUDED_)
@@ -49,6 +49,13 @@ namespace SEASON3B
             IMAGE_INVENTORY_EXIT_BTN, //"newui_exit_00.tga"
             IMAGE_INVENTORY_REPAIR_BTN, //"newui_repair_00.tga"
             IMAGE_INVENTORY_EXPAND_BTN, //"newui_expansion_btn.tga"
+
+            // Dedicated slot (BITMAP_ARTIFACT_PANEL_BG) -- IMAGE_INVENTORY_BACK_TOP2 is
+            // shared with CharacterInfoWindow/NPCShop/quest windows/etc, so the
+            // Artifact/Pentagram panel background needs its own slot instead of
+            // fighting those other windows for the same GPU slot. See
+            // _TextureIndex.h, 2026-10-09.
+            IMAGE_ARTIFACT_PANEL_BG = BITMAP_ARTIFACT_PANEL_BG,
         };
 
         enum MYSHOP_MODE
@@ -81,6 +88,10 @@ namespace SEASON3B
         POINT m_Pos;
 
         EQUIPMENT_ITEM m_EquipmentSlots[MAX_EQUIPMENT_INDEX];
+        EQUIPMENT_ITEM m_PentagramSlot;
+        ITEM m_PentagramItem;
+        bool m_bPentagramPointed;
+        int m_iPentagramSocketPointed;
         int	m_iPointedSlot;
 
         CNewUIButton m_BtnRepair;
@@ -104,6 +115,15 @@ namespace SEASON3B
 
         bool EquipItem(int iIndex, std::span<const BYTE> pbyItemPacket);
         void UnequipItem(int iIndex);
+        bool EquipPentagramItem(std::span<const BYTE> itemPacket);
+        void UnequipPentagramItem();
+        void RestorePentagramItem(const ITEM& item);
+        const ITEM* GetPentagramItem() const;
+        // True while the Artifact/Pentagram panel must stay hidden and
+        // non-interactive because an incompatible window (trade, vault,
+        // shop, Chaos Machine, etc.) is open. Nothing gets unequipped while
+        // blocked; rendering and hit-testing simply resume once it closes.
+        bool IsPentagramPanelBlocked() const;
         // The center of an equipment slot in window-local coordinates; false
         // for a slot number outside the equipment.
         bool GetEquipmentSlotCenter(int slot, POINT& center) const;
@@ -194,10 +214,13 @@ namespace SEASON3B
         void RenderSetOption();
         void RenderSocketOption();
         void RenderEquippedItem();
+        void RenderPentagramSlot();
+        void RenderPentagramErrtelSlots();
         void RenderButtons();
         void RenderInventoryDetails() const;
 
         bool EquipmentWindowProcess();
+        bool PentagramWindowProcess();
         // Whether the item in equipmentSlot may be taken off here; tells the
         // player why not.
         bool CheckTakeOff(int equipmentSlot) const;

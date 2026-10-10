@@ -115,6 +115,11 @@ extern CUIMapName* g_pUIMapName;
 
 extern bool g_PetEnableDuel;
 
+// Dark Fantasy: UI-only 32-bit attribute snapshot.
+// The existing F3:32 response already contains DWORD fields. This has no effect
+// on combat, packet layout, login, tunnel or server-side character state.
+DWORD g_DarkFantasyStats32[5] = {0, 0, 0, 0, 0};
+bool g_DarkFantasyStats32Valid = false;
 MASTER_LEVEL_VALUE Master_Level_Data;
 
 // BYTE Version[SIZE_PROTOCOLVERSION] = {'1'+1, '0'+2, '4'+3, '0'+4, '5'+5};
@@ -1127,9 +1132,12 @@ BOOL ReceiveJoinMapServer(std::span<const BYTE> ReceiveBuffer)
         return false;
     }
 
+    // An F3:03 join contains 16-bit base attributes; wait for F3:32 to recover
+    // their full 32-bit values instead of guessing or adding 65536.
+    g_DarkFantasyStats32Valid = false;
     CharacterAttribute->Experience = ntoh64(Data->CurrentExperience);
     CharacterAttribute->NextExperience = ntoh64(Data->ExperienceForNextLevel);
-    CharacterAttribute->LevelUpPoint = Data->LevelUpPoint;
+    CharacterAttribute->LevelUpPoint = Data->LevelUpPoint | (static_cast<DWORD>(Data->HighLevelUpPoint) << 16);
     CharacterAttribute->Strength = Data->Strength;
     CharacterAttribute->Dexterity = Data->Dexterity;
     CharacterAttribute->Vitality = Data->Vitality;
@@ -1643,7 +1651,11 @@ void ReceiveDeleteInventory(const BYTE* ReceiveBuffer)
     if (Data->SubCode != 0xff)
     {
         int itemindex = Data->SubCode;
-        if (itemindex >= 0 && itemindex < MAX_EQUIPMENT_INDEX)
+        if (IsPentagramSlot(itemindex))
+        {
+            g_pMyInventory->UnequipPentagramItem();
+        }
+        else if (itemindex >= 0 && itemindex < MAX_EQUIPMENT_INDEX)
         {
             g_pMyInventory->UnequipItem(itemindex);
         }
@@ -1713,6 +1725,7 @@ BOOL ReceiveInventoryExtended(std::span<const BYTE> ReceiveBuffer)
     }
 
     g_pMyInventory->UnequipAllItems();
+    g_pMyInventory->UnequipPentagramItem();
     g_pMyInventory->DeleteAllItems();
     g_pMyInventoryExt->DeleteAllItems();
     g_pMyShopInventory->DeleteAllItems();
@@ -1747,7 +1760,12 @@ BOOL ReceiveInventoryExtended(std::span<const BYTE> ReceiveBuffer)
         int length = CalcItemLength(itemData);
         itemData = itemData.subspan(0, length);
 
-        if (itemindex >= 0 && itemindex < MAX_EQUIPMENT_INDEX)
+        if (IsPentagramSlot(itemindex))
+        {
+            g_ErrorReport.Write(L"[PENTAGRAM-CLIENT] Received slot=%d from inventory list\r\n", itemindex);
+            g_pMyInventory->EquipPentagramItem(itemData);
+        }
+        else if (itemindex >= 0 && itemindex < MAX_EQUIPMENT_INDEX)
         {
             g_pMyInventory->EquipItem(itemindex, itemData);
         }
@@ -4021,7 +4039,9 @@ void ReceiveMagicFinish(const BYTE* ReceiveBuffer)
         UnRegisterBuff(eDeBuff_Poison, o);
         break;
     case AT_SKILL_ICE_STORM:
-        UnRegisterBuff(eDeBuff_Freeze, o);
+        case AT_SKILL_ICE_STORM_STR:
+            case AT_SKILL_ICE_STORM_MASTERY:
+            UnRegisterBuff(eDeBuff_Freeze, o);
         break;
     case AT_SKILL_MONSTER_MAGIC_DEF:
         SetActionDestroy_Def(o);
@@ -4247,7 +4267,7 @@ BOOL ReceiveMagic(const BYTE* ReceiveBuffer, int Size, BOOL bEncrypted)
         sc->SkillSuccess = (Success != 0);
         sc->Skill = MagicNumber;
     }
-    switch (MagicNumber)
+    switch (gSkillManager.MasterSkillToBaseSkillIndex(static_cast<ActionSkillType>(MagicNumber)))
     {
     case AT_SKILL_MONSTER_SUMMON:
         SetPlayerAttack(sc);
@@ -4354,6 +4374,8 @@ BOOL ReceiveMagic(const BYTE* ReceiveBuffer, int Size, BOOL bEncrypted)
             SetPlayerStop(tc);
     case AT_SKILL_FIREBALL:
     case AT_SKILL_METEO:
+    case AT_SKILL_METEO_STR:
+    case AT_SKILL_METEO_MASTERY:
     case AT_SKILL_ICE:
     case AT_SKILL_ICE_STR:
     case AT_SKILL_ICE_STR_MG:
@@ -4907,6 +4929,7 @@ BOOL ReceiveMagic(const BYTE* ReceiveBuffer, int Size, BOOL bEncrypted)
         so->m_bySkillCount = 0;
         break;
     case AT_SKILL_NOVA:
+        case AT_SKILL_NOVA_STR:
         SetAction(so, PLAYER_SKILL_HELL_START);
         if (sc == Hero)
         {
@@ -6282,7 +6305,11 @@ void ReceiveDropItem(const BYTE* ReceiveBuffer)
     auto Data = (LPPHEADER_DEFAULT_KEY)ReceiveBuffer;
     if (Data->KeyH)
     {
-        if (Data->KeyL < 12)
+        if (IsPentagramSlot(Data->KeyL))
+        {
+            g_pMyInventory->UnequipPentagramItem();
+        }
+        else if (Data->KeyL < MAX_EQUIPMENT_INDEX)
         {
             g_pMyInventory->UnequipItem(Data->KeyL);
         }
@@ -6331,13 +6358,13 @@ BOOL ReceiveEquipmentItemExtended(std::span<const BYTE> ReceiveBuffer)
             iSourceIndex = pPickedItem->GetSourceLinealPos();
         }
 
-        if (iSourceIndex >= MAX_MY_INVENTORY_EX_INDEX)
+        if (IsMyShopSlot(iSourceIndex))
         {
             int price = 0;
             if (GetPersonalItemPrice(iSourceIndex, price, g_IsPurchaseShop))
             {
                 RemovePersonalItemPrice(iSourceIndex, g_IsPurchaseShop);
-                if (Data->Index >= MAX_MY_INVENTORY_EX_INDEX)
+                if (IsMyShopSlot(Data->Index))
                 {
                     AddPersonalItemPrice(Data->Index, price, g_IsPurchaseShop);
                 }
@@ -6351,7 +6378,11 @@ BOOL ReceiveEquipmentItemExtended(std::span<const BYTE> ReceiveBuffer)
             int itemindex = Data->Index;
             bool shouldResyncInventory = false;
 
-            if (itemindex >= 0 && itemindex < MAX_EQUIPMENT_INDEX)
+            if (IsPentagramSlot(itemindex))
+            {
+                g_pMyInventory->EquipPentagramItem(itemData);
+            }
+            else if (itemindex >= 0 && itemindex < MAX_EQUIPMENT_INDEX)
             {
                 g_pMyInventory->EquipItem(itemindex, itemData);
             }
@@ -6451,6 +6482,11 @@ void ReceiveModifyItemExtended(std::span<const BYTE> ReceiveBuffer)
     }
 
     int itemindex = Data->Index;
+    if (IsPentagramSlot(itemindex))
+    {
+        g_pMyInventory->EquipPentagramItem(itemData);
+        return;
+    }
     if (IsMainInventorySlot(itemindex) && g_pMyInventory->FindItem(itemindex))
     {
         g_pMyInventory->DeleteItem(itemindex);
@@ -6638,7 +6674,22 @@ BOOL ReceiveTalk(const BYTE* ReceiveBuffer, BOOL bEncrypted)
         SEASON3B::CreateMessageBox(MSGBOX_LAYOUT_CLASS(SEASON3B::CLuckyTradeMenuMsgBoxLayout));
     }
     break;
-    default:
+    
+    // ========================================================
+    // Season 8 - Element Master Adniel (#582)
+    // C3 30 - NPC Talk Result 0x29
+    // ========================================================
+    case 0x29:
+    {
+        g_ErrorReport.Write(
+            L"[Adniel] ReceiveTalk window 0x29\r\n");
+
+        SEASON3B::CreateMessageBox(
+            MSGBOX_LAYOUT_CLASS(
+                SEASON3B::CAdnielMenuMsgBoxLayout));
+    }
+    break;
+default:
     {
         // Data->Value
         g_pNewUISystem->Show(SEASON3B::INTERFACE_NPCSHOP);
@@ -6961,7 +7012,7 @@ void ReceiveLevelUp(const BYTE* ReceiveBuffer, int Size)
     {
         auto Data = (LPPRECEIVE_LEVEL_UP_EXTENDED)ReceiveBuffer;
         CharacterAttribute->Level = Data->Level;
-        CharacterAttribute->LevelUpPoint = Data->LevelUpPoint;
+        CharacterAttribute->LevelUpPoint = Data->LevelUpPoint | (static_cast<DWORD>(Data->HighLevelUpPoint) << 16);
         CharacterAttribute->LifeMax = Data->MaxLife;
         CharacterAttribute->ManaMax = Data->MaxMana;
         CharacterAttribute->Life = Data->MaxLife;
@@ -7064,6 +7115,8 @@ void ReceiveAddPointExtended(const BYTE* ReceiveBuffer)
     }
 
     CharacterAttribute->LevelUpPoint -= Data->AddedAmount;
+    if (g_DarkFantasyStats32Valid && Data->StatType < 5)
+        g_DarkFantasyStats32[Data->StatType] += Data->AddedAmount;
     switch (Data->StatType)
     {
     case 0:
@@ -7094,6 +7147,12 @@ void ReceiveAddPointExtended(const BYTE* ReceiveBuffer)
 void ReceiveSetPointsExtended(const BYTE* ReceiveBuffer)
 {
     auto Data = (LPPRECEIVE_SET_POINTS_EXTENDED)ReceiveBuffer;
+    g_DarkFantasyStats32[0] = Data->Strength;
+    g_DarkFantasyStats32[1] = Data->Dexterity;
+    g_DarkFantasyStats32[2] = Data->Vitality;
+    g_DarkFantasyStats32[3] = Data->Energy;
+    g_DarkFantasyStats32[4] = Data->Charisma;
+    g_DarkFantasyStats32Valid = true;
     CharacterAttribute->Strength = Data->Strength;
     CharacterAttribute->Dexterity = Data->Dexterity;
     CharacterAttribute->Vitality = Data->Vitality;

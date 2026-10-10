@@ -203,7 +203,58 @@ BYTE CSkillManager::GetSkillMasteryType(ActionSkillType iType)
 
 ActionSkillType CSkillManager::MasterSkillToBaseSkillIndex(ActionSkillType masterSkill)
 {
-    auto baseSkill = masterSkill;
+        // S8_RANK6_GLOBAL_MAPPING
+    // Skill base para logica local. ID master real para red.
+    switch (static_cast<int>(masterSkill))
+    {
+        case 339: return static_cast<ActionSkillType>(43);
+        case 340: return static_cast<ActionSkillType>(232);
+        case 342: return static_cast<ActionSkillType>(43);
+        case 343: return static_cast<ActionSkillType>(232);
+        case 346: return static_cast<ActionSkillType>(344);
+        case 363: return static_cast<ActionSkillType>(48);
+        case 390: return static_cast<ActionSkillType>(2);
+        case 391: return static_cast<ActionSkillType>(39);
+        case 392: return static_cast<ActionSkillType>(40);
+        case 393: return static_cast<ActionSkillType>(39);
+        case 394: return static_cast<ActionSkillType>(2);
+        case 406: return static_cast<ActionSkillType>(16);
+        case 411: return static_cast<ActionSkillType>(235);
+        // Party Heal (426) / Strengthener (429): usar la ruta local Heal.
+        // El paquete de red conserva el ID real (426/429).
+        case 426: return AT_SKILL_HEALING;
+        case 429: return AT_SKILL_HEALING;
+        case 431: return static_cast<ActionSkillType>(235);
+        case 434: return static_cast<ActionSkillType>(427);
+        case 459: return static_cast<ActionSkillType>(221);
+        case 460: return static_cast<ActionSkillType>(222);
+        case 462: return static_cast<ActionSkillType>(214);
+        // Blind (461) / Strengthener (463): ruta de ejecucion real de Summoner.
+        // El paquete de red conserva el ID Master real.
+        case 461: return AT_SKILL_ALICE_BLIND;
+        case 463: return AT_SKILL_ALICE_BLIND;
+        case 472: return static_cast<ActionSkillType>(218);
+        case 491: return static_cast<ActionSkillType>(7);
+        case 492: return static_cast<ActionSkillType>(236);
+        case 493: return static_cast<ActionSkillType>(55);
+        case 494: return static_cast<ActionSkillType>(236);
+        case 496: return static_cast<ActionSkillType>(237);
+        case 497: return static_cast<ActionSkillType>(495);
+        case 519: return static_cast<ActionSkillType>(65);
+        case 520: return static_cast<ActionSkillType>(78);
+        case 522: return static_cast<ActionSkillType>(64);
+        case 523: return static_cast<ActionSkillType>(238);
+        case 524: return static_cast<ActionSkillType>(521);
+        case 561: return static_cast<ActionSkillType>(264);
+        case 562: return static_cast<ActionSkillType>(262);
+        case 563: return static_cast<ActionSkillType>(263);
+        case 564: return static_cast<ActionSkillType>(265);
+        case 566: return static_cast<ActionSkillType>(265);
+        case 567: return static_cast<ActionSkillType>(565);
+        default:
+            break;
+    }
+auto baseSkill = masterSkill;
 
     while (true)
     {
@@ -219,6 +270,95 @@ ActionSkillType CSkillManager::MasterSkillToBaseSkillIndex(ActionSkillType maste
 
     return baseSkill;
 }
+ActionSkillType CSkillManager::MasterSkillToClientLogicSkill(ActionSkillType skill)
+{
+    switch (skill)
+    {
+        case AT_SKILL_CYCLONE_STR:
+        case AT_SKILL_SLASH_STR:
+        case AT_SKILL_FALLING_SLASH_STR:
+        case AT_SKILL_LUNGE_STR:
+        case AT_SKILL_TWISTING_SLASH_STR:
+        case AT_SKILL_RAGEFUL_BLOW_STR:
+        case AT_SKILL_TWISTING_SLASH_MASTERY:
+        case AT_SKILL_RAGEFUL_BLOW_MASTERY:
+        case AT_SKILL_DEATHSTAB_STR:
+        case AT_SKILL_STRIKE_OF_DESTRUCTION_STR:
+        case AT_SKILL_SWELL_LIFE_STR:
+        case AT_SKILL_SWELL_LIFE_PROFICIENCY:
+
+        case AT_SKILL_FLAME_STR:
+        case AT_SKILL_LIGHTNING_STR:
+        case AT_SKILL_EXPANSION_OF_WIZARDRY_STR:
+        case AT_SKILL_INFERNO_STR:
+        case AT_SKILL_BLAST_STR:
+        case AT_SKILL_EXPANSION_OF_WIZARDRY_MASTERY:
+        case AT_SKILL_POISON_STR:
+        case AT_SKILL_EVIL_SPIRIT_STR:
+        case AT_SKILL_DECAY_STR:
+        case AT_SKILL_HELL_FIRE_STR:
+        case AT_SKILL_ICE_STR:
+        case AT_SKILL_METEO_STR:
+        case AT_SKILL_NOVA_STR:
+        case AT_SKILL_METEO_MASTERY:
+        case AT_SKILL_SOUL_BARRIER_STR:
+        case AT_SKILL_SOUL_BARRIER_PROFICIENCY:
+
+        case AT_SKILL_HEALING_STR:
+        case AT_SKILL_TRIPLE_SHOT_STR:
+        case AT_SKILL_PENETRATION_STR:
+        case AT_SKILL_DEFENSE_STR:
+        case AT_SKILL_TRIPLE_SHOT_MASTERY:
+        case AT_SKILL_ATTACK_STR:
+        case AT_SKILL_ATTACK_MASTERY:
+        case AT_SKILL_DEFENSE_MASTERY:
+        case AT_SKILL_ICE_ARROW_STR:
+        case AT_SKILL_INFINITY_ARROW_STR:
+
+        case AT_SKILL_ALICE_SLEEP_STR:
+        case AT_SKILL_ALICE_CHAINLIGHTNING_STR:
+        case AT_SKILL_LIGHTNING_SHOCK_STR:
+        case AT_SKILL_ALICE_DRAINLIFE_STR:
+        case AT_SKILL_ALICE_BERSERKER_STR:
+
+        case AT_SKILL_CYCLONE_STR_MG:
+        case AT_SKILL_LIGHTNING_STR_MG:
+        case AT_SKILL_TWISTING_SLASH_STR_MG:
+        case AT_SKILL_POWER_SLASH_STR:
+        case AT_SKILL_FLAME_STR_MG:
+        case AT_SKILL_BLAST_STR_MG:
+        case AT_SKILL_INFERNO_STR_MG:
+        case AT_SKILL_EVIL_SPIRIT_STR_MG:
+        case AT_SKILL_ICE_STR_MG:
+        case AT_SKILL_FIRE_SLASH_STR:
+
+        case AT_SKILL_FIREBURST_STR:
+        case AT_SKILL_FORCE_WAVE_STR:
+        case AT_SKILL_ADD_CRITICAL_STR1:
+        case AT_SKILL_EARTHSHAKE_STR:
+        case AT_SKILL_FIREBURST_MASTERY:
+        case AT_SKILL_ADD_CRITICAL_STR2:
+        case AT_SKILL_EARTHSHAKE_MASTERY:
+        case AT_SKILL_ADD_CRITICAL_STR3:
+        case AT_SKILL_FIRE_SCREAM_STR:
+
+        case AT_SKILL_KILLING_BLOW_STR:
+        case AT_SKILL_BEAST_UPPERCUT_STR:
+        case AT_SKILL_KILLING_BLOW_MASTERY:
+        case AT_SKILL_BEAST_UPPERCUT_MASTERY:
+        case AT_SKILL_CHAIN_DRIVE_STR:
+        case AT_SKILL_DARKSIDE_STR:
+        case AT_SKILL_DRAGON_ROAR_STR:
+        case AT_SKILL_DEF_UP_OURFORCES_STR:
+        case AT_SKILL_DEF_UP_OURFORCES_MASTERY:
+        case AT_SKILL_HP_UP_OURFORCES_STR:
+            return skill;
+
+        default:
+            return MasterSkillToBaseSkillIndex(skill);
+    }
+}
+
 
 bool CSkillManager::skillVScharactorCheck(const DemendConditionInfo& basicInfo, const DemendConditionInfo& heroInfo)
 {

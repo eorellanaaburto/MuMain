@@ -1,0 +1,15 @@
+MU ONLINE S8 / HUD INSPIRADO EN S15 — CONCEPTO V1
+
+ESTADO: MAQUETA INTERACTIVA. NO ES INSTALADOR, NO MODIFICA MU ONLINE.
+
+ABRIR: Extraer MU_S8_HUD_S15_CONCEPTO_V1.zip en C:\Users\Usuario\Downloads\,
+ ejecutar PowerShell: 
+ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Users\Usuario\Downloads\MU_S8_HUD_S15_CONCEPTO_V1\ABRIR_DISENO_HUD.ps1"
+
+El HTML funciona sin Internet. Botones: resolución, inventario, Artifact, ambos. Teclas I/A.
+
+El prototipo describe la nueva distribución, pero Main.exe utiliza GFx cifrado.
+Para introducir el diseño dentro del juego tendremos que crear texturas OZD compatibles,
+modificar el GFx o el código según corresponda y comprobar hitboxes y protocolo.
+El color de Pts, los valores dinámicos y el orden de dibujo requieren verificaciones en el cliente.
+No renombrar PNG como OZD. No copiar este prototipo a Data.

@@ -1525,7 +1525,8 @@
         "pt": "Esfera de semente (Fogo)"
       },
       "tags": ["socketSeedSphere"],
-      "slot": "mainHand"
+      "width": 1,
+      "height": 1
     },
     {
       "number": 119,
@@ -1535,7 +1536,8 @@
         "pt": "Esfera de semente (Água)"
       },
       "tags": ["socketSeedSphere"],
-      "slot": "mainHand"
+      "width": 1,
+      "height": 1
     },
     {
       "number": 120,
@@ -1545,7 +1547,8 @@
         "pt": "Esfera de semente (Gelo)"
       },
       "tags": ["socketSeedSphere"],
-      "slot": "mainHand"
+      "width": 1,
+      "height": 1
     },
     {
       "number": 121,
@@ -1555,7 +1558,8 @@
         "pt": "Esfera de semente (Vento)"
       },
       "tags": ["socketSeedSphere"],
-      "slot": "mainHand"
+      "width": 1,
+      "height": 1
     },
     {
       "number": 122,
@@ -1565,7 +1569,8 @@
         "pt": "Esfera Semente (Relâmpago)"
       },
       "tags": ["socketSeedSphere"],
-      "slot": "mainHand"
+      "width": 1,
+      "height": 1
     },
     {
       "number": 123,
@@ -1575,7 +1580,8 @@
         "pt": "Esfera de semente (Terra)"
       },
       "tags": ["socketSeedSphere"],
-      "slot": "mainHand"
+      "width": 1,
+      "height": 1
     },
     {
       "number": 124,
@@ -1585,7 +1591,8 @@
         "pt": "Esfera de semente (Fogo)"
       },
       "tags": ["socketSeedSphere"],
-      "slot": "mainHand"
+      "width": 1,
+      "height": 1
     },
     {
       "number": 125,
@@ -1595,7 +1602,8 @@
         "pt": "Esfera de semente (Água)"
       },
       "tags": ["socketSeedSphere"],
-      "slot": "mainHand"
+      "width": 1,
+      "height": 1
     },
     {
       "number": 126,
@@ -1605,7 +1613,8 @@
         "pt": "Esfera de semente (Gelo)"
       },
       "tags": ["socketSeedSphere"],
-      "slot": "mainHand"
+      "width": 1,
+      "height": 1
     },
     {
       "number": 127,
@@ -1615,7 +1624,8 @@
         "pt": "Esfera de semente (Vento)"
       },
       "tags": ["socketSeedSphere"],
-      "slot": "mainHand"
+      "width": 1,
+      "height": 1
     },
     {
       "number": 128,
@@ -1625,7 +1635,8 @@
         "pt": "Esfera Semente (Relâmpago)"
       },
       "tags": ["socketSeedSphere"],
-      "slot": "mainHand"
+      "width": 1,
+      "height": 1
     },
     {
       "number": 129,
@@ -1635,7 +1646,8 @@
         "pt": "Esfera de semente (Terra)"
       },
       "tags": ["socketSeedSphere"],
-      "slot": "mainHand"
+      "width": 1,
+      "height": 1
     },
     {
       "number": 130,
@@ -1974,6 +1986,345 @@
         "summoner": 1,
         "rageFighter": 1
       }
+    },
+    {
+      "number": 144,
+      "name": {
+        "en": "Mithril Fragment",
+        "es": "Fragmento de Mithril",
+        "pt": "Fragmento de Mithril"
+      },
+      "width": 1,
+      "height": 1,
+      "repairable": false
+    },
+    {
+      "number": 146,
+      "name": {
+        "en": "Elixir Fragment",
+        "es": "Fragmento de Elixir",
+        "pt": "Fragmento de Elixir"
+      },
+      "width": 1,
+      "height": 1,
+      "repairable": false
+    },
+    {
+      "number": 150,
+      "name": {
+        "en": "Jewel Combination Frame",
+        "es": "Marco de Combinación de Joyas",
+        "pt": "Moldura de Combinação de Joias"
+      },
+      "width": 1,
+      "height": 2,
+      "repairable": false
+    },
+    {
+      "number": 151,
+      "name": {
+        "en": "Spirit Powder",
+        "es": "Polvo Espiritual",
+        "pt": "Pó Espiritual"
+      },
+      "width": 1,
+      "height": 2,
+      "repairable": false
+    },
+    {
+      "number": 200,
+      "name": {
+        "en": "Muren's Book of Magic",
+        "es": "Libro Mágico de Muren",
+        "pt": "Muren's Book of Magic"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 201,
+      "name": {
+        "en": "Scroll of Etramu",
+        "es": "Pergamino de Etramu",
+        "pt": "Scroll of Etramu"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 202,
+      "name": {
+        "en": "Lorencia Knights' Iron Shield",
+        "es": "Escudo de Hierro de los Caballeros de Lorencia",
+        "pt": "Lorencia Knights' Iron Shield"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 203,
+      "name": {
+        "en": "Iron Shield of the Magic",
+        "es": "Escudo de Hierro de la Magia",
+        "pt": "Iron Shield of the Magic"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 204,
+      "name": {
+        "en": "Hero Elixir",
+        "es": "Elixir del Héroe",
+        "pt": "Hero Elixir"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 205,
+      "name": {
+        "en": "Brave Hero Elixir",
+        "es": "Elixir del Héroe Valiente",
+        "pt": "Brave Hero Elixir"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 206,
+      "name": {
+        "en": "Gladiator's Dagger",
+        "es": "Daga del Gladiador",
+        "pt": "Gladiator's Dagger"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 207,
+      "name": {
+        "en": "Merciless Gladiator's Dagger",
+        "es": "Daga del Gladiador Despiadado",
+        "pt": "Merciless Gladiator's Dagger"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 208,
+      "name": {
+        "en": "Kundun's Madness Blade",
+        "es": "Espada de la Locura de Kundun",
+        "pt": "Kundun's Madness Blade"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 209,
+      "name": {
+        "en": "Kundun's Magic Spell Scroll",
+        "es": "Pergamino Mágico de Kundun",
+        "pt": "Kundun's Magic Spell Scroll"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 210,
+      "name": {
+        "en": "Empire Guardians' Stronghold",
+        "es": "Fortaleza de los Guardianes del Imperio",
+        "pt": "Empire Guardians' Stronghold"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 211,
+      "name": {
+        "en": "Ancient Icarus Scroll",
+        "es": "Pergamino Antiguo de Icarus",
+        "pt": "Ancient Icarus Scroll"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 212,
+      "name": {
+        "en": "Arca's Prophecy",
+        "es": "Profecía de Arca",
+        "pt": "Arca's Prophecy"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 213,
+      "name": {
+        "en": "Antonia's Sword",
+        "es": "Espada de Antonia",
+        "pt": "Antonia's Sword"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 214,
+      "name": {
+        "en": "Kundun's Seal Scroll",
+        "es": "Pergamino del Sello de Kundun",
+        "pt": "Kundun's Seal Scroll"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 3,
+      "height": 3,
+      "repairable": false,
+      "slot": "pentagram"
+    },
+    {
+      "number": 221,
+      "name": {
+        "en": "Errtel of Anger",
+        "es": "Errtel de Ira",
+        "pt": "Errtel of Anger"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 1,
+      "height": 1,
+      "repairable": false
+    },
+    {
+      "number": 231,
+      "name": {
+        "en": "Errtel of Blessing",
+        "es": "Errtel de Bendición",
+        "pt": "Errtel of Blessing"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 1,
+      "height": 1,
+      "repairable": false
+    },
+    {
+      "number": 241,
+      "name": {
+        "en": "Errtel of Integrity",
+        "es": "Errtel de Integridad",
+        "pt": "Errtel of Integrity"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 1,
+      "height": 1,
+      "repairable": false
+    },
+    {
+      "number": 251,
+      "name": {
+        "en": "Errtel of Divinity",
+        "es": "Errtel de Divinidad",
+        "pt": "Errtel of Divinity"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 1,
+      "height": 1,
+      "repairable": false
+    },
+    {
+      "number": 261,
+      "name": {
+        "en": "Errtel of Gale",
+        "es": "Errtel de Vendaval",
+        "pt": "Errtel of Gale"
+      },
+      "tags": [
+        "valuable"
+      ],
+      "width": 1,
+      "height": 1,
+      "repairable": false
     }
   ]
 }

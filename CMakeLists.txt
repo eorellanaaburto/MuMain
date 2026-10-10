@@ -170,6 +170,7 @@ FetchContent_Declare(glm
     GIT_REPOSITORY https://github.com/g-truc/glm.git
     GIT_TAG        1.0.1
     GIT_SHALLOW    TRUE
+    GIT_SUBMODULES ""
 )
 set(GLM_ENABLE_CXX_20 ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glm)
@@ -181,11 +182,12 @@ FetchContent_Declare(spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog.git
     GIT_TAG        v1.15.3
     GIT_SHALLOW    TRUE
+    GIT_SUBMODULES ""
 )
 FetchContent_MakeAvailable(spdlog)
 
 FetchContent_Declare(miniaudio
-    URL https://github.com/mackron/miniaudio/archive/9634bedb5b5a2ca38c1ee7108a9358a4e233f14d.tar.gz
+    URL C:/Users/Usuario/Documents/Codex/2026-09-30/et/work/miniaudio.tar.gz
     URL_HASH SHA256=1a3a79b80fc6f0b0cc155e28b954a598e0ddfa2db64e2afa8466be88c476fa55
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     SOURCE_SUBDIR _fetchcontent_only
@@ -198,6 +200,7 @@ FetchContent_Declare(SDL3_ttf
     GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf.git
     GIT_TAG        a1ce3670aec736ecbf0936c43f2f0cc53aa61e5b
     GIT_SHALLOW    FALSE
+    GIT_SUBMODULES ""
     PATCH_COMMAND
         "${CMAKE_COMMAND}"
         "-DSOURCE_DIR=<SOURCE_DIR>"
@@ -221,3 +224,6 @@ if(BUILD_TESTING)
     enable_testing()
     add_subdirectory(tests)
 endif()
+
+
+

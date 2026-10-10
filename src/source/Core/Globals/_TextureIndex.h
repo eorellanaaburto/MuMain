@@ -693,6 +693,13 @@ enum
     BITMAP_EFFECT_TEXTURE_END = 33000,
     BITMAP_NONAMED_TEXTURES_BEGIN = 33001,
     BITMAP_NONAMED_TEXTURES_END = 0x7FFFFFFF,
+
+    // Dedicated slot for the Artifact/Pentagram panel background, 2026-10-09.
+    // Not reused by any other window (unlike BITMAP_INTERFACE_NEW_PERSONALINVENTORY_BEGIN+1,
+    // which CharacterInfoWindow, NPCShop, quest/lucky-item/gold-bowman windows etc. all alias
+    // to the same slot for their own small generic "top" piece -- loading a large custom
+    // texture there gets silently clobbered whenever any of those other windows also inits).
+    BITMAP_ARTIFACT_PANEL_BG = 33050,
 };
 
 #endif // _TEXTURE_INDEX_H_

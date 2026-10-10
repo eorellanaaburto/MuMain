@@ -1,4 +1,4 @@
-// NewUIMixInventory.h: interface for the CNewUIMixInventory class.
+﻿// NewUIMixInventory.h: interface for the CNewUIMixInventory class.
 //////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -45,6 +45,10 @@ namespace SEASON3B
         float m_fInventoryColor[3];
         float m_fInventoryWarningColor[3];
 
+        // Element Master Adniel - Season 8
+        bool m_bAdnielMode;
+        BYTE m_byAdnielRecipeId;
+
         CUISocketListBox m_SocketListBox;
 
     public:
@@ -65,6 +69,11 @@ namespace SEASON3B
 
         void SetMixState(int iMixState);
         int GetMixState() { return m_iMixState; }
+
+        // Element Master Adniel
+        void SetAdnielMix(BYTE recipeId);
+        bool IsAdnielMix() const { return m_bAdnielMode; }
+        BYTE GetAdnielRecipeId() const { return m_byAdnielRecipeId; }
 
         int GetPointedItemIndex();
 

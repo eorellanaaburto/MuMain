@@ -1,4 +1,4 @@
-// NewUIInventoryActionController.cpp
+﻿// NewUIInventoryActionController.cpp
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
@@ -280,12 +280,81 @@ bool CNewUIInventoryActionController::HandleSellToNPC(CNewUIInventoryCtrl* targe
 
 bool CNewUIInventoryActionController::HandleInventoryRightClickActions(CNewUIInventoryCtrl* targetControl) const
 {
+    // Pentagram / Artifact tiene prioridad sobre el inventario extendido.
+    ITEM* pItem = targetControl->FindItemAtPt(MouseX, MouseY);
+
+    if (pItem != nullptr)
+    {
+        const int pentagramIndex = targetControl->GetIndexByItem(pItem);
+
+        if (pentagramIndex >= 0)
+        {
+            const ITEM_ATTRIBUTE* pItemAttr = &ItemAttribute[pItem->Type];
+
+            g_ErrorReport.Write(
+                L"[PENTAGRAM-CLIENT] RightClick item from=%d type=%d attrSlot=%d\r\n",
+                pentagramIndex,
+                pItem->Type,
+                (int)pItemAttr->m_byItemSlot);
+
+            // Pentagram Season 8: grupo 12, indices 200..214.
+            // Type = 12 * 512 + index => 6344..6358.
+            const bool isPentagram =
+                (pItem->Type >= 6344 && pItem->Type <= 6358);
+
+            if (isPentagram)
+            {
+                g_ErrorReport.Write(
+                    L"[PENTAGRAM-CLIENT] FORCE inventory->236 from=%d type=%d attrSlot=%d\r\n",
+                    pentagramIndex,
+                    pItem->Type,
+                    (int)pItemAttr->m_byItemSlot);
+
+                if (!CNewUIInventoryCtrl::CreatePickedItem(targetControl, pItem))
+                {
+                    g_ErrorReport.Write(
+                        L"[PENTAGRAM-CLIENT] CreatePickedItem FAILED\r\n");
+                    return true;
+                }
+
+                CNewUIPickedItem* picked = CNewUIInventoryCtrl::GetPickedItem();
+                if (picked == nullptr)
+                {
+                    g_ErrorReport.Write(
+                        L"[PENTAGRAM-CLIENT] GetPickedItem FAILED\r\n");
+                    return true;
+                }
+
+                targetControl->RemoveItem(pItem);
+                picked->HidePickedItem();
+
+                const bool sent = SendRequestEquipmentItem(
+                    STORAGE_TYPE::INVENTORY,
+                    pentagramIndex,
+                    picked->GetItem(),
+                    STORAGE_TYPE::INVENTORY,
+                    PENTAGRAM_SERVER_SLOT);
+
+                g_ErrorReport.Write(
+                    L"[PENTAGRAM-CLIENT] Send inventory->236 result=%d\r\n",
+                    sent ? 1 : 0);
+
+                if (!sent)
+                {
+                    CNewUIInventoryCtrl::BackupPickedItem();
+                }
+
+                return true;
+            }
+        }
+    }
+
     if (g_pNewUISystem->IsVisible(INTERFACE_INVENTORY_EXT))
     {
         return TryTransferBetweenInventorySections(targetControl);
     }
 
-    ITEM* pItem = targetControl->FindItemAtPt(MouseX, MouseY);
+    pItem = targetControl->FindItemAtPt(MouseX, MouseY);
     if (pItem == nullptr)
     {
         return false;
@@ -372,6 +441,30 @@ bool CNewUIInventoryActionController::TryEquipItem(CNewUIInventoryCtrl* targetCo
 {
     const ITEM_ATTRIBUTE* pItemAttr = &ItemAttribute[pItem->Type];
     int nDstIndex = pItemAttr->m_byItemSlot;
+
+    if (nDstIndex == PENTAGRAM_SERVER_SLOT)
+    {
+        if (!m_pContext->IsEquipable(nDstIndex, pItem)
+            || g_pMyInventory == nullptr || g_pMyInventory->GetPentagramItem()->Type >= 0
+            || g_pMyInventory->IsPentagramPanelBlocked())
+            return true;
+
+        if (!CNewUIInventoryCtrl::CreatePickedItem(targetControl, pItem))
+            return false;
+
+        CNewUIPickedItem* picked = CNewUIInventoryCtrl::GetPickedItem();
+        if (picked == nullptr)
+            return false;
+
+        targetControl->RemoveItem(pItem);
+        picked->HidePickedItem();
+        g_ErrorReport.Write(L"[PENTAGRAM-CLIENT] Move inventory->236 from=%d type=%d\r\n",
+                            iSrcIndex, picked->GetItem()->Type);
+        if (!SendRequestEquipmentItem(STORAGE_TYPE::INVENTORY, iSrcIndex, picked->GetItem(),
+                                      STORAGE_TYPE::INVENTORY, PENTAGRAM_SERVER_SLOT))
+            CNewUIInventoryCtrl::BackupPickedItem();
+        return true;
+    }
 
     if (nDstIndex < 0 || nDstIndex >= MAX_EQUIPMENT_INDEX)
     {
@@ -1037,3 +1130,6 @@ bool CNewUIInventoryActionController::TryTransferBetweenInventorySections(CNewUI
 }
 
 } // namespace SEASON3B
+
+
+

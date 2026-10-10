@@ -401,10 +401,11 @@ typedef struct
     WORD         MagicSpeed;
     WORD         MaxAttackSpeed;
     BYTE		 InventoryExtensions;
-    BYTE         Spare;
+    BYTE         HighLevelUpPoint;
     WORD         Resets;
 } PRECEIVE_JOIN_MAP_SERVER_EXTENDED, * LPPRECEIVE_JOIN_MAP_SERVER_EXTENDED;
 #pragma pack(pop)
+static_assert(sizeof(PRECEIVE_JOIN_MAP_SERVER_EXTENDED) == 92);
 
 #pragma pack(push, 1)
 typedef struct
@@ -823,6 +824,7 @@ typedef struct {
 } PRECEIVE_REPAIR_GOLD, * LPPRECEIVE_REPAIR_GOLD;
 
 //receive level up
+#pragma pack(push, 1)
 typedef struct {
     PBMSG_HEADER Header;
     BYTE         SubCode;
@@ -851,7 +853,10 @@ typedef struct {
     short        MaxAddPoint;
     WORD		 wMinusPoint;
     WORD		 wMaxMinusPoint;
+    BYTE         HighLevelUpPoint;
 } PRECEIVE_LEVEL_UP_EXTENDED, * LPPRECEIVE_LEVEL_UP_EXTENDED;
+#pragma pack(pop)
+static_assert(sizeof(PRECEIVE_LEVEL_UP_EXTENDED) == 33);
 
 typedef struct {
     PBMSG_HEADER  Header;

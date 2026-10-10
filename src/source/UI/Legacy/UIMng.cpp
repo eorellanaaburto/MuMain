@@ -100,52 +100,29 @@ void CUIMng::CreateTitleSceneUI()
 
     m_asprTitle = new CSprite[UIM_TS_MAX];
 
-    float _fScaleXTemp = (float)rInput.GetScreenWidth() / 1280.0f;
-    float _fScaleYTemp = (float)rInput.GetScreenHeight() / 1024.0f;
+    const float imageScaleX = (float)rInput.GetScreenWidth() / 1280.0f;
+    const float imageScaleY = (float)rInput.GetScreenHeight() / 1024.0f;
+    auto createSprite = [this](int index, int width, int height, int bitmap, int x, int y,
+                               float scaleX, float scaleY)
+    {
+        m_asprTitle[index].Create(width, height, bitmap, 0, NULL, 0, 0, false,
+                                 SPR_SIZING_DATUMS_LT, scaleX, scaleY);
+        m_asprTitle[index].SetPosition(x, y);
+        m_asprTitle[index].Show();
+    };
 
-    m_asprTitle[UIM_TS_BACK0].Create(400, 69, BITMAP_TITLE, 0, NULL, 0, 0, false, SPR_SIZING_DATUMS_LT, fScaleX,
-                                     fScaleY);
-    m_asprTitle[UIM_TS_BACK0].SetPosition(0, 0);
-
-    m_asprTitle[UIM_TS_BACK1].Create(400, 69, BITMAP_TITLE + 1, 0, NULL, 0, 0, false, SPR_SIZING_DATUMS_LT, fScaleX,
-                                     fScaleY);
-    m_asprTitle[UIM_TS_BACK1].SetPosition(400, 0);
-
-    m_asprTitle[UIM_TS_BACK2].Create(400, 100, BITMAP_TITLE + 6, 0, NULL, 0, 0, false, SPR_SIZING_DATUMS_LT, fScaleX,
-                                     fScaleY);
-    m_asprTitle[UIM_TS_BACK2].SetPosition(0, 500);
-
-    m_asprTitle[UIM_TS_BACK3].Create(400, 100, BITMAP_TITLE + 7, 0, NULL, 0, 0, false, SPR_SIZING_DATUMS_LT, fScaleX,
-                                     fScaleY);
-    m_asprTitle[UIM_TS_BACK3].SetPosition(400, 500);
-
-    m_asprTitle[UIM_TS_BACK4].Create(512, 512, BITMAP_TITLE + 8, 0, NULL, 0, 0, false, SPR_SIZING_DATUMS_LT,
-                                     _fScaleXTemp, _fScaleYTemp);
-    m_asprTitle[UIM_TS_BACK4].SetPosition(0, 119);
-
-    m_asprTitle[UIM_TS_BACK5].Create(512, 512, BITMAP_TITLE + 9, 0, NULL, 0, 0, false, SPR_SIZING_DATUMS_LT,
-                                     _fScaleXTemp, _fScaleYTemp);
-    m_asprTitle[UIM_TS_BACK5].SetPosition(512, 119);
-
-    m_asprTitle[UIM_TS_BACK6].Create(256, 512, BITMAP_TITLE + 10, 0, NULL, 0, 0, false, SPR_SIZING_DATUMS_LT,
-                                     _fScaleXTemp, _fScaleYTemp);
-    m_asprTitle[UIM_TS_BACK6].SetPosition(1024, 119);
-
-    m_asprTitle[UIM_TS_BACK7].Create(512, 223, BITMAP_TITLE + 11, 0, NULL, 0, 0, false, SPR_SIZING_DATUMS_LT,
-                                     _fScaleXTemp, _fScaleYTemp);
-    m_asprTitle[UIM_TS_BACK7].SetPosition(0, 512 + 119);
-
-    m_asprTitle[UIM_TS_BACK8].Create(512, 223, BITMAP_TITLE + 12, 0, NULL, 0, 0, false, SPR_SIZING_DATUMS_LT,
-                                     _fScaleXTemp, _fScaleYTemp);
-    m_asprTitle[UIM_TS_BACK8].SetPosition(512, 512 + 119);
-
-    m_asprTitle[UIM_TS_BACK9].Create(256, 223, BITMAP_TITLE + 13, 0, NULL, 0, 0, false, SPR_SIZING_DATUMS_LT,
-                                     _fScaleXTemp, _fScaleYTemp);
-    m_asprTitle[UIM_TS_BACK9].SetPosition(1024, 512 + 119);
-
-    m_asprTitle[UIM_TS_121518].Create(256, 206, BITMAP_TITLE + 3, 0, NULL, 0, 0, false, SPR_SIZING_DATUMS_LT, fScaleX,
-                                      fScaleY);
-    m_asprTitle[UIM_TS_121518].SetPosition(544, 60);
+    for (int i = 0; i < 6; ++i)
+    {
+        const int column = i % 3;
+        const int row = i / 3;
+        createSprite(UIM_TS_BACK4 + i, column == 2 ? 256 : 512, row == 0 ? 512 : 223,
+                     BITMAP_TITLE + 8 + i, column * 512, 119 + row * 512,
+                     imageScaleX, imageScaleY);
+    }
+    createSprite(UIM_TS_BACK0, 400, 69, BITMAP_TITLE, 0, 0, fScaleX, fScaleY);
+    createSprite(UIM_TS_BACK1, 400, 69, BITMAP_TITLE + 1, 400, 0, fScaleX, fScaleY);
+    createSprite(UIM_TS_BACK2, 400, 100, BITMAP_TITLE + 6, 0, 500, fScaleX, fScaleY);
+    createSprite(UIM_TS_BACK3, 400, 100, BITMAP_TITLE + 7, 400, 500, fScaleX, fScaleY);
 
     m_pgbLoding = new CGaugeBar;
 
@@ -153,12 +130,7 @@ void CUIMng::CreateTitleSceneUI()
     m_pgbLoding->Create(4, 15, BITMAP_TITLE + 5, &rc, 0, 0, -1, true, fScaleX, fScaleY);
 
     m_pgbLoding->SetPosition(72, 540);
-    for (int i = 0; i < UIM_TS_MAX; ++i)
-    {
-        m_asprTitle[i].Show();
-    }
     m_pgbLoding->Show();
-    m_asprTitle[UIM_TS_121518].Show(false);
     m_nScene = UIM_SCENE_TITLE;
 }
 
@@ -187,12 +159,14 @@ void CUIMng::RenderTitleSceneUI(HDC hDC, DWORD dwNow, DWORD dwTotal)
     mu::GetRenderer().ClearScreen();
     ::BeginBitmap();
 
-    for (int i = 0; i < UIM_TS_MAX; ++i)
+    for (int i = UIM_TS_BACK4; i <= UIM_TS_BACK9; ++i)
     {
-        if (i == 2)
-            continue;
         m_asprTitle[i].Render();
     }
+    m_asprTitle[UIM_TS_BACK0].Render();
+    m_asprTitle[UIM_TS_BACK1].Render();
+    m_asprTitle[UIM_TS_BACK2].Render();
+    m_asprTitle[UIM_TS_BACK3].Render();
 
     m_pgbLoding->SetValue(dwNow, dwTotal);
     m_pgbLoding->Render();

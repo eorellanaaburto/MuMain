@@ -1316,7 +1316,8 @@ void Action(CHARACTER* c, OBJECT* o, bool Now)
         auto iSkill = static_cast<ActionSkillType>((g_MovementSkill.m_bMagic) ? (CharacterAttribute->Skill[g_MovementSkill.m_iSkill]) : g_MovementSkill.m_iSkill);
 
         float Distance = gSkillManager.GetSkillDistance(iSkill, c);
-        switch (iSkill)
+        const auto LogicSkill = gSkillManager.MasterSkillToBaseSkillIndex(iSkill);
+        switch (LogicSkill)
         {
         case AT_SKILL_IMPALE:
             if (Hero->Helper.Type != MODEL_HORN_OF_UNIRIA)
@@ -1365,7 +1366,11 @@ void Action(CHARACTER* c, OBJECT* o, bool Now)
         case AT_SKILL_POISON:
         case AT_SKILL_POISON_STR:
         case AT_SKILL_METEO:
-        case AT_SKILL_LIGHTNING:
+        case AT_SKILL_METEO_STR:
+        case AT_SKILL_METEO_MASTERY:
+        case AT_SKILL_ICE_STORM:
+            case AT_SKILL_NOVA:
+            case AT_SKILL_LIGHTNING:
         case AT_SKILL_LIGHTNING_STR:
         case AT_SKILL_LIGHTNING_STR_MG:
         case AT_SKILL_ENERGYBALL:

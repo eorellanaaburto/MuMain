@@ -5422,6 +5422,29 @@ bool SEASON3B::CSeedMasterMenuMsgBoxLayout::SetLayout()
     return true;
 }
 
+bool SEASON3B::CAdnielErrtelMenuMsgBoxLayout::SetLayout()
+{
+    CAdnielErrtelMenuMsgBox* pMsgBox = GetMsgBox();
+
+    if (pMsgBox == nullptr)
+        return false;
+
+    return pMsgBox->Create();
+}
+
+bool SEASON3B::CAdnielMenuMsgBoxLayout::SetLayout()
+{
+    CAdnielMenuMsgBox* pMsgBox = GetMsgBox();
+
+    if (0 == pMsgBox)
+        return false;
+
+    if (false == pMsgBox->Create())
+        return false;
+
+    return true;
+}
+
 bool SEASON3B::CSeedInvestigatorMenuMsgBoxLayout::SetLayout()
 {
     CSeedInvestigatorMenuMsgBox* pMsgBox = GetMsgBox();
@@ -6482,6 +6505,1613 @@ void SEASON3B::CSeedMasterMenuMsgBox::RenderButtons()
     m_BtnSeedSphere.Render();
     m_BtnExit.Render();
 }
+
+// ============================================================
+// ELEMENT MASTER ADNIEL - SEASON 8
+// ============================================================
+
+SEASON3B::CAdnielErrtelMenuMsgBox::CAdnielErrtelMenuMsgBox()
+{
+    m_iMiddleCount = 12;
+}
+
+SEASON3B::CAdnielErrtelMenuMsgBox::~CAdnielErrtelMenuMsgBox()
+{
+    Release();
+}
+
+bool SEASON3B::CAdnielErrtelMenuMsgBox::Create(float fPriority)
+{
+    SetAddCallbackFunc();
+
+    int x = (SCREEN_WIDTH / 2) - (MSGBOX_WIDTH / 2);
+    int y = 35;
+
+    int height =
+        MSGBOX_TOP_HEIGHT +
+        (m_iMiddleCount * MSGBOX_MIDDLE_HEIGHT) +
+        MSGBOX_BOTTOM_HEIGHT;
+
+    CNewUIMessageBoxBase::Create(
+        x,
+        y,
+        MSGBOX_WIDTH,
+        height,
+        fPriority);
+
+    SetButtonInfo();
+
+    return true;
+}
+
+void SEASON3B::CAdnielErrtelMenuMsgBox::Release()
+{
+    CNewUIMessageBoxBase::Release();
+}
+
+bool SEASON3B::CAdnielErrtelMenuMsgBox::Update()
+{
+    m_BtnAnger.Update();
+    m_BtnBlessing.Update();
+    m_BtnIntegrity.Update();
+    m_BtnDivinity.Update();
+    m_BtnGale.Update();
+    m_BtnExit.Update();
+
+    return true;
+}
+
+bool SEASON3B::CAdnielErrtelMenuMsgBox::Render()
+{
+    EnableAlphaTest();
+
+    RenderFrame();
+    RenderTexts();
+    RenderButtons();
+
+    DisableAlphaBlend();
+
+    return true;
+}
+
+CALLBACK_RESULT
+SEASON3B::CAdnielErrtelMenuMsgBox::LButtonUp(
+    class CNewUIMessageBoxBase* pOwner,
+    const leaf::xstreambuf& xParam)
+{
+    auto* pMsgBox =
+        dynamic_cast<CAdnielErrtelMenuMsgBox*>(pOwner);
+
+    if (pMsgBox == nullptr)
+        return CALLBACK_CONTINUE;
+
+    BYTE recipe = 0;
+
+    if (pMsgBox->m_BtnAnger.IsMouseIn())
+        recipe = 1;
+    else if (pMsgBox->m_BtnBlessing.IsMouseIn())
+        recipe = 2;
+    else if (pMsgBox->m_BtnIntegrity.IsMouseIn())
+        recipe = 3;
+    else if (pMsgBox->m_BtnDivinity.IsMouseIn())
+        recipe = 4;
+    else if (pMsgBox->m_BtnGale.IsMouseIn())
+        recipe = 5;
+
+    if (recipe != 0)
+    {
+        PlayBuffer(SOUND_CLICK01);
+
+        g_pMixInventory->SetAdnielMix(recipe);
+
+        g_MessageBox->SendEvent(
+            pOwner,
+            MSGBOX_EVENT_DESTROY);
+
+        g_pNewUISystem->Show(
+            SEASON3B::INTERFACE_MIXINVENTORY);
+
+        return CALLBACK_BREAK;
+    }
+
+    if (pMsgBox->m_BtnExit.IsMouseIn())
+    {
+        PlayBuffer(SOUND_CLICK01);
+
+        g_MessageBox->SendEvent(
+            pOwner,
+            MSGBOX_EVENT_DESTROY);
+
+        SEASON3B::CreateMessageBox(
+            MSGBOX_LAYOUT_CLASS(
+                SEASON3B::CAdnielMenuMsgBoxLayout));
+
+        return CALLBACK_BREAK;
+    }
+
+    return CALLBACK_CONTINUE;
+}
+
+void SEASON3B::CAdnielErrtelMenuMsgBox::SetAddCallbackFunc()
+{
+    AddCallbackFunc(
+        SEASON3B::CAdnielErrtelMenuMsgBox::LButtonUp,
+        MSGBOX_EVENT_MOUSE_LBUTTON_UP);
+}
+
+void SEASON3B::CAdnielErrtelMenuMsgBox::SetButtonInfo()
+{
+    float width =
+        MSGBOX_BTN_EMPTY_WIDTH + 40.f;
+
+    const float height =
+        MSGBOX_BTN_EMPTY_HEIGHT;
+
+    const float center =
+        GetSize().cx / 2.f;
+
+    const float x =
+        GetPos().x +
+        center -
+        width / 2.f;
+
+    float y =
+        GetPos().y + 65.f;
+
+    m_BtnAnger.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY,
+        x,
+        y,
+        width,
+        height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
+
+    m_BtnAnger.SetText(L"Errtel of Anger");
+
+    y += 30.f;
+
+    m_BtnBlessing.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY,
+        x,
+        y,
+        width,
+        height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
+
+    m_BtnBlessing.SetText(L"Errtel of Blessing");
+
+    y += 30.f;
+
+    m_BtnIntegrity.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY,
+        x,
+        y,
+        width,
+        height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
+
+    m_BtnIntegrity.SetText(L"Errtel of Integrity");
+
+    y += 30.f;
+
+    m_BtnDivinity.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY,
+        x,
+        y,
+        width,
+        height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
+
+    m_BtnDivinity.SetText(L"Errtel of Divinity");
+
+    y += 30.f;
+
+    m_BtnGale.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY,
+        x,
+        y,
+        width,
+        height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
+
+    m_BtnGale.SetText(L"Errtel of Gale");
+
+    width =
+        MSGBOX_BTN_EMPTY_SMALL_WIDTH;
+
+    const float xExit =
+        GetPos().x +
+        center -
+        width / 2.f;
+
+    const float yExit =
+        GetPos().y +
+        GetSize().cy -
+        (
+            MSGBOX_BTN_EMPTY_HEIGHT +
+            MSGBOX_BTN_BOTTOM_BLANK
+        );
+
+    m_BtnExit.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY_SMALL,
+        xExit,
+        yExit,
+        width,
+        height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY_SMALL);
+
+    m_BtnExit.SetText(L"Back");
+}
+
+void SEASON3B::CAdnielErrtelMenuMsgBox::RenderFrame()
+{
+    float x = GetPos().x;
+    float y = GetPos().y + 2.f;
+
+    float width =
+        GetSize().cx -
+        MSGBOX_BACK_BLANK_WIDTH;
+
+    float height =
+        GetSize().cy -
+        MSGBOX_BACK_BLANK_HEIGHT;
+
+    RenderImage(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BACK,
+        x,
+        y,
+        width,
+        height);
+
+    x = GetPos().x;
+    y = GetPos().y;
+
+    width = MSGBOX_WIDTH;
+    height = MSGBOX_TOP_HEIGHT;
+
+    RenderImage(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_TOP_TITLEBAR,
+        x,
+        y,
+        width,
+        height);
+
+    y += MSGBOX_TOP_HEIGHT;
+
+    height = MSGBOX_MIDDLE_HEIGHT;
+
+    for (int i = 0; i < m_iMiddleCount; ++i)
+    {
+        RenderImage(
+            CNewUIMessageBoxMng::IMAGE_MSGBOX_MIDDLE,
+            x,
+            y,
+            width,
+            height);
+
+        y += height;
+    }
+
+    RenderImage(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BOTTOM,
+        x,
+        y,
+        width,
+        MSGBOX_BOTTOM_HEIGHT);
+}
+
+void SEASON3B::CAdnielErrtelMenuMsgBox::RenderTexts()
+{
+    g_pRenderText->SetBgColor(0, 0, 0, 0);
+    g_pRenderText->SetFont(g_hFontBold);
+    g_pRenderText->SetTextColor(255,255,255,255);
+
+    g_pRenderText->RenderText(
+        GetPos().x + 10.f,
+        GetPos().y + 10.f,
+        L"Element Master Adniel",
+        MSGBOX_WIDTH - 20.f,
+        0,
+        RT3_SORT_CENTER);
+
+    g_pRenderText->SetFont(g_hFont);
+
+    g_pRenderText->RenderText(
+        GetPos().x + 10.f,
+        GetPos().y + 35.f,
+        L"Select the Errtel you want to refine",
+        MSGBOX_WIDTH - 20.f,
+        0,
+        RT3_SORT_CENTER);
+}
+
+void SEASON3B::CAdnielErrtelMenuMsgBox::RenderButtons()
+{
+    m_BtnAnger.Render();
+    m_BtnBlessing.Render();
+    m_BtnIntegrity.Render();
+    m_BtnDivinity.Render();
+    m_BtnGale.Render();
+    m_BtnExit.Render();
+}
+
+
+// ============================================================================
+// ADNIEL - SELECTOR MOUNT / REMOVE
+// ============================================================================
+
+SEASON3B::CAdnielSocketMenuMsgBox::CAdnielSocketMenuMsgBox()
+{
+    m_bRemoveMode = false;
+    m_iMiddleCount = 12;
+}
+
+SEASON3B::CAdnielSocketMenuMsgBox::~CAdnielSocketMenuMsgBox()
+{
+    Release();
+}
+
+bool SEASON3B::CAdnielSocketMenuMsgBox::Create(float fPriority)
+{
+    SetAddCallbackFunc();
+
+    int x =
+        (SCREEN_WIDTH / 2) -
+        (MSGBOX_WIDTH / 2);
+
+    int y = 35;
+
+    int height =
+        MSGBOX_TOP_HEIGHT +
+        (m_iMiddleCount * MSGBOX_MIDDLE_HEIGHT) +
+        MSGBOX_BOTTOM_HEIGHT;
+
+    CNewUIMessageBoxBase::Create(
+        x,
+        y,
+        MSGBOX_WIDTH,
+        height,
+        fPriority);
+
+    SetButtonInfo();
+
+    return true;
+}
+
+void SEASON3B::CAdnielSocketMenuMsgBox::Release()
+{
+    CNewUIMessageBoxBase::Release();
+}
+
+bool SEASON3B::CAdnielSocketMenuMsgBox::Update()
+{
+    m_BtnAnger.Update();
+    m_BtnBlessing.Update();
+    m_BtnIntegrity.Update();
+    m_BtnDivinity.Update();
+    m_BtnGale.Update();
+    m_BtnExit.Update();
+
+    return true;
+}
+
+bool SEASON3B::CAdnielSocketMenuMsgBox::Render()
+{
+    EnableAlphaTest();
+
+    RenderFrame();
+    RenderTexts();
+    RenderButtons();
+
+    DisableAlphaBlend();
+
+    return true;
+}
+
+CALLBACK_RESULT
+SEASON3B::CAdnielSocketMenuMsgBox::LButtonUp(
+    class CNewUIMessageBoxBase* pOwner,
+    const leaf::xstreambuf& xParam)
+{
+    auto* pMsgBox =
+        dynamic_cast<CAdnielSocketMenuMsgBox*>(pOwner);
+
+    if (pMsgBox == nullptr)
+    {
+        return CALLBACK_CONTINUE;
+    }
+
+    int socketIndex = -1;
+
+    if (pMsgBox->m_BtnAnger.IsMouseIn())
+        socketIndex = 0;
+    else if (pMsgBox->m_BtnBlessing.IsMouseIn())
+        socketIndex = 1;
+    else if (pMsgBox->m_BtnIntegrity.IsMouseIn())
+        socketIndex = 2;
+    else if (pMsgBox->m_BtnDivinity.IsMouseIn())
+        socketIndex = 3;
+    else if (pMsgBox->m_BtnGale.IsMouseIn())
+        socketIndex = 4;
+
+    if (socketIndex >= 0)
+    {
+        static const wchar_t* mountCommands[5] =
+        {
+            L"/adnielmountanger",
+            L"/adnielmountblessing",
+            L"/adnielmountintegrity",
+            L"/adnielmountdivinity",
+            L"/adnielmountgale"
+        };
+
+        static const wchar_t* removeCommands[5] =
+        {
+            L"/adnielremoveanger",
+            L"/adnielremoveblessing",
+            L"/adnielremoveintegrity",
+            L"/adnielremovedivinity",
+            L"/adnielremovegale"
+        };
+
+        const wchar_t* selected =
+            pMsgBox->m_bRemoveMode
+                ? removeCommands[socketIndex]
+                : mountCommands[socketIndex];
+
+        const std::wstring command =
+            selected;
+
+        PlayBuffer(SOUND_CLICK01);
+
+        SocketClient
+            ->ToGameServer()
+            ->SendPublicChatMessage(
+                MU_C16(Hero->ID),
+                MU_C16(command.c_str()));
+
+        g_MessageBox->SendEvent(
+            pOwner,
+            MSGBOX_EVENT_DESTROY);
+
+        return CALLBACK_BREAK;
+    }
+
+    if (pMsgBox->m_BtnExit.IsMouseIn())
+    {
+        PlayBuffer(SOUND_CLICK01);
+
+        g_MessageBox->SendEvent(
+            pOwner,
+            MSGBOX_EVENT_DESTROY);
+
+        SEASON3B::CreateMessageBox(
+            MSGBOX_LAYOUT_CLASS(
+                SEASON3B::CAdnielMenuMsgBoxLayout));
+
+        return CALLBACK_BREAK;
+    }
+
+    return CALLBACK_CONTINUE;
+}
+
+void
+SEASON3B::CAdnielSocketMenuMsgBox::SetAddCallbackFunc()
+{
+    AddCallbackFunc(
+        SEASON3B::CAdnielSocketMenuMsgBox::LButtonUp,
+        MSGBOX_EVENT_MOUSE_LBUTTON_UP);
+}
+
+void
+SEASON3B::CAdnielSocketMenuMsgBox::SetButtonInfo()
+{
+    float width =
+        MSGBOX_BTN_EMPTY_WIDTH + 40.f;
+
+    const float height =
+        MSGBOX_BTN_EMPTY_HEIGHT;
+
+    const float center =
+        GetSize().cx / 2.f;
+
+    const float x =
+        GetPos().x +
+        center -
+        (width / 2.f);
+
+    float y =
+        GetPos().y + 65.f;
+
+    CNewUIMessageBoxButton* buttons[5] =
+    {
+        &m_BtnAnger,
+        &m_BtnBlessing,
+        &m_BtnIntegrity,
+        &m_BtnDivinity,
+        &m_BtnGale
+    };
+
+    const wchar_t* names[5] =
+    {
+        L"Errtel of Anger",
+        L"Errtel of Blessing",
+        L"Errtel of Integrity",
+        L"Errtel of Divinity",
+        L"Errtel of Gale"
+    };
+
+    for (int i = 0; i < 5; ++i)
+    {
+        buttons[i]->SetInfo(
+            CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY,
+            x,
+            y,
+            width,
+            height,
+            CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
+
+        buttons[i]->SetText(
+            names[i]);
+
+        y += 35.f;
+    }
+
+    width =
+        MSGBOX_BTN_EMPTY_SMALL_WIDTH;
+
+    const float closeX =
+        GetPos().x +
+        center -
+        (width / 2.f);
+
+    const float closeY =
+        GetPos().y +
+        GetSize().cy -
+        (
+            MSGBOX_BTN_EMPTY_HEIGHT +
+            MSGBOX_BTN_BOTTOM_BLANK
+        );
+
+    m_BtnExit.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY_SMALL,
+        closeX,
+        closeY,
+        width,
+        height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY_SMALL);
+
+    m_BtnExit.SetText(
+        L"Back");
+}
+
+void
+SEASON3B::CAdnielSocketMenuMsgBox::RenderFrame()
+{
+    float x =
+        GetPos().x;
+
+    float y =
+        GetPos().y + 2.f;
+
+    float width =
+        GetSize().cx -
+        MSGBOX_BACK_BLANK_WIDTH;
+
+    float height =
+        GetSize().cy -
+        MSGBOX_BACK_BLANK_HEIGHT;
+
+    RenderImage(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BACK,
+        x,
+        y,
+        width,
+        height);
+
+    x = GetPos().x;
+    y = GetPos().y;
+
+    width = MSGBOX_WIDTH;
+    height = MSGBOX_TOP_HEIGHT;
+
+    RenderImage(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_TOP_TITLEBAR,
+        x,
+        y,
+        width,
+        height);
+
+    y += MSGBOX_TOP_HEIGHT;
+
+    height =
+        MSGBOX_MIDDLE_HEIGHT;
+
+    for (int i = 0;
+         i < m_iMiddleCount;
+         ++i)
+    {
+        RenderImage(
+            CNewUIMessageBoxMng::IMAGE_MSGBOX_MIDDLE,
+            x,
+            y,
+            width,
+            height);
+
+        y += height;
+    }
+
+    RenderImage(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BOTTOM,
+        x,
+        y,
+        width,
+        MSGBOX_BOTTOM_HEIGHT);
+}
+
+void
+SEASON3B::CAdnielSocketMenuMsgBox::RenderTexts()
+{
+    g_pRenderText->SetBgColor(
+        0,0,0,0);
+
+    g_pRenderText->SetTextColor(
+        255,255,255,255);
+
+    g_pRenderText->SetFont(
+        g_hFontBold);
+
+    g_pRenderText->RenderText(
+        GetPos().x + 10.f,
+        GetPos().y + 10.f,
+        L"Element Master Adniel",
+        MSGBOX_WIDTH - 20.f,
+        0,
+        RT3_SORT_CENTER);
+
+    g_pRenderText->SetFont(
+        g_hFont);
+
+    g_pRenderText->RenderText(
+        GetPos().x + 10.f,
+        GetPos().y + 35.f,
+        m_bRemoveMode
+            ? L"Select the Errtel to remove"
+            : L"Select the Errtel to mount",
+        MSGBOX_WIDTH - 20.f,
+        0,
+        RT3_SORT_CENTER);
+}
+
+void
+SEASON3B::CAdnielSocketMenuMsgBox::RenderButtons()
+{
+    m_BtnAnger.Render();
+    m_BtnBlessing.Render();
+    m_BtnIntegrity.Render();
+    m_BtnDivinity.Render();
+    m_BtnGale.Render();
+    m_BtnExit.Render();
+}
+
+// ============================================================================
+// ADNIEL - PENTAGRAM STATUS
+// ============================================================================
+
+bool
+SEASON3B::CAdnielStatusMsgBox::s_bEquipped =
+    false;
+
+BYTE
+SEASON3B::CAdnielStatusMsgBox::s_byPentagramLevel =
+    0;
+
+BYTE
+SEASON3B::CAdnielStatusMsgBox::s_byRank[5] =
+{
+    0,0,0,0,0
+};
+
+BYTE
+SEASON3B::CAdnielStatusMsgBox::s_byLevel[5] =
+{
+    0,0,0,0,0
+};
+
+SEASON3B::CAdnielStatusMsgBox::CAdnielStatusMsgBox()
+{
+    m_iMiddleCount = 11;
+}
+
+SEASON3B::CAdnielStatusMsgBox::~CAdnielStatusMsgBox()
+{
+    Release();
+}
+
+void
+SEASON3B::CAdnielStatusMsgBox::SetStatusData(
+    bool equipped,
+    BYTE pentagramLevel,
+    const BYTE* ranks,
+    const BYTE* levels)
+{
+    s_bEquipped =
+        equipped;
+
+    s_byPentagramLevel =
+        pentagramLevel;
+
+    for (int i=0; i<5; ++i)
+    {
+        s_byRank[i] =
+            ranks[i];
+
+        s_byLevel[i] =
+            levels[i];
+    }
+}
+
+bool
+SEASON3B::CAdnielStatusMsgBox::Create(
+    float fPriority)
+{
+    SetAddCallbackFunc();
+
+    const int x =
+        (SCREEN_WIDTH / 2) -
+        (MSGBOX_WIDTH / 2);
+
+    const int y =
+        45;
+
+    const int height =
+        MSGBOX_TOP_HEIGHT +
+        (m_iMiddleCount *
+         MSGBOX_MIDDLE_HEIGHT) +
+        MSGBOX_BOTTOM_HEIGHT;
+
+    CNewUIMessageBoxBase::Create(
+        x,
+        y,
+        MSGBOX_WIDTH,
+        height,
+        fPriority);
+
+    SetButtonInfo();
+
+    return true;
+}
+
+void
+SEASON3B::CAdnielStatusMsgBox::Release()
+{
+    CNewUIMessageBoxBase::Release();
+}
+
+bool
+SEASON3B::CAdnielStatusMsgBox::Update()
+{
+    m_BtnExit.Update();
+
+    return true;
+}
+
+bool
+SEASON3B::CAdnielStatusMsgBox::Render()
+{
+    EnableAlphaTest();
+
+    RenderFrame();
+    RenderTexts();
+    RenderButtons();
+
+    DisableAlphaBlend();
+
+    return true;
+}
+
+CALLBACK_RESULT
+SEASON3B::CAdnielStatusMsgBox::LButtonUp(
+    class CNewUIMessageBoxBase* pOwner,
+    const leaf::xstreambuf& xParam)
+{
+    auto* pMsgBox =
+        dynamic_cast<CAdnielStatusMsgBox*>(
+            pOwner);
+
+    if (pMsgBox == nullptr)
+    {
+        return CALLBACK_CONTINUE;
+    }
+
+    if (pMsgBox->m_BtnExit.IsMouseIn())
+    {
+        PlayBuffer(SOUND_CLICK01);
+
+        g_MessageBox->SendEvent(
+            pOwner,
+            MSGBOX_EVENT_DESTROY);
+
+        SEASON3B::CreateMessageBox(
+            MSGBOX_LAYOUT_CLASS(
+                SEASON3B::CAdnielMenuMsgBoxLayout));
+
+        return CALLBACK_BREAK;
+    }
+
+    return CALLBACK_CONTINUE;
+}
+
+void
+SEASON3B::CAdnielStatusMsgBox::SetAddCallbackFunc()
+{
+    AddCallbackFunc(
+        SEASON3B::CAdnielStatusMsgBox::LButtonUp,
+        MSGBOX_EVENT_MOUSE_LBUTTON_UP);
+}
+
+void
+SEASON3B::CAdnielStatusMsgBox::SetButtonInfo()
+{
+    const float width =
+        MSGBOX_BTN_EMPTY_SMALL_WIDTH;
+
+    const float height =
+        MSGBOX_BTN_EMPTY_HEIGHT;
+
+    const float x =
+        GetPos().x +
+        (GetSize().cx / 2.f) -
+        (width / 2.f);
+
+    const float y =
+        GetPos().y +
+        GetSize().cy -
+        (
+            MSGBOX_BTN_EMPTY_HEIGHT +
+            MSGBOX_BTN_BOTTOM_BLANK
+        );
+
+    m_BtnExit.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY_SMALL,
+        x,
+        y,
+        width,
+        height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY_SMALL);
+
+    m_BtnExit.SetText(
+        L"Back");
+}
+
+void
+SEASON3B::CAdnielStatusMsgBox::RenderFrame()
+{
+    float x =
+        GetPos().x;
+
+    float y =
+        GetPos().y + 2.f;
+
+    float width =
+        GetSize().cx -
+        MSGBOX_BACK_BLANK_WIDTH;
+
+    float height =
+        GetSize().cy -
+        MSGBOX_BACK_BLANK_HEIGHT;
+
+    RenderImage(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BACK,
+        x,y,width,height);
+
+    x =
+        GetPos().x;
+
+    y =
+        GetPos().y;
+
+    width =
+        MSGBOX_WIDTH;
+
+    height =
+        MSGBOX_TOP_HEIGHT;
+
+    RenderImage(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_TOP_TITLEBAR,
+        x,y,width,height);
+
+    y +=
+        MSGBOX_TOP_HEIGHT;
+
+    height =
+        MSGBOX_MIDDLE_HEIGHT;
+
+    for (int i=0;
+         i<m_iMiddleCount;
+         ++i)
+    {
+        RenderImage(
+            CNewUIMessageBoxMng::IMAGE_MSGBOX_MIDDLE,
+            x,y,width,height);
+
+        y += height;
+    }
+
+    RenderImage(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BOTTOM,
+        x,
+        y,
+        width,
+        MSGBOX_BOTTOM_HEIGHT);
+}
+
+void
+SEASON3B::CAdnielStatusMsgBox::RenderTexts()
+{
+    static const wchar_t* names[5] =
+    {
+        L"Anger",
+        L"Blessing",
+        L"Integrity",
+        L"Divinity",
+        L"Gale"
+    };
+
+    g_pRenderText->SetBgColor(
+        0,0,0,0);
+
+    g_pRenderText->SetTextColor(
+        255,255,255,255);
+
+    g_pRenderText->SetFont(
+        g_hFontBold);
+
+    g_pRenderText->RenderText(
+        GetPos().x + 10.f,
+        GetPos().y + 10.f,
+        L"Pentagram Status",
+        MSGBOX_WIDTH - 20.f,
+        0,
+        RT3_SORT_CENTER);
+
+    g_pRenderText->SetFont(
+        g_hFont);
+
+    wchar_t buffer[128];
+
+    if (!s_bEquipped)
+    {
+        swprintf_s(
+            buffer,
+            L"No Pentagram equipped");
+
+        g_pRenderText->RenderText(
+            GetPos().x + 10.f,
+            GetPos().y + 45.f,
+            buffer,
+            MSGBOX_WIDTH - 20.f,
+            0,
+            RT3_SORT_CENTER);
+
+        return;
+    }
+
+    swprintf_s(
+        buffer,
+        L"Pentagram +%d",
+        static_cast<int>(
+            s_byPentagramLevel));
+
+    g_pRenderText->RenderText(
+        GetPos().x + 10.f,
+        GetPos().y + 40.f,
+        buffer,
+        MSGBOX_WIDTH - 20.f,
+        0,
+        RT3_SORT_CENTER);
+
+    float y =
+        GetPos().y + 70.f;
+
+    for (int i=0; i<5; ++i)
+    {
+        if (s_byRank[i] == 0)
+        {
+            swprintf_s(
+                buffer,
+                L"%s : Empty",
+                names[i]);
+        }
+        else
+        {
+            swprintf_s(
+                buffer,
+                L"%s : Rank %d  +%d",
+                names[i],
+                static_cast<int>(
+                    s_byRank[i]),
+                static_cast<int>(
+                    s_byLevel[i]));
+        }
+
+        g_pRenderText->RenderText(
+            GetPos().x + 20.f,
+            y,
+            buffer,
+            MSGBOX_WIDTH - 40.f,
+            0,
+            RT3_SORT_LEFT);
+
+        y += 25.f;
+    }
+}
+
+void
+SEASON3B::CAdnielStatusMsgBox::RenderButtons()
+{
+    m_BtnExit.Render();
+}
+
+// ============================================================================
+// LAYOUTS
+// ============================================================================
+
+bool
+SEASON3B::CAdnielMountMenuMsgBoxLayout::SetLayout()
+{
+    CAdnielSocketMenuMsgBox* pMsgBox =
+        GetMsgBox();
+
+    if (pMsgBox == nullptr)
+    {
+        return false;
+    }
+
+    pMsgBox->SetRemoveMode(
+        false);
+
+    return pMsgBox->Create();
+}
+
+bool
+SEASON3B::CAdnielRemoveMenuMsgBoxLayout::SetLayout()
+{
+    CAdnielSocketMenuMsgBox* pMsgBox =
+        GetMsgBox();
+
+    if (pMsgBox == nullptr)
+    {
+        return false;
+    }
+
+    pMsgBox->SetRemoveMode(
+        true);
+
+    return pMsgBox->Create();
+}
+
+bool
+SEASON3B::CAdnielStatusMsgBoxLayout::SetLayout()
+{
+    CAdnielStatusMsgBox* pMsgBox =
+        GetMsgBox();
+
+    if (pMsgBox == nullptr)
+    {
+        return false;
+    }
+
+    return pMsgBox->Create();
+}
+
+SEASON3B::CAdnielMenuMsgBox::CAdnielMenuMsgBox()
+{
+    m_iMiddleCount = 15;
+}
+
+SEASON3B::CAdnielMenuMsgBox::~CAdnielMenuMsgBox()
+{
+    Release();
+}
+
+bool SEASON3B::CAdnielMenuMsgBox::Create(float fPriority)
+{
+    SetAddCallbackFunc();
+
+    int x, y, width, height;
+
+    x = (SCREEN_WIDTH / 2) - (MSGBOX_WIDTH / 2);
+    y = 55;
+    width = MSGBOX_WIDTH;
+
+    height =
+        MSGBOX_TOP_HEIGHT +
+        (m_iMiddleCount * MSGBOX_MIDDLE_HEIGHT) +
+        MSGBOX_BOTTOM_HEIGHT;
+
+    CNewUIMessageBoxBase::Create(
+        x,
+        y,
+        width,
+        height,
+        fPriority);
+
+    SetButtonInfo();
+
+    return true;
+}
+
+void SEASON3B::CAdnielMenuMsgBox::Release()
+{
+    CNewUIMessageBoxBase::Release();
+}
+
+bool SEASON3B::CAdnielMenuMsgBox::Update()
+{
+    m_BtnElemental.Update();
+    m_BtnLevelUp.Update();
+    m_BtnRankUp.Update();
+    m_BtnMount.Update();
+    m_BtnRemove.Update();
+    m_BtnStatus.Update();
+    m_BtnExit.Update();
+
+    return true;
+}
+
+bool SEASON3B::CAdnielMenuMsgBox::Render()
+{
+    EnableAlphaTest();
+
+    RenderFrame();
+    RenderTexts();
+    RenderButtons();
+
+    DisableAlphaBlend();
+
+    return true;
+}
+
+CALLBACK_RESULT SEASON3B::CAdnielMenuMsgBox::LButtonUp(
+    class CNewUIMessageBoxBase* pOwner,
+    const leaf::xstreambuf& xParam)
+{
+    auto* pMsgBox =
+        dynamic_cast<CAdnielMenuMsgBox*>(
+            pOwner);
+
+    if (pMsgBox == nullptr)
+    {
+        return CALLBACK_CONTINUE;
+    }
+
+    // --------------------------------------------------------
+    // Crear / refinar Errtel
+    // --------------------------------------------------------
+
+    if (pMsgBox->m_BtnElemental.IsMouseIn())
+    {
+        PlayBuffer(SOUND_CLICK01);
+
+        g_MessageBox->SendEvent(
+            pOwner,
+            MSGBOX_EVENT_DESTROY);
+
+        SEASON3B::CreateMessageBox(
+            MSGBOX_LAYOUT_CLASS(
+                SEASON3B::CAdnielErrtelMenuMsgBoxLayout));
+
+        return CALLBACK_BREAK;
+    }
+
+    // --------------------------------------------------------
+    // Level Up
+    // --------------------------------------------------------
+
+    if (pMsgBox->m_BtnLevelUp.IsMouseIn())
+    {
+        PlayBuffer(SOUND_CLICK01);
+
+        const std::wstring command =
+            L"/adniellevel";
+
+        SocketClient
+            ->ToGameServer()
+            ->SendPublicChatMessage(
+                MU_C16(Hero->ID),
+                MU_C16(command.c_str()));
+
+        return CALLBACK_BREAK;
+    }
+
+    // --------------------------------------------------------
+    // Rank Up
+    // --------------------------------------------------------
+
+    if (pMsgBox->m_BtnRankUp.IsMouseIn())
+    {
+        PlayBuffer(SOUND_CLICK01);
+
+        const std::wstring command =
+            L"/adnielrank";
+
+        SocketClient
+            ->ToGameServer()
+            ->SendPublicChatMessage(
+                MU_C16(Hero->ID),
+                MU_C16(command.c_str()));
+
+        return CALLBACK_BREAK;
+    }
+
+    // --------------------------------------------------------
+    // Mount selectivo
+    // --------------------------------------------------------
+
+    if (pMsgBox->m_BtnMount.IsMouseIn())
+    {
+        PlayBuffer(SOUND_CLICK01);
+
+        g_MessageBox->SendEvent(
+            pOwner,
+            MSGBOX_EVENT_DESTROY);
+
+        SEASON3B::CreateMessageBox(
+            MSGBOX_LAYOUT_CLASS(
+                SEASON3B::CAdnielMountMenuMsgBoxLayout));
+
+        return CALLBACK_BREAK;
+    }
+
+    // --------------------------------------------------------
+    // Remove selectivo
+    // --------------------------------------------------------
+
+    if (pMsgBox->m_BtnRemove.IsMouseIn())
+    {
+        PlayBuffer(SOUND_CLICK01);
+
+        g_MessageBox->SendEvent(
+            pOwner,
+            MSGBOX_EVENT_DESTROY);
+
+        SEASON3B::CreateMessageBox(
+            MSGBOX_LAYOUT_CLASS(
+                SEASON3B::CAdnielRemoveMenuMsgBoxLayout));
+
+        return CALLBACK_BREAK;
+    }
+
+    // --------------------------------------------------------
+    // Pentagram Status
+    // --------------------------------------------------------
+
+    if (pMsgBox->m_BtnStatus.IsMouseIn())
+    {
+        PlayBuffer(SOUND_CLICK01);
+
+        // The server never replies to "/adnielstatus" with a parseable packet
+        // (it's a GM debug chat command, not a real protocol message), so
+        // SetStatusData() had no caller and this panel always showed "No
+        // Pentagram equipped". The real equip/socket state already lives
+        // client-side in g_pMyInventory's Pentagram item - use that directly
+        // instead of round-tripping through the chat command.
+        const ITEM* pPentagram =
+            g_pMyInventory->GetPentagramItem();
+
+        const bool bEquipped =
+            pPentagram != nullptr &&
+            pPentagram->Type >= 0;
+
+        BYTE byRanks[5] = {0,0,0,0,0};
+        BYTE byLevels[5] = {0,0,0,0,0};
+
+        if (bEquipped)
+        {
+            const int declared =
+                static_cast<int>(pPentagram->SocketCount) > MAX_SOCKETS
+                    ? MAX_SOCKETS
+                    : static_cast<int>(pPentagram->SocketCount);
+
+            for (int i = 0; i < declared; ++i)
+            {
+                if (pPentagram->bySocketOption[i] == SOCKET_EMPTY)
+                {
+                    continue;
+                }
+
+                // SocketSeedID = which Errtel is socketed, SocketSphereLv =
+                // its level - same two fields RestorePentagramItem() already
+                // logs per socket ("seed=%d sphere=%d").
+                byRanks[i] =
+                    pPentagram->SocketSeedID[i];
+
+                byLevels[i] =
+                    pPentagram->SocketSphereLv[i];
+            }
+        }
+
+        CAdnielStatusMsgBox::SetStatusData(
+            bEquipped,
+            bEquipped ? pPentagram->Level : 0,
+            byRanks,
+            byLevels);
+
+        g_MessageBox->SendEvent(
+            pOwner,
+            MSGBOX_EVENT_DESTROY);
+
+        SEASON3B::CreateMessageBox(
+            MSGBOX_LAYOUT_CLASS(
+                SEASON3B::CAdnielStatusMsgBoxLayout));
+
+        return CALLBACK_BREAK;
+    }
+
+    // --------------------------------------------------------
+    // Close
+    // --------------------------------------------------------
+
+    if (pMsgBox->m_BtnExit.IsMouseIn())
+    {
+        SocketClient
+            ->ToGameServer()
+            ->SendCraftingDialogCloseRequest();
+
+        PlayBuffer(SOUND_CLICK01);
+
+        g_MessageBox->SendEvent(
+            pOwner,
+            MSGBOX_EVENT_DESTROY);
+
+        return CALLBACK_BREAK;
+    }
+
+    return CALLBACK_CONTINUE;
+}
+
+void SEASON3B::CAdnielMenuMsgBox::SetAddCallbackFunc()
+{
+    AddCallbackFunc(
+        SEASON3B::CAdnielMenuMsgBox::LButtonUp,
+        MSGBOX_EVENT_MOUSE_LBUTTON_UP);
+}
+
+void SEASON3B::CAdnielMenuMsgBox::SetButtonInfo()
+{
+    float width =
+        MSGBOX_BTN_EMPTY_WIDTH + 40.f;
+
+    const float height =
+        MSGBOX_BTN_EMPTY_HEIGHT;
+
+    const float center =
+        GetSize().cx / 2.f;
+
+    float x =
+        GetPos().x +
+        center -
+        (width / 2.f);
+
+    float y =
+        GetPos().y + 85.f;
+
+    m_BtnElemental.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY,
+        x,y,width,height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
+
+    m_BtnElemental.SetText(
+        I18N::Game::Lookup(3677));
+
+    y += 35.f;
+
+    m_BtnLevelUp.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY,
+        x,y,width,height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
+
+    m_BtnLevelUp.SetText(
+        I18N::Game::Lookup(3678));
+
+    y += 35.f;
+
+    m_BtnRankUp.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY,
+        x,y,width,height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
+
+    m_BtnRankUp.SetText(
+        I18N::Game::Lookup(3679));
+
+    y += 35.f;
+
+    m_BtnMount.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY,
+        x,y,width,height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
+
+    m_BtnMount.SetText(
+        L"Mount Errtel");
+
+    y += 35.f;
+
+    m_BtnRemove.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY,
+        x,y,width,height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
+
+    m_BtnRemove.SetText(
+        L"Remove Errtel");
+
+    y += 35.f;
+
+    m_BtnStatus.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY,
+        x,y,width,height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY);
+
+    m_BtnStatus.SetText(
+        L"Pentagram Status");
+
+    width =
+        MSGBOX_BTN_EMPTY_SMALL_WIDTH;
+
+    x =
+        GetPos().x +
+        center -
+        (width / 2.f);
+
+    y =
+        GetPos().y +
+        GetSize().cy -
+        (
+            MSGBOX_BTN_EMPTY_HEIGHT +
+            MSGBOX_BTN_BOTTOM_BLANK
+        );
+
+    m_BtnExit.SetInfo(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BTN_EMPTY_SMALL,
+        x,y,width,height,
+        CNewUIMessageBoxButton::MSGBOX_BTN_SIZE_EMPTY_SMALL);
+
+    m_BtnExit.SetText(
+        I18N::Game::Close388);
+}
+
+void SEASON3B::CAdnielMenuMsgBox::RenderFrame()
+{
+    float x, y, width, height;
+
+    x = GetPos().x;
+    y = GetPos().y + 2.f;
+
+    width =
+        GetSize().cx -
+        MSGBOX_BACK_BLANK_WIDTH;
+
+    height =
+        GetSize().cy -
+        MSGBOX_BACK_BLANK_HEIGHT;
+
+    RenderImage(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BACK,
+        x,
+        y,
+        width,
+        height);
+
+    x = GetPos().x;
+    y = GetPos().y;
+
+    width =
+        MSGBOX_WIDTH;
+
+    height =
+        MSGBOX_TOP_HEIGHT;
+
+    RenderImage(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_TOP_TITLEBAR,
+        x,
+        y,
+        width,
+        height);
+
+    y += MSGBOX_TOP_HEIGHT;
+
+    height =
+        MSGBOX_MIDDLE_HEIGHT;
+
+    for (int i = 0;
+         i < m_iMiddleCount;
+         ++i)
+    {
+        RenderImage(
+            CNewUIMessageBoxMng::IMAGE_MSGBOX_MIDDLE,
+            x,
+            y,
+            width,
+            height);
+
+        y += height;
+    }
+
+    height =
+        MSGBOX_BOTTOM_HEIGHT;
+
+    RenderImage(
+        CNewUIMessageBoxMng::IMAGE_MSGBOX_BOTTOM,
+        x,
+        y,
+        width,
+        height);
+}
+
+void SEASON3B::CAdnielMenuMsgBox::RenderTexts()
+{
+    float fPos_x =
+        GetPos().x + 10.f;
+
+    float fPos_y =
+        GetPos().y + 10.f;
+
+    g_pRenderText->SetBgColor(
+        0,
+        0,
+        0,
+        0);
+
+    g_pRenderText->SetTextColor(
+        255,
+        255,
+        255,
+        255);
+
+    // --------------------------------------------------------
+    // Element Master Adniel
+    // Legacy ID 3675
+    // --------------------------------------------------------
+
+    g_pRenderText->SetFont(
+        g_hFontBold);
+
+    g_pRenderText->RenderText(
+        fPos_x,
+        fPos_y,
+        I18N::Game::Lookup(3675),
+        MSGBOX_WIDTH - 20.0f,
+        0,
+        RT3_SORT_CENTER);
+
+    // --------------------------------------------------------
+    // You can refine Pentagram items or upgrade Errtel.
+    // Legacy ID 3676
+    // --------------------------------------------------------
+
+    g_pRenderText->SetFont(
+        g_hFont);
+
+    g_pRenderText->RenderText(
+        fPos_x,
+        fPos_y + 28.f,
+        I18N::Game::Lookup(3676),
+        MSGBOX_WIDTH - 20.0f,
+        0,
+        RT3_SORT_CENTER);
+}
+
+void SEASON3B::CAdnielMenuMsgBox::RenderButtons()
+{
+    m_BtnElemental.Render();
+    m_BtnLevelUp.Render();
+    m_BtnRankUp.Render();
+    m_BtnMount.Render();
+    m_BtnRemove.Render();
+    m_BtnStatus.Render();
+    m_BtnExit.Render();
+}
+
 
 SEASON3B::CSeedInvestigatorMenuMsgBox::CSeedInvestigatorMenuMsgBox()
 {

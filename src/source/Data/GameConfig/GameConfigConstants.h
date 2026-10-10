@@ -70,7 +70,6 @@ namespace CfgDefaults
 
     inline constexpr int CfgDefaultZoom = 1735;  // OrbitalCamera DEFAULT_RADIUS — matches Default-cam camera-to-Hero distance
 
-    // I18N locale code; "en" is the default the resx generator falls back to.
     inline constexpr wchar_t CfgDefaultUILocale[] = L"en";
 
     // UI font family name. Empty = each platform's built-in default (Tahoma on

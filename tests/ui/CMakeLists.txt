@@ -69,3 +69,17 @@ mu_add_test(
     SOURCES test_character_name_lifecycle.cpp
     LINK_LIBS MuClient
 )
+
+mu_add_test(
+    NAME item_guardian_option_tests
+    SOURCES
+        test_item_guardian_option.cpp
+        ${CMAKE_SOURCE_DIR}/src/source/UI/NewUI/Inventory/ItemPacketParser.cpp
+    LINK_LIBS MuClient
+)
+
+mu_add_test(
+    NAME pentagram_slot_tests
+    SOURCES test_pentagram_slot.cpp
+    LINK_LIBS MuClient
+)

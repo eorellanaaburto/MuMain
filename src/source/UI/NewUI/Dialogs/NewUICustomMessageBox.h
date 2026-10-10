@@ -1,4 +1,4 @@
-#ifndef _NEWUICUSOMMESSAGEBOX_H_
+﻿#ifndef _NEWUICUSOMMESSAGEBOX_H_
 #define _NEWUICUSOMMESSAGEBOX_H_
 
 #pragma once
@@ -914,6 +914,165 @@ namespace SEASON3B
         int m_iMiddleCount;
     };
 
+    // ========================================================
+    // ELEMENT MASTER ADNIEL - SEASON 8
+    // ========================================================
+    class CAdnielErrtelMenuMsgBox : public CNewUIMessageBoxBase
+    {
+    public:
+        CAdnielErrtelMenuMsgBox();
+        ~CAdnielErrtelMenuMsgBox();
+
+        bool Create(float fPriority = 3.f);
+        void Release();
+
+        bool Update();
+        bool Render();
+
+        static CALLBACK_RESULT LButtonUp(
+            class CNewUIMessageBoxBase* pOwner,
+            const leaf::xstreambuf& xParam);
+
+    private:
+        void SetAddCallbackFunc();
+        void SetButtonInfo();
+        void RenderFrame();
+        void RenderTexts();
+        void RenderButtons();
+
+        CNewUIMessageBoxButton m_BtnAnger;
+        CNewUIMessageBoxButton m_BtnBlessing;
+        CNewUIMessageBoxButton m_BtnIntegrity;
+        CNewUIMessageBoxButton m_BtnDivinity;
+        CNewUIMessageBoxButton m_BtnGale;
+        CNewUIMessageBoxButton m_BtnExit;
+
+        int m_iMiddleCount;
+    };
+
+    // ========================================================
+    // ADNIEL - SELECTOR DE ERRTEL
+    // ========================================================
+
+    class CAdnielSocketMenuMsgBox :
+        public CNewUIMessageBoxBase
+    {
+    public:
+        CAdnielSocketMenuMsgBox();
+        ~CAdnielSocketMenuMsgBox();
+
+        bool Create(float fPriority = 3.f);
+        void Release();
+
+        bool Update();
+        bool Render();
+
+        void SetRemoveMode(bool value)
+        {
+            m_bRemoveMode = value;
+        }
+
+        static CALLBACK_RESULT LButtonUp(
+            class CNewUIMessageBoxBase* pOwner,
+            const leaf::xstreambuf& xParam);
+
+    private:
+        void SetAddCallbackFunc();
+        void SetButtonInfo();
+        void RenderFrame();
+        void RenderTexts();
+        void RenderButtons();
+
+        bool m_bRemoveMode;
+
+        CNewUIMessageBoxButton m_BtnAnger;
+        CNewUIMessageBoxButton m_BtnBlessing;
+        CNewUIMessageBoxButton m_BtnIntegrity;
+        CNewUIMessageBoxButton m_BtnDivinity;
+        CNewUIMessageBoxButton m_BtnGale;
+        CNewUIMessageBoxButton m_BtnExit;
+
+        int m_iMiddleCount;
+    };
+
+    // ========================================================
+    // ADNIEL - PENTAGRAM STATUS
+    // ========================================================
+
+    class CAdnielStatusMsgBox :
+        public CNewUIMessageBoxBase
+    {
+    public:
+        CAdnielStatusMsgBox();
+        ~CAdnielStatusMsgBox();
+
+        bool Create(float fPriority = 3.f);
+        void Release();
+
+        bool Update();
+        bool Render();
+
+        static void SetStatusData(
+            bool equipped,
+            BYTE pentagramLevel,
+            const BYTE* ranks,
+            const BYTE* levels);
+
+        static CALLBACK_RESULT LButtonUp(
+            class CNewUIMessageBoxBase* pOwner,
+            const leaf::xstreambuf& xParam);
+
+    private:
+        void SetAddCallbackFunc();
+        void SetButtonInfo();
+        void RenderFrame();
+        void RenderTexts();
+        void RenderButtons();
+
+        static bool s_bEquipped;
+        static BYTE s_byPentagramLevel;
+        static BYTE s_byRank[5];
+        static BYTE s_byLevel[5];
+
+        CNewUIMessageBoxButton m_BtnExit;
+
+        int m_iMiddleCount;
+    };
+    class CAdnielMenuMsgBox : public CNewUIMessageBoxBase
+    {
+    public:
+        CAdnielMenuMsgBox();
+        ~CAdnielMenuMsgBox();
+
+        bool Create(float fPriority = 3.f);
+        void Release();
+
+        bool Update();
+        bool Render();
+
+        static CALLBACK_RESULT LButtonUp(
+            class CNewUIMessageBoxBase* pOwner,
+            const leaf::xstreambuf& xParam);
+
+    private:
+        void SetAddCallbackFunc();
+        void SetButtonInfo();
+
+        void RenderFrame();
+        void RenderTexts();
+        void RenderButtons();
+
+        CNewUIMessageBoxButton m_BtnElemental;
+        CNewUIMessageBoxButton m_BtnLevelUp;
+        CNewUIMessageBoxButton m_BtnRankUp;
+        CNewUIMessageBoxButton m_BtnMount;
+        CNewUIMessageBoxButton m_BtnRemove;
+        CNewUIMessageBoxButton m_BtnStatus;
+        CNewUIMessageBoxButton m_BtnExit;
+
+        int m_iMiddleCount;
+    };
+
     class CSeedInvestigatorMenuMsgBox : public CNewUIMessageBoxBase
     {
     public:
@@ -1330,6 +1489,39 @@ namespace SEASON3B
     public:
         bool SetLayout();
     };
+    class CAdnielErrtelMenuMsgBoxLayout :
+        public TMsgBoxLayout<CAdnielErrtelMenuMsgBox>
+    {
+    public:
+        bool SetLayout();
+    };
+
+    class CAdnielMountMenuMsgBoxLayout :
+        public TMsgBoxLayout<CAdnielSocketMenuMsgBox>
+    {
+    public:
+        bool SetLayout();
+    };
+
+    class CAdnielRemoveMenuMsgBoxLayout :
+        public TMsgBoxLayout<CAdnielSocketMenuMsgBox>
+    {
+    public:
+        bool SetLayout();
+    };
+
+    class CAdnielStatusMsgBoxLayout :
+        public TMsgBoxLayout<CAdnielStatusMsgBox>
+    {
+    public:
+        bool SetLayout();
+    };
+    class CAdnielMenuMsgBoxLayout : public TMsgBoxLayout<CAdnielMenuMsgBox>
+    {
+    public:
+        bool SetLayout();
+    };
+
     class CSeedInvestigatorMenuMsgBoxLayout : public TMsgBoxLayout<CSeedInvestigatorMenuMsgBox>
     {
     public:

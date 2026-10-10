@@ -1,4 +1,4 @@
-// SkillManager.h: interface for the CSkillManager class.
+﻿// SkillManager.h: interface for the CSkillManager class.
 //////////////////////////////////////////////////////////////////////
 #pragma once
 
@@ -47,6 +47,8 @@ public:
     void CalcSkillDelay(int time);
     BYTE GetSkillMasteryType(ActionSkillType iType);
     ActionSkillType MasterSkillToBaseSkillIndex(ActionSkillType masterSkill);
+
+    ActionSkillType MasterSkillToClientLogicSkill(ActionSkillType skill);
     bool skillVScharactorCheck(const DemendConditionInfo& basicInfo, const DemendConditionInfo& heroInfo);
     bool AreSkillAttributeRequirementsMet(ActionSkillType skilltype);
 

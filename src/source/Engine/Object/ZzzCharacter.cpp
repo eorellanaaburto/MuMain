@@ -4431,6 +4431,7 @@ void MoveCharacter(CHARACTER* c, OBJECT* o)
             PlayBuffer(SOUND_HELLFIRE);
             break;
         case AT_SKILL_NOVA:
+        case AT_SKILL_NOVA_STR:
             CreateEffect(MODEL_CIRCLE, o->Position, o->Angle, o->Light, 1, o);
             StopBuffer(SOUND_NUKE1, true);
             PlayBuffer(SOUND_NUKE2);
@@ -4452,6 +4453,8 @@ void MoveCharacter(CHARACTER* c, OBJECT* o)
             }
             break;
         case AT_SKILL_ICE_STORM:
+        case AT_SKILL_ICE_STORM_STR:
+        case AT_SKILL_ICE_STORM_MASTERY:
         {
             vec3_t TargetPosition, Pos;
             TargetPosition[0] = (float)(c->SkillX + 0.5f) * TERRAIN_SCALE;
@@ -4886,7 +4889,7 @@ void MoveCharacter(CHARACTER* c, OBJECT* o)
             vec3_t Angle;
             VectorCopy(o->Angle, Angle);
             Angle[2] = CreateAngle2D(o->Position, to->Position);
-            switch ((c->Skill))
+            switch (gSkillManager.MasterSkillToBaseSkillIndex(static_cast<ActionSkillType>(c->Skill)))
             {
             case AT_SKILL_TRIPLE_SHOT:
             case AT_SKILL_TRIPLE_SHOT_STR:
@@ -5003,6 +5006,8 @@ void MoveCharacter(CHARACTER* c, OBJECT* o)
                 PlayBuffer(SOUND_HEART);
                 break;
             case AT_SKILL_METEO:
+            case AT_SKILL_METEO_STR:
+            case AT_SKILL_METEO_MASTERY:
                 CreateEffect(MODEL_FIRE, to->Position, to->Angle, o->Light);
                 PlayBuffer(SOUND_METEORITE01);
                 break;

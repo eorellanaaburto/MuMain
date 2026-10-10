@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "GameLogic/Combat/SkillCast.h"
 #include "Character/CharacterManager.h" // gCharacterManager
 #include "GameLogic/Social/MonkSystem.h" // g_CMonkSystem
@@ -124,28 +124,38 @@ bool SkillWarrior(CHARACTER* c, ITEM* p)
         if (o->CurrentAction >= MONSTER01_ATTACK1 && o->CurrentAction <= MONSTER01_ATTACK2) return false;
     }
     auto Skill = CharacterAttribute->Skill[g_MovementSkill.m_iSkill];
-    if (Skill == AT_SKILL_RIDER
-        || Skill == AT_SKILL_FIRE_SLASH
-        || Skill == AT_SKILL_FIRE_SLASH_STR
-        || Skill == AT_SKILL_TWISTING_SLASH
-        || Skill == AT_SKILL_TWISTING_SLASH_STR
-        || Skill == AT_SKILL_TWISTING_SLASH_STR_MG
-        || Skill == AT_SKILL_TWISTING_SLASH_MASTERY
-        || Skill == AT_SKILL_DEATHSTAB
-        || Skill == AT_SKILL_DEATHSTAB_STR
-        || (Skill == AT_SKILL_IMPALE && GameLogic::Items::IsRideableMountModel(Hero->Helper.Type))
-        || Skill == AT_SKILL_FORCE
-        || Skill == AT_SKILL_FORCE_WAVE
-        || Skill == AT_SKILL_FORCE_WAVE_STR
-        || Skill == AT_SKILL_FIREBURST
-        || Skill == AT_SKILL_FIREBURST_STR
-        || Skill == AT_SKILL_FIREBURST_MASTERY
-        || Skill == AT_SKILL_RUSH
-        || Skill == AT_SKILL_SPIRAL_SLASH
-        || Skill == AT_SKILL_SPACE_SPLIT
+    const auto LogicSkill = gSkillManager.MasterSkillToClientLogicSkill(Skill);
+    if (LogicSkill == AT_SKILL_RIDER
+        || LogicSkill == AT_SKILL_FIRE_SLASH
+        || LogicSkill == AT_SKILL_FIRE_SLASH_STR
+        || LogicSkill == AT_SKILL_TWISTING_SLASH
+        || LogicSkill == AT_SKILL_TWISTING_SLASH_STR
+        || LogicSkill == AT_SKILL_TWISTING_SLASH_STR_MG
+        || LogicSkill == AT_SKILL_TWISTING_SLASH_MASTERY
+        // S8_V2: explicit Master weapon attacks enter this cast path even if
+        // weapon Special[] exposes only the basic skill. Network uses Skill.
+        || LogicSkill == AT_SKILL_FALLING_SLASH_STR
+        || LogicSkill == AT_SKILL_LUNGE_STR
+        || LogicSkill == AT_SKILL_CYCLONE_STR
+        || LogicSkill == AT_SKILL_CYCLONE_STR_MG
+        || LogicSkill == AT_SKILL_SLASH_STR
+        // Blood Storm (344/346): habilitar la ruta local de ataque del BK.
+        || LogicSkill == static_cast<ActionSkillType>(344)
+        || LogicSkill == AT_SKILL_DEATHSTAB
+        || LogicSkill == AT_SKILL_DEATHSTAB_STR
+        || (LogicSkill == AT_SKILL_IMPALE && GameLogic::Items::IsRideableMountModel(Hero->Helper.Type))
+        || LogicSkill == AT_SKILL_FORCE
+        || LogicSkill == AT_SKILL_FORCE_WAVE
+        || LogicSkill == AT_SKILL_FORCE_WAVE_STR
+        || LogicSkill == AT_SKILL_FIREBURST
+        || LogicSkill == AT_SKILL_FIREBURST_STR
+        || LogicSkill == AT_SKILL_FIREBURST_MASTERY
+        || LogicSkill == AT_SKILL_RUSH
+        || LogicSkill == AT_SKILL_SPIRAL_SLASH
+        || LogicSkill == AT_SKILL_SPACE_SPLIT
         )
     {
-        switch (Skill)
+        switch (LogicSkill)
         {
         case AT_SKILL_IMPALE:
             if (!(o->Type == MODEL_PLAYER && Hero->Weapon[0].Type != -1 &&
@@ -196,7 +206,7 @@ bool SkillWarrior(CHARACTER* c, ITEM* p)
     }
 
 
-    auto baseSkill = gSkillManager.MasterSkillToBaseSkillIndex(Skill);
+    auto baseSkill = gSkillManager.MasterSkillToClientLogicSkill(Skill);
     bool Success = false;
     for (int i = 0; i < p->SpecialNum; i++)
     {
@@ -220,7 +230,7 @@ bool SkillWarrior(CHARACTER* c, ITEM* p)
                 continue;
             }
 
-            switch (Skill)
+            switch (LogicSkill)
             {
             case AT_SKILL_BLOCKING:
                 c->Movement = false;
@@ -249,9 +259,9 @@ bool SkillWarrior(CHARACTER* c, ITEM* p)
         }
     }
 
-    if (Skill == AT_SKILL_FIRE_SCREAM
-        || Skill == AT_SKILL_FIRE_SCREAM_STR
-        || Skill == AT_SKILL_CHAOTIC_DISEIER
+    if (LogicSkill == AT_SKILL_FIRE_SCREAM
+        || LogicSkill == AT_SKILL_FIRE_SCREAM_STR
+        || LogicSkill == AT_SKILL_CHAOTIC_DISEIER
         )
     {
         int iMana;
@@ -286,13 +296,14 @@ bool SkillWarrior(CHARACTER* c, ITEM* p)
 void UseSkillWarrior(CHARACTER* c, OBJECT* o)
 {
     auto Skill = g_MovementSkill.m_bMagic ? CharacterAttribute->Skill[g_MovementSkill.m_iSkill] : static_cast<ActionSkillType>(g_MovementSkill.m_iSkill);
+    const auto LogicSkill = gSkillManager.MasterSkillToClientLogicSkill(Skill);
     LetHeroStop();
     c->Movement = false;
     if (o->Type == MODEL_PLAYER)
     {
         SetAttackSpeed();
 
-        switch (Skill)
+        switch (LogicSkill)
         {
         case AT_SKILL_IMPALE:
             if (c->Helper.Type == MODEL_HORN_OF_FENRIR)
@@ -308,6 +319,8 @@ void UseSkillWarrior(CHARACTER* c, OBJECT* o)
         case AT_SKILL_TWISTING_SLASH_STR:
         case AT_SKILL_TWISTING_SLASH_STR_MG:
         case AT_SKILL_TWISTING_SLASH_MASTERY:
+        // Animacion compatible de giro para Blood Storm; no sustituye su ID de red.
+        case static_cast<ActionSkillType>(344):
         case AT_SKILL_FIRE_SLASH:
         case AT_SKILL_FIRE_SLASH_STR:
             SetAction(o, PLAYER_ATTACK_SKILL_WHEEL);
@@ -341,8 +354,18 @@ void UseSkillWarrior(CHARACTER* c, OBJECT* o)
             }
             else
             {
-                auto baseSkill = gSkillManager.MasterSkillToBaseSkillIndex(Skill);
-                SetAction(o, static_cast<int>(PLAYER_ATTACK_SKILL_SWORD1) + baseSkill - AT_SKILL_FALLING_SLASH);
+                // S8_V2: Master ID 326 is not an animation index.
+                // Only base sword skills 19..23 can index this animation range.
+                // Keep the original Skill for requests to OpenMU.
+                const auto baseSkill = gSkillManager.MasterSkillToBaseSkillIndex(Skill);
+                if (baseSkill >= AT_SKILL_FALLING_SLASH && baseSkill <= AT_SKILL_SLASH)
+                {
+                    SetAction(o, static_cast<int>(PLAYER_ATTACK_SKILL_SWORD1) + baseSkill - AT_SKILL_FALLING_SLASH);
+                }
+                else
+                {
+                    SetPlayerAttack(c);
+                }
             }
             break;
         }
@@ -355,21 +378,21 @@ void UseSkillWarrior(CHARACTER* c, OBJECT* o)
     vec3_t Light;
     Vector(1.f, 1.f, 1.f, Light);
 
-    if (Skill != AT_SKILL_FORCE
-        && Skill != AT_SKILL_FORCE_WAVE
-        && Skill != AT_SKILL_FORCE_WAVE_STR
-        && Skill != AT_SKILL_FIREBURST
-        && Skill != AT_SKILL_FIREBURST_STR
-        && Skill != AT_SKILL_FIREBURST_MASTERY
-        && Skill != AT_SKILL_SPACE_SPLIT
-        && Skill != AT_SKILL_FIRE_SCREAM
-        && Skill != AT_SKILL_FIRE_SCREAM_STR
-        && Skill != AT_SKILL_KILLING_BLOW
-        && Skill != AT_SKILL_KILLING_BLOW_STR
-        && Skill != AT_SKILL_KILLING_BLOW_MASTERY
-        && Skill != AT_SKILL_BEAST_UPPERCUT
-        && Skill != AT_SKILL_BEAST_UPPERCUT_STR
-        && Skill != AT_SKILL_BEAST_UPPERCUT_MASTERY
+    if (LogicSkill != AT_SKILL_FORCE
+        && LogicSkill != AT_SKILL_FORCE_WAVE
+        && LogicSkill != AT_SKILL_FORCE_WAVE_STR
+        && LogicSkill != AT_SKILL_FIREBURST
+        && LogicSkill != AT_SKILL_FIREBURST_STR
+        && LogicSkill != AT_SKILL_FIREBURST_MASTERY
+        && LogicSkill != AT_SKILL_SPACE_SPLIT
+        && LogicSkill != AT_SKILL_FIRE_SCREAM
+        && LogicSkill != AT_SKILL_FIRE_SCREAM_STR
+        && LogicSkill != AT_SKILL_KILLING_BLOW
+        && LogicSkill != AT_SKILL_KILLING_BLOW_STR
+        && LogicSkill != AT_SKILL_KILLING_BLOW_MASTERY
+        && LogicSkill != AT_SKILL_BEAST_UPPERCUT
+        && LogicSkill != AT_SKILL_BEAST_UPPERCUT_STR
+        && LogicSkill != AT_SKILL_BEAST_UPPERCUT_MASTERY
         )
     {
         CreateParticle(BITMAP_SHINY + 2, o->Position, o->Angle, Light, 0, 0.f, o);
@@ -382,7 +405,7 @@ void UseSkillWarrior(CHARACTER* c, OBJECT* o)
         o->Angle[2] = CreateAngle2D(o->Position, c->TargetPosition);
     }
 
-    if (Skill != AT_SKILL_CHAOTIC_DISEIER)
+    if (LogicSkill != AT_SKILL_CHAOTIC_DISEIER)
     {
         WORD TKey = 0xffff;
         if (g_MovementSkill.m_iTarget >= 0 && g_MovementSkill.m_iTarget < MAX_CHARACTERS_CLIENT)
@@ -390,12 +413,13 @@ void UseSkillWarrior(CHARACTER* c, OBJECT* o)
 			TKey = getTargetCharacterKey(c, g_MovementSkill.m_iTarget);
 		}
 
-        if (Skill == AT_SKILL_TWISTING_SLASH
-            || Skill == AT_SKILL_TWISTING_SLASH_STR
-            || Skill == AT_SKILL_TWISTING_SLASH_STR_MG
-            || Skill == AT_SKILL_TWISTING_SLASH_MASTERY
-            || Skill == AT_SKILL_FIRE_SLASH
-            || Skill == AT_SKILL_FIRE_SLASH_STR
+        if (LogicSkill == AT_SKILL_TWISTING_SLASH
+            || LogicSkill == AT_SKILL_TWISTING_SLASH_STR
+            || LogicSkill == AT_SKILL_TWISTING_SLASH_STR_MG
+            || LogicSkill == AT_SKILL_TWISTING_SLASH_MASTERY
+            || LogicSkill == static_cast<ActionSkillType>(344)
+            || LogicSkill == AT_SKILL_FIRE_SLASH
+            || LogicSkill == AT_SKILL_FIRE_SLASH_STR
             )
         {
             SendRequestMagicContinue(Skill, (c->PositionX), (c->PositionY), 
@@ -408,19 +432,19 @@ void UseSkillWarrior(CHARACTER* c, OBJECT* o)
     }
 
     if (((!g_isCharacterBuff(o, eDeBuff_Harden)) && c->Helper.Type != MODEL_DARK_HORSE_ITEM)
-        && Skill != AT_SKILL_FIRE_SCREAM
-        && Skill != AT_SKILL_FIRE_SCREAM_STR
+        && LogicSkill != AT_SKILL_FIRE_SCREAM
+        && LogicSkill != AT_SKILL_FIRE_SCREAM_STR
         )
     {
         BYTE positionX = (BYTE)(c->TargetPosition[0] / TERRAIN_SCALE);
         BYTE positionY = (BYTE)(c->TargetPosition[1] / TERRAIN_SCALE);
 
         if ((gMapManager.InBloodCastle() == true)
-            || Skill == AT_SKILL_FORCE
-            || Skill == AT_SKILL_FORCE_WAVE
-            || Skill == AT_SKILL_FORCE_WAVE_STR
-            || Skill == AT_SKILL_SPIRAL_SLASH
-            || Skill == AT_SKILL_RUSH
+            || LogicSkill == AT_SKILL_FORCE
+            || LogicSkill == AT_SKILL_FORCE_WAVE
+            || LogicSkill == AT_SKILL_FORCE_WAVE_STR
+            || LogicSkill == AT_SKILL_SPIRAL_SLASH
+            || LogicSkill == AT_SKILL_RUSH
             || CharactersClient[g_MovementSkill.m_iTarget].MonsterIndex == MONSTER_CASTLE_GATE1
             || CharactersClient[g_MovementSkill.m_iTarget].MonsterIndex == MONSTER_GUARDIAN_STATUE
             || CharactersClient[g_MovementSkill.m_iTarget].MonsterIndex == MONSTER_LIFE_STONE
@@ -446,17 +470,17 @@ void UseSkillWarrior(CHARACTER* c, OBJECT* o)
 
         if ((TerrainWall[TargetIndex] & TW_NOMOVE) != TW_NOMOVE && (TerrainWall[TargetIndex] & TW_NOGROUND) != TW_NOGROUND)
         {
-            if (Skill != AT_SKILL_IMPALE
-                && Skill != AT_SKILL_DEATHSTAB
-                && Skill != AT_SKILL_DEATHSTAB_STR
-                && Skill != AT_SKILL_RIDER
-                && Skill != AT_SKILL_FORCE
-                && Skill != AT_SKILL_FORCE_WAVE
-                && Skill != AT_SKILL_FORCE_WAVE_STR
-                && Skill != AT_SKILL_FIREBURST
-                && Skill != AT_SKILL_FIREBURST_STR
-                && Skill != AT_SKILL_FIREBURST_MASTERY
-                && Skill != AT_SKILL_SPACE_SPLIT
+            if (LogicSkill != AT_SKILL_IMPALE
+                && LogicSkill != AT_SKILL_DEATHSTAB
+                && LogicSkill != AT_SKILL_DEATHSTAB_STR
+                && LogicSkill != AT_SKILL_RIDER
+                && LogicSkill != AT_SKILL_FORCE
+                && LogicSkill != AT_SKILL_FORCE_WAVE
+                && LogicSkill != AT_SKILL_FORCE_WAVE_STR
+                && LogicSkill != AT_SKILL_FIREBURST
+                && LogicSkill != AT_SKILL_FIREBURST_STR
+                && LogicSkill != AT_SKILL_FIREBURST_MASTERY
+                && LogicSkill != AT_SKILL_SPACE_SPLIT
                 )
             {
                 SocketClient->ToGameServer()->SendInstantMoveRequest(positionX, positionY);
@@ -471,8 +495,9 @@ void UseSkillWarrior(CHARACTER* c, OBJECT* o)
 void UseSkillWizard(CHARACTER* c, OBJECT* o)
 {
     auto Skill = CharacterAttribute->Skill[g_MovementSkill.m_iSkill];
+    const auto LogicSkill = gSkillManager.MasterSkillToClientLogicSkill(Skill);
 
-    switch (Skill)
+    switch (LogicSkill)
     {
     case AT_SKILL_IMPALE:
     case AT_SKILL_DEATHSTAB:
@@ -480,7 +505,7 @@ void UseSkillWizard(CHARACTER* c, OBJECT* o)
         return;
     }
 
-    if (Skill == AT_SKILL_DEATH_CANNON)
+    if (LogicSkill == AT_SKILL_DEATH_CANNON)
     {
         if (Hero->Weapon[0].Type < MODEL_STAFF || Hero->Weapon[0].Type >= MODEL_STAFF + MAX_ITEM_INDEX)
             return;
@@ -498,11 +523,13 @@ void UseSkillWizard(CHARACTER* c, OBJECT* o)
         TKey = getTargetCharacterKey(c, g_MovementSkill.m_iTarget);
     }
 
-    switch (Skill)
+    switch (LogicSkill)
     {
     case AT_SKILL_POISON:
     case AT_SKILL_POISON_STR:
     case AT_SKILL_METEO:
+    case AT_SKILL_METEO_STR:
+    case AT_SKILL_METEO_MASTERY:
     case AT_SKILL_LIGHTNING:
     case AT_SKILL_LIGHTNING_STR:
     case AT_SKILL_LIGHTNING_STR_MG:
@@ -523,6 +550,25 @@ void UseSkillWizard(CHARACTER* c, OBJECT* o)
         SetAttackSpeed();
         LetHeroStop();
         break;
+    case AT_SKILL_ICE_STORM:
+    {
+        SendRequestMagicContinue(
+            Skill,
+            (int)(c->TargetPosition[0] / 100.f),
+            (int)(c->TargetPosition[1] / 100.f),
+            (BYTE)(o->Angle[2] / 360.f * 256.f),
+            0,
+            0,
+            TKey,
+            0);
+        break;
+    }
+
+    case AT_SKILL_NOVA:
+    {
+        SendRequestMagic(Skill, Hero->Key);
+        break;
+    }
     case AT_SKILL_BLAST:
     case AT_SKILL_BLAST_STR:
     case AT_SKILL_BLAST_STR_MG:
@@ -541,6 +587,7 @@ void UseSkillElf(CHARACTER* c, OBJECT* o)
 {
     LetHeroStop();
     int Skill = CharacterAttribute->Skill[g_MovementSkill.m_iSkill];
+    const auto LogicSkill = gSkillManager.MasterSkillToClientLogicSkill(static_cast<ActionSkillType>(Skill));
 
     if (g_MovementSkill.m_iTarget >= 0 && g_MovementSkill.m_iTarget < MAX_CHARACTERS_CLIENT)
     {
@@ -554,7 +601,7 @@ void UseSkillElf(CHARACTER* c, OBJECT* o)
         TKey = getTargetCharacterKey(c, g_MovementSkill.m_iTarget);
     }
 
-    switch (Skill)
+    switch (LogicSkill)
     {
     case AT_SKILL_HEALING:
     case AT_SKILL_HEALING_STR:
@@ -564,6 +611,8 @@ void UseSkillElf(CHARACTER* c, OBJECT* o)
     case AT_SKILL_DEFENSE:
     case AT_SKILL_DEFENSE_STR:
     case AT_SKILL_DEFENSE_MASTERY:
+    case AT_SKILL_BLESS:
+    case AT_SKILL_BLESS_STR:
         SendRequestMagic(Skill, TKey);
         SetPlayerMagic(c);
         break;
@@ -599,15 +648,16 @@ void UseSkillElf(CHARACTER* c, OBJECT* o)
 void UseSkillSummon(CHARACTER* pCha, OBJECT* pObj)
 {
     int iSkill = CharacterAttribute->Skill[g_MovementSkill.m_iSkill];
+    const auto LogicSkill = gSkillManager.MasterSkillToClientLogicSkill(static_cast<ActionSkillType>(iSkill));
 
-    switch (iSkill)
+    switch (LogicSkill)
     {
     case AT_SKILL_ALICE_DRAINLIFE:
     case AT_SKILL_ALICE_DRAINLIFE_STR:
     case AT_SKILL_ALICE_LIGHTNINGORB:
     {
         LetHeroStop();
-        if (iSkill == AT_SKILL_ALICE_DRAINLIFE || iSkill == AT_SKILL_ALICE_DRAINLIFE_STR)
+        if (LogicSkill == AT_SKILL_ALICE_DRAINLIFE || LogicSkill == AT_SKILL_ALICE_DRAINLIFE_STR)
         {
             switch (pCha->Helper.Type)
             {
@@ -625,7 +675,7 @@ void UseSkillSummon(CHARACTER* pCha, OBJECT* pObj)
                 break;
             }
         }
-        else if (iSkill == AT_SKILL_ALICE_LIGHTNINGORB)
+        else if (LogicSkill == AT_SKILL_ALICE_LIGHTNINGORB)
         {
             switch (pCha->Helper.Type)
             {
@@ -689,6 +739,12 @@ void UseSkillSummon(CHARACTER* pCha, OBJECT* pObj)
     case AT_SKILL_ALICE_THORNS:
     {
         LetHeroStop();
+        // Blind mejorado: ejecutar tambien una animacion local para el jugador.
+        if (LogicSkill == AT_SKILL_ALICE_BLIND)
+        {
+            SetAttackSpeed();
+            SetAction(pObj, PLAYER_SKILL_SLEEP);
+        }
 
         if (g_MovementSkill.m_iTarget >= 0 && g_MovementSkill.m_iTarget < MAX_CHARACTERS_CLIENT)
         {
@@ -748,6 +804,7 @@ void UseSkillSummon(CHARACTER* pCha, OBJECT* pObj)
 void UseSkillRagefighter(CHARACTER* pCha, OBJECT* pObj)
 {
     int iSkill = g_MovementSkill.m_bMagic ? CharacterAttribute->Skill[g_MovementSkill.m_iSkill] : g_MovementSkill.m_iSkill;
+    const auto LogicSkill = gSkillManager.MasterSkillToClientLogicSkill(static_cast<ActionSkillType>(iSkill));
 
     ITEM* pLeftRing = &CharacterMachine->Equipment[EQUIPMENT_RING_LEFT];
     ITEM* pRightRing = &CharacterMachine->Equipment[EQUIPMENT_RING_RIGHT];
@@ -755,10 +812,10 @@ void UseSkillRagefighter(CHARACTER* pCha, OBJECT* pObj)
     if (g_CMonkSystem.IsChangeringNotUseSkill(pLeftRing->Type, pRightRing->Type, pLeftRing->Level, pRightRing->Level))
         return;
 
-    if (g_CMonkSystem.IsRideNotUseSkill(iSkill, pCha->Helper.Type))
+    if (g_CMonkSystem.IsRideNotUseSkill(LogicSkill, pCha->Helper.Type))
         return;
 
-    if (!g_CMonkSystem.IsSwordformGlovesUseSkill(iSkill))
+    if (!g_CMonkSystem.IsSwordformGlovesUseSkill(LogicSkill))
         return;
 
     LetHeroStop();
@@ -766,11 +823,11 @@ void UseSkillRagefighter(CHARACTER* pCha, OBJECT* pObj)
 
     if (pObj->Type == MODEL_PLAYER)
     {
-        g_CMonkSystem.SetRageSkillAni(iSkill, pObj);
+        g_CMonkSystem.SetRageSkillAni(LogicSkill, pObj);
         SetAttackSpeed();
     }
 
-    switch (iSkill)
+    switch (LogicSkill)
     {
     case AT_SKILL_KILLING_BLOW:
     case AT_SKILL_KILLING_BLOW_STR:
@@ -789,7 +846,7 @@ void UseSkillRagefighter(CHARACTER* pCha, OBJECT* pObj)
         BYTE TargetPosX = (BYTE)(pCha->TargetPosition[0] / TERRAIN_SCALE);
         BYTE TargetPosY = (BYTE)(pCha->TargetPosition[1] / TERRAIN_SCALE);
 
-        if ((gMapManager.InBloodCastle()) || iSkill == AT_SKILL_OCCUPY
+        if ((gMapManager.InBloodCastle()) || LogicSkill == AT_SKILL_OCCUPY
             || (g_MovementSkill.m_iTarget >= 0 && g_MovementSkill.m_iTarget < MAX_CHARACTERS_CLIENT && (
                CharactersClient[g_MovementSkill.m_iTarget].MonsterIndex == MONSTER_CASTLE_GATE1
             || CharactersClient[g_MovementSkill.m_iTarget].MonsterIndex == MONSTER_GUARDIAN_STATUE
@@ -895,6 +952,22 @@ void UseSkillRagefighter(CHARACTER* pCha, OBJECT* pObj)
         g_CMonkSystem.RageCreateEffect(pObj, iSkill);
     }
     break;
+    case AT_SKILL_BLOOD_HOWLING:
+    case AT_SKILL_BLOOD_HOWLING_STR:
+    {
+        WORD wTargetKey = 0;
+        if (g_MovementSkill.m_iTarget >= 0 && g_MovementSkill.m_iTarget < MAX_CHARACTERS_CLIENT)
+        {
+            wTargetKey = CharactersClient[g_MovementSkill.m_iTarget].Key;
+        }
+
+        SocketClient->ToGameServer()->SendRageAttackRangeRequest(iSkill, wTargetKey);
+        SocketClient->ToGameServer()->SendRageAttackRequest(iSkill, wTargetKey);
+
+        pObj->m_sTargetIndex = g_MovementSkill.m_iTarget;
+        g_CMonkSystem.RageCreateEffect(pObj, iSkill);
+    }
+    break;
     case AT_SKILL_DRAGON_ROAR:
     case AT_SKILL_DRAGON_ROAR_STR:
     {
@@ -960,6 +1033,7 @@ void UseSkillRagefighter(CHARACTER* pCha, OBJECT* pObj)
 
 void AttackRagefighter(CHARACTER* pCha, int nSkill, float fDistance)
 {
+    const auto LogicSkill = gSkillManager.MasterSkillToClientLogicSkill(static_cast<ActionSkillType>(nSkill));
     OBJECT* pObj = &pCha->Object;
 
     int iMana, iSkillMana;
@@ -999,7 +1073,7 @@ void AttackRagefighter(CHARACTER* pCha, int nSkill, float fDistance)
 
     if (bSuccess)
     {
-        switch (nSkill)
+        switch (LogicSkill)
         {
         case AT_SKILL_KILLING_BLOW:
         case AT_SKILL_KILLING_BLOW_STR:
@@ -1200,7 +1274,7 @@ bool SkillElf(CHARACTER* c, ITEM* p)
                     {
                         TKey = getTargetCharacterKey(c, g_MovementSkill.m_iTarget);
                     }
-                    SendRequestMagicContinue(Spe_Num, (c->PositionX),
+                    SendRequestMagicContinue(currentSkill, (c->PositionX),
                         (c->PositionY), (BYTE)(o->Angle[2] / 360.f * 256.f), 0, 0, TKey, 0);
                     SetPlayerAttack(c);
                     if (o->Type != MODEL_PLAYER && o->Kind != KIND_PLAYER)
@@ -1226,7 +1300,7 @@ bool SkillElf(CHARACTER* c, ITEM* p)
                     {
                         TKey = getTargetCharacterKey(c, g_MovementSkill.m_iTarget);
                     }
-                    SendRequestMagicContinue(Spe_Num, (c->PositionX),
+                    SendRequestMagicContinue(currentSkill, (c->PositionX),
                         (c->PositionY), ((o->Angle[2] / 360.f) * 255), byValue, angle, TKey, 0);
                     SetPlayerAttack(c);
                     if (o->Type != MODEL_PLAYER)

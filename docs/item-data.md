@@ -9,6 +9,10 @@ database; `Item_<lang>.bmd` is no longer read by the game.
 The data matches OpenMU's `ItemDefinition` where both sides have the same
 fields, so it can later be exchanged with the server.
 
+An item with the level 380 (Guardian) option shows its two purple option
+lines in the inventory tooltip. The server sends the option with the item;
+the client reads the values for that item from `Data/Local/ItemAddOption.bmd`.
+
 ---
 
 ## Files

@@ -17,71 +17,21 @@
 extern EGameScene SceneFlag;
 extern CErrorReport g_ErrorReport;
 
-// Constants for background image selection
-constexpr int BACKGROUND_SELECTION_PERCENTAGE = 100;
-constexpr int CLASSIC_BACKGROUND_PROBABILITY = 70;
-
-// Bitmap indices for title scene resources
-constexpr int TITLE_BITMAP_BASE = BITMAP_TITLE;
-constexpr int TITLE_BITMAP_BACK_02 = BITMAP_TITLE + 1;
-constexpr int TITLE_BITMAP_LOGO = BITMAP_TITLE + 3;
 constexpr int TITLE_BITMAP_PATTERN = BITMAP_TITLE + 5;
-constexpr int TITLE_BITMAP_DYNAMIC_START = BITMAP_TITLE + 6;
-constexpr int TITLE_BITMAP_DYNAMIC_END = BITMAP_TITLE + 14;
-
-enum class BackgroundTheme
-{
-    Classic,
-    Season5
-};
-
-/**
- * @brief Determines which background theme to use based on configured probability.
- * @return BackgroundTheme::Classic or BackgroundTheme::Season5
- */
-static BackgroundTheme SelectBackgroundTheme()
-{
-    int roll = rand() % BACKGROUND_SELECTION_PERCENTAGE;
-    return (roll <= CLASSIC_BACKGROUND_PROBABILITY) ? BackgroundTheme::Classic : BackgroundTheme::Season5;
-}
-
-/**
- * @brief Loads the appropriate background image set based on theme.
- * @param theme The background theme to load (Classic or Season5)
- */
-static void LoadBackgroundTheme(BackgroundTheme theme)
-{
-    if (theme == BackgroundTheme::Classic)
-    {
-        LoadBitmap(L"Interface\\S8IntroA01.jpg", BITMAP_TITLE + 8, GL_LINEAR);
-        LoadBitmap(L"Interface\\S8IntroA02.jpg", BITMAP_TITLE + 9, GL_LINEAR);
-        LoadBitmap(L"Interface\\S8IntroA03.jpg", BITMAP_TITLE + 10, GL_LINEAR);
-        LoadBitmap(L"Interface\\S8IntroA04.jpg", BITMAP_TITLE + 11, GL_LINEAR);
-        LoadBitmap(L"Interface\\S8IntroA05.jpg", BITMAP_TITLE + 12, GL_LINEAR);
-        LoadBitmap(L"Interface\\S8IntroA06.jpg", BITMAP_TITLE + 13, GL_LINEAR);
-    }
-    else
-    {
-        LoadBitmap(L"Interface\\S8IntroB01.jpg", BITMAP_TITLE + 8, GL_LINEAR);
-        LoadBitmap(L"Interface\\S8IntroB02.jpg", BITMAP_TITLE + 9, GL_LINEAR);
-        LoadBitmap(L"Interface\\S8IntroB03.jpg", BITMAP_TITLE + 10, GL_LINEAR);
-        LoadBitmap(L"Interface\\S8IntroB04.jpg", BITMAP_TITLE + 11, GL_LINEAR);
-        LoadBitmap(L"Interface\\S8IntroB05.jpg", BITMAP_TITLE + 12, GL_LINEAR);
-        LoadBitmap(L"Interface\\S8IntroB06.jpg", BITMAP_TITLE + 13, GL_LINEAR);
-    }
-}
-
-/**
- * @brief Loads all common title scene bitmaps.
- */
-static void LoadCommonTitleBitmaps()
+static void LoadTitleBitmaps()
 {
     LoadBitmap(L"Interface\\New_lo_back_01.jpg", BITMAP_TITLE, GL_LINEAR);
     LoadBitmap(L"Interface\\New_lo_back_02.jpg", BITMAP_TITLE + 1, GL_LINEAR);
-    LoadBitmap(L"Interface\\lo_121518.tga", BITMAP_TITLE + 3, GL_LINEAR);
     LoadBitmap(L"Interface\\lo_lo.jpg", BITMAP_TITLE + 5, GL_LINEAR, GL_REPEAT);
     LoadBitmap(L"Interface\\lo_back_s5_03.jpg", BITMAP_TITLE + 6, GL_LINEAR);
     LoadBitmap(L"Interface\\lo_back_s5_04.jpg", BITMAP_TITLE + 7, GL_LINEAR);
+    const wchar_t* pieces[6] = {
+        L"Interface\\S8IntroA01.jpg", L"Interface\\S8IntroA02.jpg",
+        L"Interface\\S8IntroA03.jpg", L"Interface\\S8IntroA04.jpg",
+        L"Interface\\S8IntroA05.jpg", L"Interface\\S8IntroA06.jpg"
+    };
+    for (int i = 0; i < 6; ++i)
+        LoadBitmap(pieces[i], BITMAP_TITLE + 8 + i, GL_LINEAR);
 }
 
 /**
@@ -89,15 +39,13 @@ static void LoadCommonTitleBitmaps()
  */
 static void UnloadTitleBitmaps()
 {
-    DeleteBitmap(TITLE_BITMAP_BASE);
-    DeleteBitmap(TITLE_BITMAP_BACK_02);
-    DeleteBitmap(TITLE_BITMAP_LOGO);
+    DeleteBitmap(BITMAP_TITLE);
+    DeleteBitmap(BITMAP_TITLE + 1);
     DeleteBitmap(TITLE_BITMAP_PATTERN);
-
-    for (int i = TITLE_BITMAP_DYNAMIC_START; i < TITLE_BITMAP_DYNAMIC_END; ++i)
-    {
-        DeleteBitmap(i);
-    }
+    DeleteBitmap(BITMAP_TITLE + 6);
+    DeleteBitmap(BITMAP_TITLE + 7);
+    for (int i = 0; i < 6; ++i)
+        DeleteBitmap(BITMAP_TITLE + 8 + i);
 }
 
 /**
@@ -114,9 +62,7 @@ void WebzenScene(HDC hDC)
     }
     ClearInput();
 
-    LoadCommonTitleBitmaps();
-    BackgroundTheme theme = SelectBackgroundTheme();
-    LoadBackgroundTheme(theme);
+    LoadTitleBitmaps();
 
     rUIMng.CreateTitleSceneUI();
 

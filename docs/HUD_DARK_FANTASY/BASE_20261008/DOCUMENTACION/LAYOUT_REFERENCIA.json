@@ -1,0 +1,95 @@
+{
+  "target": "MU Season 8 Dark Fantasy",
+  "reference": {
+    "width": 1672,
+    "height": 941
+  },
+  "sourceType": "concept art only",
+  "features": {
+    "bottom": {
+      "region": [
+        0,
+        715,
+        1672,
+        226
+      ],
+      "anchor": "bottom_center"
+    },
+    "hpOrb": {
+      "region": [
+        0,
+        710,
+        330,
+        231
+      ],
+      "anchor": "bottom_left"
+    },
+    "sd": {
+      "region": [
+        275,
+        777,
+        215,
+        150
+      ]
+    },
+    "skillBar": {
+      "region": [
+        465,
+        765,
+        715,
+        160
+      ],
+      "slots": 10
+    },
+    "ag": {
+      "region": [
+        1180,
+        777,
+        210,
+        150
+      ]
+    },
+    "mpOrb": {
+      "region": [
+        1360,
+        710,
+        312,
+        231
+      ],
+      "anchor": "bottom_right"
+    },
+    "topLeft": {
+      "region": [
+        0,
+        0,
+        520,
+        128
+      ]
+    },
+    "stats": {
+      "region": [
+        1230,
+        0,
+        442,
+        737
+      ]
+    },
+    "inventory": {
+      "region": [
+        1260,
+        0,
+        412,
+        815
+      ]
+    },
+    "artifact": {
+      "region": [
+        855,
+        0,
+        410,
+        725
+      ]
+    }
+  },
+  "notice": "Illustrative coordinates on art image; not game engine logical coordinates or sprite UVs."
+}

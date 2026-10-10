@@ -25,6 +25,7 @@ enum class ItemSlot : BYTE
     Pet = 8,
     Pendant = 9,
     Ring = 10,
+    Pentagram = PENTAGRAM_SERVER_SLOT,
     None = 255,
 };
 

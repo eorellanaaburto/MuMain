@@ -392,7 +392,7 @@ typedef struct
     WORD Defense;
     WORD MagicDefense;
     WORD WalkSpeed;
-    WORD LevelUpPoint;
+    DWORD LevelUpPoint;
     BYTE SkillNumber;
     BYTE SkillMasterNumber;
 

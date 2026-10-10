@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "GameLogic/Combat/ClassAttack.h"
 #include "GameLogic/Combat/CombatTarget.h"
 #include "GameLogic/Combat/SkillCast.h"
@@ -154,6 +154,10 @@ void AttackElf(CHARACTER* c, int Skill, float Distance)
 
     case AT_SKILL_HEALING:
     case AT_SKILL_HEALING_STR:
+    // Party Heal y Party Heal Strengthener: misma via de envio que Heal.
+    // Se envia Skill (426/429) original; efecto de area a cargo del servidor.
+    case 426:
+    case 429:
     case AT_SKILL_ATTACK:
     case AT_SKILL_ATTACK_STR:
     case AT_SKILL_ATTACK_MASTERY:
@@ -488,6 +492,8 @@ void AttackKnight(CHARACTER* c, ActionSkillType Skill, float Distance)
         || Skill == AT_SKILL_SWELL_LIFE
         || Skill == AT_SKILL_SWELL_LIFE_STR
         || Skill == AT_SKILL_SWELL_LIFE_PROFICIENCY
+        || Skill == AT_SKILL_IRON_DEFENSE
+        || Skill == AT_SKILL_IRON_DEFENSE_STR
         || Skill == AT_SKILL_ADD_CRITICAL
         || Skill == AT_SKILL_ADD_CRITICAL_STR1
         || Skill == AT_SKILL_ADD_CRITICAL_STR2
@@ -962,6 +968,12 @@ void AttackKnight(CHARACTER* c, ActionSkillType Skill, float Distance)
                 SetAction(o, PLAYER_SKILL_VITALITY);
                 c->Movement = 0;
                 break;
+            case AT_SKILL_IRON_DEFENSE:
+            case AT_SKILL_IRON_DEFENSE_STR:
+                SendRequestMagic(Skill, HeroKey);
+                SetAction(o, PLAYER_SKILL_VITALITY);
+                c->Movement = 0;
+                break;
             case AT_SKILL_RAGEFUL_BLOW:
             case AT_SKILL_RAGEFUL_BLOW_STR:
             case AT_SKILL_RAGEFUL_BLOW_MASTERY:
@@ -1074,11 +1086,11 @@ void AttackWizard(CHARACTER* c, int Skill, float Distance)
     int ClassIndex = gCharacterManager.GetBaseClass(c->Class);
 
     int iMana, iSkillMana;
-    if (Skill == AT_SKILL_NOVA_BEGIN || Skill == AT_SKILL_NOVA)
+    if (Skill == AT_SKILL_NOVA_BEGIN || Skill == AT_SKILL_NOVA || Skill == AT_SKILL_NOVA_STR)
     {
         gSkillManager.GetSkillInformation(AT_SKILL_NOVA, 1, NULL, &iMana, NULL, &iSkillMana);
 
-        if (Skill == AT_SKILL_NOVA)
+        if (Skill == AT_SKILL_NOVA || Skill == AT_SKILL_NOVA_STR)
         {
             iSkillMana = 0;
         }
@@ -1107,7 +1119,7 @@ void AttackWizard(CHARACTER* c, int Skill, float Distance)
 
     if (iSkillMana > CharacterAttribute->SkillMana)
     {
-        if (Skill == AT_SKILL_NOVA_BEGIN || Skill == AT_SKILL_NOVA)
+        if (Skill == AT_SKILL_NOVA_BEGIN || Skill == AT_SKILL_NOVA || Skill == AT_SKILL_NOVA_STR)
         {
             MouseRButtonPop = false;
             MouseRButtonPush = false;
@@ -1136,6 +1148,7 @@ void AttackWizard(CHARACTER* c, int Skill, float Distance)
     }
     return;
     case AT_SKILL_NOVA:
+    case AT_SKILL_NOVA_STR:
     {
         int iTargetKey = getTargetCharacterKey(c, SelectedCharacter);
         if (iTargetKey == -1) {
@@ -1384,6 +1397,18 @@ void AttackWizard(CHARACTER* c, int Skill, float Distance)
             case AT_SKILL_DECAY:
             case AT_SKILL_DECAY_STR:
             case AT_SKILL_ICE_STORM:
+            {
+                WORD TKey = 0xffff;
+                if (g_MovementSkill.m_iTarget != -1)
+                {
+                    TKey = getTargetCharacterKey(c, g_MovementSkill.m_iTarget);
+                }
+                SendRequestMagicContinue(Skill, (BYTE)(c->TargetPosition[0] / TERRAIN_SCALE), (BYTE)(c->TargetPosition[1] / TERRAIN_SCALE), (BYTE)(o->Angle[2] / 360.f * 256.f), 0, 0, TKey, 0);
+                SetPlayerMagic(c);
+                c->Movement = 0;
+            }
+            return;
+            case AT_SKILL_EARTH_PRISON:
             {
                 WORD TKey = 0xffff;
                 if (g_MovementSkill.m_iTarget != -1)
@@ -1692,6 +1717,9 @@ void AttackWizard(CHARACTER* c, int Skill, float Distance)
         case AT_SKILL_ALICE_SLEEP:
         case AT_SKILL_ALICE_SLEEP_STR:
         case AT_SKILL_ALICE_BLIND:
+        // Blind y su variante Master: no omitir la ejecucion al seleccionar objetivo.
+        case 461:
+        case 463:
         {
             if (SelectedCharacter >= 0 && SelectedCharacter < MAX_CHARACTERS_CLIENT && CharactersClient[SelectedCharacter].Object.Kind == KIND_PLAYER)
             {

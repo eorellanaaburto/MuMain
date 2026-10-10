@@ -399,7 +399,8 @@ void SEASON3A::CGM3rdChangeUp::PlayBGM()
 
 CHARACTER* SEASON3A::CGM3rdChangeUp::CreateBalgasBarrackMonster(int iType, int PosX, int PosY, int Key)
 {
-    if (!(IsBalgasBarrackMap() || IsBalgasRefugeMap() || gMapManager.InDevilSquare()))
+    if (!(IsBalgasBarrackMap() || IsBalgasRefugeMap() || gMapManager.InDevilSquare()
+        || gMapManager.WorldActive == WD_6STADIUM))
         return NULL;
 
     CHARACTER* c = NULL;

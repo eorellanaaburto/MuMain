@@ -1,4 +1,4 @@
-// NewUIMixInventory.cpp: implementation of the CNewUIMixInventory class.
+﻿// NewUIMixInventory.cpp: implementation of the CNewUIMixInventory class.
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -30,6 +30,9 @@ CNewUIMixInventory::CNewUIMixInventory()
     m_Pos.x = m_Pos.y = 0;
     m_iMixState = MIX_READY;
     m_iMixEffectTimer = 0;
+
+    m_bAdnielMode = false;
+    m_byAdnielRecipeId = 0;
 }
 CNewUIMixInventory::~CNewUIMixInventory() { Release(); }
 
@@ -83,6 +86,30 @@ void CNewUIMixInventory::Release()
         g_pNewUI3DRenderMng->DeleteUI2DEffectObject(UI2DEffectCallback);
 }
 
+void CNewUIMixInventory::SetAdnielMix(BYTE recipeId)
+{
+    if (recipeId < 1 || recipeId > 5)
+    {
+        m_bAdnielMode = false;
+        m_byAdnielRecipeId = 0;
+        return;
+    }
+
+    m_bAdnielMode = true;
+    m_byAdnielRecipeId = recipeId;
+
+    // El almacenamiento sigue siendo CHAOS_MIX.
+    // OpenMU selecciona la receta real por NPC abierto + numero 1..5.
+    g_MixRecipeMgr.SetMixType(
+        SEASON3A::MIXTYPE_GOBLIN_NORMAL);
+
+    SetMixState(MIX_READY);
+
+    g_ErrorReport.Write(
+        L"[Adniel] recipe selected=%u\r\n",
+        static_cast<unsigned int>(m_byAdnielRecipeId));
+}
+
 void CNewUIMixInventory::SetMixState(int iMixState)
 {
     m_iMixState = iMixState;
@@ -127,10 +154,17 @@ void CNewUIMixInventory::DeleteAllItems()
 
 void CNewUIMixInventory::OpeningProcess()
 {
+    SetMixState(SEASON3B::CNewUIMixInventory::MIX_READY);
+
+    // ADNIEL_OPENING_PROCESS
+    // No abrir menu Chaos Goblin cuando venimos desde Adniel.
+    if (m_bAdnielMode)
+    {
+        return;
+    }
+
     g_MixRecipeMgr.SetPlusChaosRate(0);
     SocketClient->ToGameServer()->SendCrywolfChaosRateBenefitRequest();
-
-    SetMixState(SEASON3B::CNewUIMixInventory::MIX_READY);
 
     if (g_MixRecipeMgr.GetMixInventoryType() == SEASON3A::MIXTYPE_GOBLIN_NORMAL)
     {
@@ -174,6 +208,11 @@ bool CNewUIMixInventory::ClosingProcess()
     }
     g_pMixInventory->DeleteAllItems();
     g_MixRecipeMgr.ClearCheckRecipeResult();
+
+    // ADNIEL_CLOSING_PROCESS
+    m_bAdnielMode = false;
+    m_byAdnielRecipeId = 0;
+
     return true;
 }
 
@@ -337,6 +376,158 @@ void CNewUIMixInventory::UnloadImages()
 
 void CNewUIMixInventory::RenderFrame()
 {
+    // ========================================================
+    // ADNIEL_RENDER_TITLE
+    // ========================================================
+    if (m_bAdnielMode)
+    {
+        RenderImage(
+            IMAGE_MIXINVENTORY_BACK,
+            m_Pos.x,
+            m_Pos.y,
+            190.f,
+            429.f);
+
+        RenderImage(
+            IMAGE_MIXINVENTORY_TOP,
+            m_Pos.x,
+            m_Pos.y,
+            190.f,
+            64.f);
+
+        RenderImage(
+            IMAGE_MIXINVENTORY_LEFT,
+            m_Pos.x,
+            m_Pos.y + 64,
+            21.f,
+            320.f);
+
+        RenderImage(
+            IMAGE_MIXINVENTORY_RIGHT,
+            m_Pos.x + INVENTORY_WIDTH - 21,
+            m_Pos.y + 64,
+            21.f,
+            320.f);
+
+        RenderImage(
+            IMAGE_MIXINVENTORY_BOTTOM,
+            m_Pos.x,
+            m_Pos.y + INVENTORY_HEIGHT - 45,
+            190.f,
+            45.f);
+
+        const wchar_t* recipeName =
+            L"Elemental Combination";
+
+        switch (m_byAdnielRecipeId)
+        {
+        case 1:
+            recipeName = L"Errtel of Anger";
+            break;
+
+        case 2:
+            recipeName = L"Errtel of Blessing";
+            break;
+
+        case 3:
+            recipeName = L"Errtel of Integrity";
+            break;
+
+        case 4:
+            recipeName = L"Errtel of Divinity";
+            break;
+
+        case 5:
+            recipeName = L"Errtel of Gale";
+            break;
+        }
+
+        g_pRenderText->SetBgColor(
+            0, 0, 0, 0);
+
+        g_pRenderText->SetFont(
+            g_hFontBold);
+
+        g_pRenderText->SetTextColor(
+            255, 220, 100, 255);
+
+        g_pRenderText->RenderText(
+            m_Pos.x + 15.f,
+            m_Pos.y + 13.f,
+            L"Element Master Adniel",
+            160.f,
+            0,
+            RT3_SORT_CENTER);
+
+        g_pRenderText->SetFont(
+            g_hFont);
+
+        g_pRenderText->SetTextColor(
+            255, 255, 255, 255);
+
+        g_pRenderText->RenderText(
+            m_Pos.x + 15.f,
+            m_Pos.y + 34.f,
+            recipeName,
+            160.f,
+            0,
+            RT3_SORT_CENTER);
+
+        g_pRenderText->SetTextColor(
+            210, 230, 255, 255);
+
+        g_pRenderText->RenderText(
+            m_Pos.x + 15.f,
+            m_Pos.y + 315.f,
+            L"Required materials:",
+            160.f,
+            0,
+            RT3_SORT_CENTER);
+
+        g_pRenderText->RenderText(
+            m_Pos.x + 15.f,
+            m_Pos.y + 330.f,
+            L"5 Mithril Fragment",
+            160.f,
+            0,
+            RT3_SORT_CENTER);
+
+        g_pRenderText->RenderText(
+            m_Pos.x + 15.f,
+            m_Pos.y + 345.f,
+            L"1 Elixir Fragment",
+            160.f,
+            0,
+            RT3_SORT_CENTER);
+
+        g_pRenderText->RenderText(
+            m_Pos.x + 15.f,
+            m_Pos.y + 360.f,
+            L"1 Jewel of Bless",
+            160.f,
+            0,
+            RT3_SORT_CENTER);
+
+        g_pRenderText->SetTextColor(
+            255, 255, 80, 255);
+
+        g_pRenderText->RenderText(
+            m_Pos.x + 15.f,
+            m_Pos.y + 375.f,
+            L"Success rate: 80%",
+            160.f,
+            0,
+            RT3_SORT_CENTER);
+
+        m_BtnMix.ChangeToolTipText(
+            &I18N::Game::Combining,
+            true);
+
+        m_BtnMix.Render();
+
+        return;
+    }
+
     RenderImage(IMAGE_MIXINVENTORY_BACK, m_Pos.x, m_Pos.y, 190.f, 429.f);
     RenderImage(IMAGE_MIXINVENTORY_TOP, m_Pos.x, m_Pos.y, 190.f, 64.f);
     RenderImage(IMAGE_MIXINVENTORY_LEFT, m_Pos.x, m_Pos.y + 64, 21.f, 320.f);
@@ -808,6 +999,48 @@ bool CNewUIMixInventory::Mix()
 {
     PlayBuffer(SOUND_CLICK01);
 
+    // ========================================================
+    // ADNIEL_SEND_MIX
+    // ========================================================
+    if (m_bAdnielMode)
+    {
+        if (m_byAdnielRecipeId < 1 ||
+            m_byAdnielRecipeId > 5)
+        {
+            g_ErrorReport.Write(
+                L"[Adniel] invalid recipe\r\n");
+
+            return false;
+        }
+
+        if (m_pNewInventoryCtrl->GetNumberOfItems() == 0)
+        {
+            g_pSystemLogBox->AddText(
+                L"Place the required materials in the combination window.",
+                SEASON3B::TYPE_ERROR_MESSAGE);
+
+            return false;
+        }
+
+        g_ErrorReport.Write(
+            L"[Adniel] sending recipe=%u items=%u\r\n",
+            static_cast<unsigned int>(m_byAdnielRecipeId),
+            static_cast<unsigned int>(
+                m_pNewInventoryCtrl->GetNumberOfItems()));
+
+        SetMixState(
+            SEASON3B::CNewUIMixInventory::MIX_REQUESTED);
+
+        SocketClient
+            ->ToGameServer()
+            ->SendChaosMachineMixRequest(
+                static_cast<ChaosMachineMixType>(
+                    m_byAdnielRecipeId),
+                0);
+
+        return true;
+    }
+
     DWORD dwGold = CharacterMachine->Gold;
     int	  nMixZen = g_MixRecipeMgr.GetReqiredZen();
 
@@ -937,7 +1170,16 @@ bool CNewUIMixInventory::AcceptsHeldItem(CNewUIPickedItem* pPickedItem)
 {
     if (pPickedItem->GetOwnerInventory() == m_pNewInventoryCtrl)
         return true;
-    return GetMixState() == MIX_READY && g_MixRecipeMgr.IsMixSource(pPickedItem->GetItem());
+
+    // ADNIEL_ACCEPT_ITEM
+    // En Adniel la validacion final la realiza OpenMU.
+    if (m_bAdnielMode)
+    {
+        return GetMixState() == MIX_READY;
+    }
+
+    return GetMixState() == MIX_READY &&
+        g_MixRecipeMgr.IsMixSource(pPickedItem->GetItem());
 }
 
 // Direction-agnostic core of the right-click moves: pick the item under the
@@ -964,7 +1206,8 @@ bool CNewUIMixInventory::ProcessMyInvenItemAutoMove(CNewUIInventoryCtrl* sourceC
 
     return AutoMoveItem(sourceCtrl, STORAGE_TYPE::INVENTORY,
         m_pNewInventoryCtrl, g_MixRecipeMgr.GetMixInventoryEquipmentIndex(),
-        /*requireMixSource*/ true);
+        // ADNIEL_AUTOMOVE
+        /*requireMixSource*/ !m_bAdnielMode);
 }
 
 bool CNewUIMixInventory::ProcessMixItemAutoMoveToInventory()
@@ -977,6 +1220,13 @@ bool CNewUIMixInventory::ProcessMixItemAutoMoveToInventory()
 
 void CNewUIMixInventory::CheckMixInventory()
 {
+    // ADNIEL_CHECK_MIX
+    // Adniel usa las recetas del servidor, no Mix.bmd.
+    if (m_bAdnielMode)
+    {
+        return;
+    }
+
     g_MixRecipeMgr.ResetMixItemInventory();
     ITEM* pItem = NULL;
     for (int i = 0; i < (int)m_pNewInventoryCtrl->GetNumberOfItems(); ++i)

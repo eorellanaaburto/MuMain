@@ -9,7 +9,7 @@
 
 #include "Render/Sprites/Sprite.h"
 
-#define LDS_BACK_MAX	4
+#define LDS_BACK_MAX	10
 
 class CLoadingScene
 {
