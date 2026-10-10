@@ -7858,6 +7858,9 @@ CALLBACK_RESULT SEASON3B::CAdnielMenuMsgBox::LButtonUp(
         SocketClient
             ->ToGameServer()
             ->SendCraftingDialogCloseRequest();
+        SocketClient
+            ->ToGameServer()
+            ->SendCloseNpcRequest();
 
         PlayBuffer(SOUND_CLICK01);
 
