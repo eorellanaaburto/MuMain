@@ -6701,6 +6701,29 @@ BOOL ReceiveTalk(const BYTE* ReceiveBuffer, BOOL bEncrypted)
                 SEASON3B::CAdnielMenuMsgBoxLayout));
     }
     break;
+    case 0x2A:
+    {
+        const BYTE* pentagram = (&Data->Value) + 1;
+        if (pentagram[0] == 0)
+        {
+            g_pSystemLogBox->AddText(L"Pentagrama: no equipado.", SEASON3B::TYPE_SYSTEM_MESSAGE);
+            break;
+        }
+
+        static const wchar_t* ErrtelNames[5] = { L"Anger", L"Blessing", L"Integrity", L"Divinity", L"Gale" };
+        const BYTE* ranks = pentagram + 2;
+        const BYTE* levels = pentagram + 7;
+
+        wchar_t line[128];
+        mu_swprintf(line, L"Pentagrama nivel %d", static_cast<int>(pentagram[1]));
+        g_pSystemLogBox->AddText(line, SEASON3B::TYPE_SYSTEM_MESSAGE);
+        for (int i = 0; i < 5; ++i)
+        {
+            mu_swprintf(line, L"Errtel of %ls: Rank %d +%d", ErrtelNames[i], static_cast<int>(ranks[i]), static_cast<int>(levels[i]));
+            g_pSystemLogBox->AddText(line, SEASON3B::TYPE_SYSTEM_MESSAGE);
+        }
+    }
+    break;
 default:
     {
         // Data->Value
