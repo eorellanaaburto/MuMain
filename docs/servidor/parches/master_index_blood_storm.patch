@@ -1,0 +1,21 @@
+--- a/src/GameServer/RemoteView/MasterSkillExtensions.cs
++++ b/src/GameServer/RemoteView/MasterSkillExtensions.cs
+@@ -116,6 +116,9 @@
+                 { 360, 89 },
+                 { 361, 90 },
+                 { 362, 92 },
++                { 344, 66 },
++                { 346, 70 },
++                { 363, 93 },
+             }
+         },
+         {
+@@ -212,6 +215,8 @@
+                 { 488, 51 },
+                 { 489, 53 },
+                 { 490, 54 },
++                { 344, 66 },
++                { 346, 70 },
+             }
+         },
+         {
