@@ -2618,6 +2618,8 @@ bool AttackStage(CHARACTER* c, OBJECT* o)
     {
     case AT_SKILL_DEATHSTAB:
     case AT_SKILL_DEATHSTAB_STR:
+    case AT_SKILL_DEATHSTAB_PROFICIENCY:
+    case AT_SKILL_DEATHSTAB_MASTERY:
     {
         BMD* b = &Models[o->Type];
 
@@ -2849,6 +2851,7 @@ bool AttackStage(CHARACTER* c, OBJECT* o)
     case AT_SKILL_SWELL_LIFE:
     case AT_SKILL_SWELL_LIFE_STR:
     case AT_SKILL_SWELL_LIFE_PROFICIENCY:
+    case AT_SKILL_SWELL_LIFE_MASTERY:
         if ((int)c->AttackTime > 9 && o->Type == MODEL_PLAYER && o->CurrentAction == PLAYER_SKILL_VITALITY)
         {
             c->AttackTime = 15;
@@ -2880,6 +2883,7 @@ bool AttackStage(CHARACTER* c, OBJECT* o)
         }
         break;
     case    AT_SKILL_THUNDER_STRIKE:
+    case    AT_SKILL_ELECTRIC_SPARK_STR:
         if (o->AnimationFrame >= 5.5f && o->Type == MODEL_PLAYER && (o->CurrentAction == PLAYER_SKILL_FLASH || o->CurrentAction == PLAYER_ATTACK_RIDE_ATTACK_FLASH
             || o->CurrentAction == PLAYER_FENRIR_ATTACK_DARKLORD_FLASH))
         {
@@ -3011,6 +3015,8 @@ bool AttackStage(CHARACTER* c, OBJECT* o)
     break;
     case AT_SKILL_STRIKE_OF_DESTRUCTION:
     case AT_SKILL_STRIKE_OF_DESTRUCTION_STR:
+    case AT_SKILL_STRIKE_OF_DESTRUCTION_PROFICIENCY:
+    case AT_SKILL_STRIKE_OF_DESTRUCTION_MASTERY:
     {
         c->AttackTime = 15;
     }
@@ -4166,6 +4172,8 @@ void MoveCharacter(CHARACTER* c, OBJECT* o)
         }
         case AT_SKILL_STRIKE_OF_DESTRUCTION:
         case AT_SKILL_STRIKE_OF_DESTRUCTION_STR:
+        case AT_SKILL_STRIKE_OF_DESTRUCTION_PROFICIENCY:
+        case AT_SKILL_STRIKE_OF_DESTRUCTION_MASTERY:
             o->Weapon = c->Weapon[0].Type - MODEL_SWORD;
             o->WeaponLevel = (BYTE)c->Weapon[0].Level;
             Vector(0.f, 0.f, 0.f, o->Light);
@@ -4188,6 +4196,7 @@ void MoveCharacter(CHARACTER* c, OBJECT* o)
         case AT_SKILL_SWELL_LIFE:
         case AT_SKILL_SWELL_LIFE_STR:
         case AT_SKILL_SWELL_LIFE_PROFICIENCY:
+        case AT_SKILL_SWELL_LIFE_MASTERY:
         {
             vec3_t Angle = { 0.0f, 0.0f, 0.0f };
             int iCount = 36;
@@ -4386,6 +4395,7 @@ void MoveCharacter(CHARACTER* c, OBJECT* o)
             PlayBuffer(SOUND_PART_TELEPORT, o);
             break;
         case AT_SKILL_THUNDER_STRIKE:
+        case AT_SKILL_ELECTRIC_SPARK_STR:
             CalcAddPosition(o, 0.f, -90.f, -50.f, Position);
             if (o->CurrentAction == PLAYER_ATTACK_RIDE_ATTACK_FLASH)
             {
@@ -4902,6 +4912,8 @@ void MoveCharacter(CHARACTER* c, OBJECT* o)
                 break;
             case AT_SKILL_ICE_ARROW:
             case AT_SKILL_ICE_ARROW_STR:
+            case AT_SKILL_POISON_ARROW:
+            case AT_SKILL_POISON_ARROW_STR:
                 CreateArrows(c, o, NULL, FindHotKey((c->Skill)), 0, (c->Skill));
                 break;
             case AT_SKILL_DEEPIMPACT:
@@ -5273,10 +5285,13 @@ void MoveCharacter(CHARACTER* c, OBJECT* o)
             case AT_SKILL_SOUL_BARRIER_PROFICIENCY:
             case AT_SKILL_DEATHSTAB:
             case AT_SKILL_DEATHSTAB_STR:
+            case AT_SKILL_DEATHSTAB_PROFICIENCY:
+            case AT_SKILL_DEATHSTAB_MASTERY:
             case AT_SKILL_IMPALE:
             case AT_SKILL_SWELL_LIFE:
             case AT_SKILL_SWELL_LIFE_STR:
             case AT_SKILL_SWELL_LIFE_PROFICIENCY:
+            case AT_SKILL_SWELL_LIFE_MASTERY:
             case AT_SKILL_NOVA:
             case AT_SKILL_IMPROVE_AG:
             case AT_SKILL_ADD_CRITICAL:

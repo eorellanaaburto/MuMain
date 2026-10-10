@@ -298,6 +298,7 @@ void EmitPhysicalDamage(Model& m, int skillType, const DamageContext& ctx)
     case AT_SKILL_SWELL_LIFE:
     case AT_SKILL_SWELL_LIFE_STR:
     case AT_SKILL_SWELL_LIFE_PROFICIENCY:
+    case AT_SKILL_SWELL_LIFE_MASTERY:
     case AT_SKILL_HEALING:
     case AT_SKILL_HEALING_STR:
     case AT_SKILL_DEFENSE:
@@ -520,12 +521,16 @@ void EmitBottomBanners(Model& m, const BuildOptions& options, int skillType)
             || skillType == AT_SKILL_RAGEFUL_BLOW_STR
             || skillType == AT_SKILL_RAGEFUL_BLOW_MASTERY
             || skillType == AT_SKILL_DEATHSTAB
-            || skillType == AT_SKILL_DEATHSTAB_STR)
+            || skillType == AT_SKILL_DEATHSTAB_STR
+            || skillType == AT_SKILL_DEATHSTAB_PROFICIENCY
+            || skillType == AT_SKILL_DEATHSTAB_MASTERY)
         {
             AddRaw(m, I18N::Game::Combo, LineColor::DarkRed);
         }
         else if (skillType == AT_SKILL_STRIKE_OF_DESTRUCTION
-            || skillType == AT_SKILL_STRIKE_OF_DESTRUCTION_STR)
+            || skillType == AT_SKILL_STRIKE_OF_DESTRUCTION_STR
+            || skillType == AT_SKILL_STRIKE_OF_DESTRUCTION_PROFICIENCY
+            || skillType == AT_SKILL_STRIKE_OF_DESTRUCTION_MASTERY)
         {
             AddRaw(m, I18N::Game::CombinationAvailable2StepOnly, LineColor::DarkRed);
         }

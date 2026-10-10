@@ -1406,6 +1406,8 @@ void Action(CHARACTER* c, OBJECT* o, bool Now)
         case AT_SKILL_DEEPIMPACT:
         case AT_SKILL_ICE_ARROW:
         case AT_SKILL_ICE_ARROW_STR:
+        case AT_SKILL_POISON_ARROW:
+        case AT_SKILL_POISON_ARROW_STR:
             if (g_MovementSkill.m_iTarget >= 0 && g_MovementSkill.m_iTarget < MAX_CHARACTERS_CLIENT && CharactersClient[g_MovementSkill.m_iTarget].Dead == 0)
             {
                 TargetX = (int)(CharactersClient[g_MovementSkill.m_iTarget].Object.Position[0] / TERRAIN_SCALE);

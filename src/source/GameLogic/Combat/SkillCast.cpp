@@ -640,6 +640,13 @@ void UseSkillElf(CHARACTER* c, OBJECT* o)
         SendRequestMagic(Skill, TKey);
         SetPlayerHighBowAttack(c);
         break;
+
+    case AT_SKILL_POISON_ARROW:
+        if (!CheckArrow())
+            break;
+        SendRequestMagic(Skill, TKey);
+        SetPlayerAttack(c);
+        break;
     }
 
     c->SkillSuccess = true;

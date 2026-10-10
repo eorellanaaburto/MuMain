@@ -92,6 +92,7 @@ bool CanExecuteSkill(CHARACTER* c, ActionSkillType Skill, float Distance)
                 && Skill != AT_SKILL_SWELL_LIFE
                 && Skill != AT_SKILL_SWELL_LIFE_STR
                 && Skill != AT_SKILL_SWELL_LIFE_PROFICIENCY
+                && Skill != AT_SKILL_SWELL_LIFE_MASTERY
                 && Skill != AT_SKILL_INFINITY_ARROW
                 && Skill != AT_SKILL_INFINITY_ARROW_STR
                 && Skill != AT_SKILL_EXPANSION_OF_WIZARDRY
@@ -237,7 +238,7 @@ int ExecuteSkill(CHARACTER* c, ActionSkillType Skill, float Distance)
         {
             Attacking = -1;
         }
-        else if (ClassIndex == CLASS_KNIGHT && (Skill == AT_SKILL_SWELL_LIFE || Skill == AT_SKILL_SWELL_LIFE_STR || Skill == AT_SKILL_SWELL_LIFE_PROFICIENCY))
+        else if (ClassIndex == CLASS_KNIGHT && (Skill == AT_SKILL_SWELL_LIFE || Skill == AT_SKILL_SWELL_LIFE_STR || Skill == AT_SKILL_SWELL_LIFE_PROFICIENCY || Skill == AT_SKILL_SWELL_LIFE_MASTERY))
         {
             Attacking = -1;
         }
@@ -340,6 +341,8 @@ int ExecuteSkill(CHARACTER* c, ActionSkillType Skill, float Distance)
                         case AT_SKILL_RIDER:
                         case AT_SKILL_DEATHSTAB:
                         case AT_SKILL_DEATHSTAB_STR:
+                        case AT_SKILL_DEATHSTAB_PROFICIENCY:
+                        case AT_SKILL_DEATHSTAB_MASTERY:
                         case AT_SKILL_FORCE:
                         case AT_SKILL_FORCE_WAVE:
                         case AT_SKILL_FORCE_WAVE_STR:
@@ -350,6 +353,7 @@ int ExecuteSkill(CHARACTER* c, ActionSkillType Skill, float Distance)
                         case AT_SKILL_EARTHSHAKE_STR:
                         case AT_SKILL_EARTHSHAKE_MASTERY:
                         case AT_SKILL_THUNDER_STRIKE:
+                        case AT_SKILL_ELECTRIC_SPARK_STR:
                         case AT_SKILL_SPACE_SPLIT:
                         case AT_SKILL_PLASMA_STORM_FENRIR:
                         case AT_SKILL_FIRE_SCREAM:

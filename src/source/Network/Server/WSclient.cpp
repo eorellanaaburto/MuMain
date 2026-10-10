@@ -3983,6 +3983,8 @@ void ReceiveMagicFinish(const BYTE* ReceiveBuffer)
         break;
     case AT_SKILL_STRIKE_OF_DESTRUCTION:
     case AT_SKILL_STRIKE_OF_DESTRUCTION_STR:
+    case AT_SKILL_STRIKE_OF_DESTRUCTION_PROFICIENCY:
+    case AT_SKILL_STRIKE_OF_DESTRUCTION_MASTERY:
         UnRegisterBuff(eDeBuff_BlowOfDestruction, o);
         break;
     case AT_SKILL_ATTACK:
@@ -4019,6 +4021,7 @@ void ReceiveMagicFinish(const BYTE* ReceiveBuffer)
     case AT_SKILL_SWELL_LIFE:
     case AT_SKILL_SWELL_LIFE_STR:
     case AT_SKILL_SWELL_LIFE_PROFICIENCY:
+    case AT_SKILL_SWELL_LIFE_MASTERY:
         UnRegisterBuff(eBuff_Life, o);
         break;
     case AT_SKILL_ICE_ARROW:
@@ -4569,6 +4572,10 @@ BOOL ReceiveMagic(const BYTE* ReceiveBuffer, int Size, BOOL bEncrypted)
         sc->AttackTime = 1;
         break;
 
+    case AT_SKILL_POISON_ARROW:
+    case AT_SKILL_POISON_ARROW_STR:
+        SetPlayerBow(sc);
+        break;
     case AT_SKILL_ICE_ARROW:
     case AT_SKILL_ICE_ARROW_STR:
         SetPlayerBow(sc);
@@ -5353,6 +5360,7 @@ BOOL ReceiveMagicContinue(const BYTE* ReceiveBuffer, int Size, BOOL bEncrypted)
             break;
 
             case AT_SKILL_THUNDER_STRIKE:
+            case AT_SKILL_ELECTRIC_SPARK_STR:
                 if (sc->Helper.Type == MODEL_HORN_OF_FENRIR)
                     SetAction(so, PLAYER_FENRIR_ATTACK_DARKLORD_FLASH);
                 else
@@ -5372,6 +5380,8 @@ BOOL ReceiveMagicContinue(const BYTE* ReceiveBuffer, int Size, BOOL bEncrypted)
                 break;
             case AT_SKILL_STRIKE_OF_DESTRUCTION:
             case AT_SKILL_STRIKE_OF_DESTRUCTION_STR:
+            case AT_SKILL_STRIKE_OF_DESTRUCTION_PROFICIENCY:
+            case AT_SKILL_STRIKE_OF_DESTRUCTION_MASTERY:
                 SetAction(so, PLAYER_SKILL_BLOW_OF_DESTRUCTION);
                 break;
             case AT_SKILL_IMPALE:
@@ -5408,6 +5418,8 @@ BOOL ReceiveMagicContinue(const BYTE* ReceiveBuffer, int Size, BOOL bEncrypted)
                 break;
             case AT_SKILL_DEATHSTAB:
             case AT_SKILL_DEATHSTAB_STR:
+            case AT_SKILL_DEATHSTAB_PROFICIENCY:
+            case AT_SKILL_DEATHSTAB_MASTERY:
                 SetAction(so, PLAYER_ATTACK_DEATHSTAB);
                 break;
 

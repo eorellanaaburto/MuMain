@@ -2328,6 +2328,8 @@ void SEASON3B::CNewUISkillList::RenderSkillIcon(int iIndex, float x, float y, fl
         || bySkillType == AT_SKILL_RAGEFUL_BLOW_MASTERY
         || bySkillType == AT_SKILL_DEATHSTAB
         || bySkillType == AT_SKILL_DEATHSTAB_STR
+        || bySkillType == AT_SKILL_DEATHSTAB_PROFICIENCY
+        || bySkillType == AT_SKILL_DEATHSTAB_MASTERY
         )
     {
         int iTypeL = CharacterMachine->Equipment[EQUIPMENT_WEAPON_LEFT].Type;
