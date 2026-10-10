@@ -64,6 +64,12 @@ public:
     /// </remarks>
     void SendLogin(const wchar_t* username, const wchar_t* password, const BYTE* clientVersion,
                    const BYTE* clientSerial);
+
+    /// <summary>
+    /// Sends an AreaSkillHit to this connection, declaring the targets hit by an explicit-hit area skill.
+    /// </summary>
+    void SendAreaSkillHit(uint16_t skillId, BYTE targetX, BYTE targetY, BYTE hitCounter, const uint16_t* targetIds,
+                          const BYTE* animationCounters, BYTE targetCount);
 };
 
 /// <summary>

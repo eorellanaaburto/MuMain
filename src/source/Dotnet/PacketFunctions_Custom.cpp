@@ -69,3 +69,24 @@ void PacketFunctions_ChatServer_Custom::SendChatMessageExt(BYTE senderIndex, con
 
     dotnet_SendChatMessageExt(this->GetHandle(), senderIndex, MU_C16(message));
 }
+
+typedef void(CORECLR_DELEGATE_CALLTYPE* SendAreaSkillHitFn)(int32_t, uint16_t, BYTE, BYTE, BYTE, const uint16_t*,
+                                                            const BYTE*, BYTE);
+
+void PacketFunctions_ClientToServer_Custom::SendAreaSkillHit(uint16_t skillId, BYTE targetX, BYTE targetY,
+                                                             BYTE hitCounter, const uint16_t* targetIds,
+                                                             const BYTE* animationCounters, BYTE targetCount)
+{
+    static SendAreaSkillHitFn dotnet_SendAreaSkillHit = nullptr;
+    if (!dotnet_SendAreaSkillHit)
+    {
+        dotnet_SendAreaSkillHit = LoadManagedSymbol<SendAreaSkillHitFn>("ConnectionManager_SendAreaSkillHit");
+        if (!dotnet_SendAreaSkillHit)
+        {
+            return;
+        }
+    }
+
+    dotnet_SendAreaSkillHit(this->GetHandle(), skillId, targetX, targetY, hitCounter, targetIds, animationCounters,
+                            targetCount);
+}

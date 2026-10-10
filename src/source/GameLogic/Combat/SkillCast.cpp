@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "GameLogic/Combat/SkillCast.h"
+#include "GameLogic/Combat/BloodStormHits.h"
 #include "Character/CharacterManager.h" // gCharacterManager
 #include "GameLogic/Social/MonkSystem.h" // g_CMonkSystem
 
@@ -413,11 +414,17 @@ void UseSkillWarrior(CHARACTER* c, OBJECT* o)
 			TKey = getTargetCharacterKey(c, g_MovementSkill.m_iTarget);
 		}
 
-        if (LogicSkill == AT_SKILL_TWISTING_SLASH
+        if (LogicSkill == static_cast<ActionSkillType>(344))
+        {
+            BYTE animationCounter = 0;
+            SendRequestMagicContinue(Skill, (c->PositionX), (c->PositionY),
+                (BYTE)(o->Angle[2] / 360.f * 256.f), 0, 0, TKey, &animationCounter);
+            SendBloodStormAreaHits(static_cast<WORD>(Skill), g_MovementSkill.m_iTarget, animationCounter);
+        }
+        else if (LogicSkill == AT_SKILL_TWISTING_SLASH
             || LogicSkill == AT_SKILL_TWISTING_SLASH_STR
             || LogicSkill == AT_SKILL_TWISTING_SLASH_STR_MG
             || LogicSkill == AT_SKILL_TWISTING_SLASH_MASTERY
-            || LogicSkill == static_cast<ActionSkillType>(344)
             || LogicSkill == AT_SKILL_FIRE_SLASH
             || LogicSkill == AT_SKILL_FIRE_SLASH_STR
             )

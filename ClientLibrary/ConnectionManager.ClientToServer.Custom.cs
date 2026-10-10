@@ -85,4 +85,51 @@ public unsafe partial class ConnectionManager
             ManagedLog.Write(ManagedLog.Level.Error, $"NET: Login packet staging failed, handle={handle}: {ex}");
         }
     }
+
+    /// <summary>
+    /// Sends an <see cref="AreaSkillHit" /> to this connection.
+    /// </summary>
+    /// <param name="handle">The handle of the connection.</param>
+    /// <param name="skillId">The skill id.</param>
+    /// <param name="targetX">The target x coordinate.</param>
+    /// <param name="targetY">The target y coordinate.</param>
+    /// <param name="hitCounter">The hit counter.</param>
+    /// <param name="targetIds">The ids of the hit targets.</param>
+    /// <param name="animationCounters">The animation counter of each hit target.</param>
+    /// <param name="targetCount">The number of hit targets.</param>
+    [UnmanagedCallersOnly(EntryPoint = "ConnectionManager_SendAreaSkillHit")]
+    public static void SendAreaSkillHit(int handle, ushort @skillId, byte @targetX, byte @targetY, byte @hitCounter, ushort* @targetIds, byte* @animationCounters, byte @targetCount)
+    {
+        if (!Connections.TryGetValue(handle, out var connection))
+        {
+            ManagedLog.Write(ManagedLog.Level.Error, $"NET: AreaSkillHit send skipped; connection handle={handle} not found");
+            return;
+        }
+
+        try
+        {
+            connection.CreateAndSend(pipeWriter =>
+            {
+                var length = AreaSkillHitRef.GetRequiredSize(@targetCount);
+                var packet = new AreaSkillHitRef(pipeWriter.GetSpan(length)[..length]);
+                packet.SkillId = @skillId;
+                packet.TargetX = @targetX;
+                packet.TargetY = @targetY;
+                packet.HitCounter = @hitCounter;
+                packet.TargetCount = @targetCount;
+                for (var i = 0; i < @targetCount; i++)
+                {
+                    var target = packet[i];
+                    target.TargetId = @targetIds[i];
+                    target.AnimationCounter = @animationCounters[i];
+                }
+
+                return length;
+            });
+        }
+        catch (Exception ex)
+        {
+            ManagedLog.Write(ManagedLog.Level.Error, $"NET: AreaSkillHit packet staging failed, handle={handle}: {ex}");
+        }
+    }
 }
