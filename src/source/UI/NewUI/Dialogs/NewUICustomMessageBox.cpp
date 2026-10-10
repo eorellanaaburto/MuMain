@@ -6831,8 +6831,6 @@ void SEASON3B::CAdnielErrtelMenuMsgBox::RenderButtons()
     m_BtnAnger.Render();
     m_BtnBlessing.Render();
     m_BtnIntegrity.Render();
-    m_BtnDivinity.Render();
-    m_BtnGale.Render();
     m_BtnExit.Render();
 }
 
