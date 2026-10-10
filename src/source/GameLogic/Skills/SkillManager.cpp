@@ -207,12 +207,12 @@ ActionSkillType CSkillManager::MasterSkillToBaseSkillIndex(ActionSkillType maste
     // Skill base para logica local. ID master real para red.
     switch (static_cast<int>(masterSkill))
     {
-        case 339: return static_cast<ActionSkillType>(43);
-        case 340: return static_cast<ActionSkillType>(232);
-        case 342: return static_cast<ActionSkillType>(43);
-        case 343: return static_cast<ActionSkillType>(232);
-        case 346: return static_cast<ActionSkillType>(344);
-        case 363: return static_cast<ActionSkillType>(48);
+        case AT_SKILL_DEATHSTAB_PROFICIENCY: return AT_SKILL_DEATHSTAB;
+        case AT_SKILL_STRIKE_OF_DESTRUCTION_PROFICIENCY: return AT_SKILL_STRIKE_OF_DESTRUCTION;
+        case AT_SKILL_DEATHSTAB_MASTERY: return AT_SKILL_DEATHSTAB;
+        case AT_SKILL_STRIKE_OF_DESTRUCTION_MASTERY: return AT_SKILL_STRIKE_OF_DESTRUCTION;
+        case AT_SKILL_BLOOD_STORM_STR: return AT_SKILL_BLOOD_STORM;
+        case AT_SKILL_SWELL_LIFE_MASTERY: return AT_SKILL_SWELL_LIFE;
         case 390: return static_cast<ActionSkillType>(2);
         case 391: return static_cast<ActionSkillType>(39);
         case 392: return static_cast<ActionSkillType>(40);

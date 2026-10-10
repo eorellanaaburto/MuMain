@@ -2223,6 +2223,7 @@ bool CNewUIMuHelperSkillList::IsBuffSkill(int iSkillType)
     case AT_SKILL_SWELL_LIFE:
     case AT_SKILL_SWELL_LIFE_STR:
     case AT_SKILL_SWELL_LIFE_PROFICIENCY:
+    case AT_SKILL_SWELL_LIFE_MASTERY:
         return true;
     // Elf buffs
     case AT_SKILL_INFINITY_ARROW:

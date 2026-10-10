@@ -526,6 +526,7 @@ namespace MUHelper
         case AT_SKILL_SWELL_LIFE:
         case AT_SKILL_SWELL_LIFE_STR:
         case AT_SKILL_SWELL_LIFE_PROFICIENCY:
+        case AT_SKILL_SWELL_LIFE_MASTERY:
             if (m_iComboState == 2)
             {
                 return 1;

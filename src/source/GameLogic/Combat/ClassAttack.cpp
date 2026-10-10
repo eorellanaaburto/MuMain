@@ -108,6 +108,15 @@ void AttackElf(CHARACTER* c, int Skill, float Distance)
 
     switch (Skill)
     {
+    case AT_SKILL_SUMMON_SATYROS:
+        if (gMapManager.WorldActive != WD_10HEAVEN && gMapManager.InChaosCastle() == false)
+            if (!g_Direction.m_CKanturu.IsMayaScene())
+            {
+                SendRequestMagic(Skill, HeroKey);
+                SetAction(&c->Object, PLAYER_SKILL_SUMMON);
+            }
+        return;
+
     case AT_SKILL_SUMMON:
     case AT_SKILL_SUMMON + 1:
     case AT_SKILL_SUMMON + 2:
@@ -265,7 +274,7 @@ void AttackElf(CHARACTER* c, int Skill, float Distance)
             }
             if (CheckAttack())
             {
-                if (((Skill == AT_SKILL_ICE_ARROW) || (Skill == AT_SKILL_ICE_ARROW_STR) || (Skill == AT_SKILL_DEEPIMPACT)) && ((o->Type == MODEL_PLAYER) && (gCharacterManager.GetEquipedBowType(Hero) != BOWTYPE_NONE)))
+                if (((Skill == AT_SKILL_ICE_ARROW) || (Skill == AT_SKILL_ICE_ARROW_STR) || (Skill == AT_SKILL_DEEPIMPACT) || (Skill == AT_SKILL_POISON_ARROW) || (Skill == AT_SKILL_POISON_ARROW_STR)) &&((o->Type == MODEL_PLAYER) && (gCharacterManager.GetEquipedBowType(Hero) != BOWTYPE_NONE)))
                 {
                     UseSkillElf(c, o);
                 }
@@ -492,6 +501,7 @@ void AttackKnight(CHARACTER* c, ActionSkillType Skill, float Distance)
         || Skill == AT_SKILL_SWELL_LIFE
         || Skill == AT_SKILL_SWELL_LIFE_STR
         || Skill == AT_SKILL_SWELL_LIFE_PROFICIENCY
+        || Skill == AT_SKILL_SWELL_LIFE_MASTERY
         || Skill == AT_SKILL_IRON_DEFENSE
         || Skill == AT_SKILL_IRON_DEFENSE_STR
         || Skill == AT_SKILL_ADD_CRITICAL
@@ -500,6 +510,7 @@ void AttackKnight(CHARACTER* c, ActionSkillType Skill, float Distance)
         || Skill == AT_SKILL_ADD_CRITICAL_STR3
         || Skill == AT_SKILL_PARTY_TELEPORT
         || Skill == AT_SKILL_THUNDER_STRIKE
+        || Skill == AT_SKILL_ELECTRIC_SPARK_STR
         || Skill == AT_SKILL_EARTHSHAKE
         || Skill == AT_SKILL_EARTHSHAKE_STR
         || Skill == AT_SKILL_EARTHSHAKE_MASTERY
@@ -917,6 +928,7 @@ void AttackKnight(CHARACTER* c, ActionSkillType Skill, float Distance)
                 }
 
             case AT_SKILL_THUNDER_STRIKE:
+            case AT_SKILL_ELECTRIC_SPARK_STR:
                 if (CheckTile(c, o, Distance))
                 {
                     int TargetX = (int)(c->TargetPosition[0] / TERRAIN_SCALE);
@@ -934,7 +946,7 @@ void AttackKnight(CHARACTER* c, ActionSkillType Skill, float Distance)
                         (c->PositionY), (BYTE)(o->Angle[2] / 360.f * 256.f), byValue, pos, TKey, 0);
                     SetAttackSpeed();
 
-                    if (Skill == AT_SKILL_THUNDER_STRIKE)
+                    if (Skill == AT_SKILL_THUNDER_STRIKE || Skill == AT_SKILL_ELECTRIC_SPARK_STR)
                     {
                         if (c->Helper.Type == MODEL_DARK_HORSE_ITEM && !c->SafeZone)
                         {
@@ -964,6 +976,7 @@ void AttackKnight(CHARACTER* c, ActionSkillType Skill, float Distance)
             case AT_SKILL_SWELL_LIFE:
             case AT_SKILL_SWELL_LIFE_STR:
             case AT_SKILL_SWELL_LIFE_PROFICIENCY:
+            case AT_SKILL_SWELL_LIFE_MASTERY:
                 SendRequestMagic(Skill, HeroKey);
                 SetAction(o, PLAYER_SKILL_VITALITY);
                 c->Movement = 0;
@@ -1004,6 +1017,8 @@ void AttackKnight(CHARACTER* c, ActionSkillType Skill, float Distance)
             break;
             case AT_SKILL_STRIKE_OF_DESTRUCTION:
             case AT_SKILL_STRIKE_OF_DESTRUCTION_STR:
+            case AT_SKILL_STRIKE_OF_DESTRUCTION_PROFICIENCY:
+            case AT_SKILL_STRIKE_OF_DESTRUCTION_MASTERY:
             {
                 o->Angle[2] = CreateAngle2D(o->Position, c->TargetPosition);
 
