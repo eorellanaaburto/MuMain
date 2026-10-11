@@ -1,0 +1,67 @@
+--- a/GameLogic/Properties/PlayerMessage.resx
++++ b/GameLogic/Properties/PlayerMessage.resx
+@@ -135,6 +135,9 @@
+   <data name="CharacterNotFound" xml:space="preserve">
+     <value>Character '{0}' not found.</value>
+   </data>
++  <data name="MuHelperSkillNotLearned" xml:space="preserve">
++    <value>MU Helper skill {0} is not learned, so it will not be used.</value>
++  </data>
+   <data name="GuildNotFound" xml:space="preserve">
+     <value>Guild {0} not found.</value>
+   </data>
+--- a/GameLogic/Properties/PlayerMessage.Designer.cs
++++ b/GameLogic/Properties/PlayerMessage.Designer.cs
+@@ -259,6 +259,15 @@
+         }
+         
+         /// <summary>
++        ///   Looks up a localized string similar to MU Helper skill {0} is not learned, so it will not be used.
++        /// </summary>
++        public static string MuHelperSkillNotLearned {
++            get {
++                return ResourceManager.GetString("MuHelperSkillNotLearned", resourceCulture);
++            }
++        }
++        
++        /// <summary>
+         ///   Looks up a localized string similar to A character with the same name already exists..
+         /// </summary>
+         public static string CharacterWithNameAlreadyExists {
+--- a/GameServer/MessageHandler/MuHelper/MuHelperSaveDataRequestHandlerPlugin.cs
++++ b/GameServer/MessageHandler/MuHelper/MuHelperSaveDataRequestHandlerPlugin.cs
+@@ -41,5 +41,33 @@
+         {
+             player.MuHelperSettings = MuHelperSettingsSerializer.TryDeserialize(configuration);
+         }
++
++        await NotifyUnlearnedSkillsAsync(player).ConfigureAwait(false);
++    }
++
++    private static async ValueTask NotifyUnlearnedSkillsAsync(Player player)
++    {
++        if (player.MuHelperSettings is not { } settings)
++        {
++            return;
++        }
++
++        var configuredSkillIds = new[]
++        {
++            settings.BasicSkillId,
++            settings.ActivationSkill1Id,
++            settings.ActivationSkill2Id,
++            settings.BuffSkill0Id,
++            settings.BuffSkill1Id,
++            settings.BuffSkill2Id,
++        };
++
++        foreach (var skillId in configuredSkillIds)
++        {
++            if (skillId > 0 && player.SkillList?.GetSkill((ushort)skillId) is null)
++            {
++                await player.ShowLocalizedBlueMessageAsync(nameof(MUnique.OpenMU.GameLogic.Properties.PlayerMessage.MuHelperSkillNotLearned), skillId).ConfigureAwait(false);
++            }
++        }
+     }
+ }
+\ No newline at end of file
