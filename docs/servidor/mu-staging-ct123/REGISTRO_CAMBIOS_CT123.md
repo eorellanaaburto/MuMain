@@ -59,15 +59,15 @@ el bono de daño y defensa debe subir con el nivel de la maestría, no bajar.
 
 ## 5. Otros puntos del documento de pendientes (PENDIENTES.md de CT 122) - estado en staging
 - 2.1 Maestrías Elfa: APLICADO en staging (sección 4).
-- 2.2 Infinity Arrow Str (441): NO aplicado. El atributo `Attack Damage Increase Multiplier` (const
+- 2.2 Infinity Arrow Str (441): APLICADO en staging (sección 9). El atributo `Attack Damage Increase Multiplier` (const
   base 1, 18 filas) NO tiene consumidor en el código con ese nombre (no se encontró referencia).
   Antes de tocarlo hay que confirmar qué atributo lee el daño de Infinity Arrow.
 - 2.3 Twisting Slash Mastery (332): NO aplicado. El `/ 100` duplicado NO está en la base: la fórmula
   actual tiene un solo `/ 100` y el valor de nivel 1 es 1.2%. Afirmación del documento refutada
   para esta base (el `/ 100` extra lo añade un plugin solo al crear la base).
-- 2.4 Beast Uppercut Mastery (555): NO aplicado. Signo negativo confirmado (valor -0.012..-0.09,
+- 2.4 Beast Uppercut Mastery (555): APLICADO en staging (sección 9, decisión de diseño tomada). Signo negativo confirmado (valor -0.012..-0.09,
   agregación Multiplicate sobre Defense Decrement). La corrección depende de decisión de diseño.
-- 2.5 Expansion of Wizardry Str (380): NO aplicado. No verificado (el atributo `Maximum Wizardry
+- 2.5 Expansion of Wizardry Str (380): APLICADO en staging (sección 9). No verificado (el atributo `Maximum Wizardry
   Base Damage` no aparece en el código con ese nombre).
 - 2.6 Unidades de tasas (AttackSuccRateInc, MaximumSDincrease, PvPDefenceRateInc): pendiente de
   confirmación de diseño.
