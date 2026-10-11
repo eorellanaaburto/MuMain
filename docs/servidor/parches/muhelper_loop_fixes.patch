@@ -1,0 +1,52 @@
+--- a/GameLogic/MuHelper/MuHelper.cs
++++ b/GameLogic/MuHelper/MuHelper.cs
+@@ -4,7 +4,6 @@
+ 
+ namespace MUnique.OpenMU.GameLogic.MuHelper;
+ 
+-using System.Diagnostics;
+ using System.Threading;
+ using MUnique.OpenMU.AttributeSystem;
+ using MUnique.OpenMU.GameLogic.Attributes;
+@@ -140,7 +139,8 @@
+         {
+             if (this._configuration.PayInterval <= TimeSpan.Zero)
+             {
+-                this._player.Logger.LogDebug("MU Helper PayInterval is {PayInterval}. Stopping for {CharacterName}.", this._configuration.PayInterval, this._player.Name);
++                this._player.Logger.LogWarning("MU Helper PayInterval is {PayInterval}. Stopping for {CharacterName}.", this._configuration.PayInterval, this._player.Name);
++                await this.StopAsync().ConfigureAwait(false);
+                 return;
+             }
+ 
+@@ -158,7 +158,8 @@
+         }
+         catch (Exception ex)
+         {
+-            Debug.Fail(ex.Message, ex.StackTrace);
++            this._player.Logger.LogError(ex, "MU Helper loop failed for {CharacterName}.", this._player.Name);
++            await this.StopAsync().ConfigureAwait(false);
+         }
+     }
+ 
+@@ -168,13 +169,17 @@
+     private async ValueTask CollectAsync()
+     {
+         var amount = this.CalculateRequiredMoney();
+-        if (amount > 0 && this._player.TryRemoveMoney(amount))
++        if (amount <= 0)
+         {
+-            await this._player.InvokeViewPlugInAsync<IMuHelperStatusUpdatePlugIn>(p => p.ConsumeMoneyAsync((uint)amount)).ConfigureAwait(false);
++            return;
+         }
+-        else
++
++        if (!this._player.TryRemoveMoney(amount))
+         {
+             await this.StopAsync().ConfigureAwait(false);
++            return;
+         }
++
++        await this._player.InvokeViewPlugInAsync<IMuHelperStatusUpdatePlugIn>(p => p.ConsumeMoneyAsync((uint)amount)).ConfigureAwait(false);
+     }
+ }
+\ No newline at end of file
