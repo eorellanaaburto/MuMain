@@ -94,3 +94,25 @@ el bono de daño y defensa debe subir con el nivel de la maestría, no bajar.
 - No modificar CT 122 desde CT 123.
 - Cada cambio de base en staging: respaldo previo (`pg_dump`) en `/root/bak-ct123-*`.
 - Publicar el registro y los parches en GitHub (rama codex/ct124-acheron-npcs).
+
+## 9. Correcciones aplicadas después (2026-10-11 02:40 UTC) — estado final de la lista del PENDIENTES.md
+Respaldo de la base antes de este bloque: `/root/bak-ct123-antes-441-380-555/openmu-antes.dump` (valores antes en `valores_antes.txt`).
+
+| Skill | Nombre | Antes | Después | Motivo verificado en código |
+| :-- | :-- | :-- | :-- | :-- |
+| 441 | Infinity Arrow Str | agregación 1 (Multiplicate), fórmula `(1+X)/100` | agregación 0 (AddRaw), misma fórmula | El atributo `AttackDamageIncrease` ("Attack Damage Increase Multiplier") se usa como `dmg = dmg * AttackDamageIncrease` (AttackableExtensions.cs:220). Con Multiplicate el multiplicador quedaba en ~0.012. Con AddRaw queda en 1.012..1.09. |
+| 380 | Expansion of Wiz Streng | `(1+X) * 0.01`, Multiplicate | `1 + (1+X) * 0.01`, Multiplicate | `MaximumWizBaseDmg` se usa en el daño mágico (AttackableExtensions.cs:845). Con Multiplicate sin base, el valor era ~0.012. Ahora es 1.012..1.09 sobre el daño base. La otra maestría que lo escribe (407) es AddRaw y no cambia. |
+| 555 | Beast Uppercut Mastery | `-1 * (1+X) * 0.01`, Multiplicate | `1 - (1+X) * 0.01`, Multiplicate | `DefenseDecrement` se usa como `defense * DefenseDecrement` (AttackableExtensions.cs:94). El valor negativo volvía negativa la defensa del objetivo. Ahora reduce la defensa 1.2%..9% extra (se combina con el 0.9 de Beast Uppercut). Decisión de diseño tomada: reducción adicional, no penalización. |
+| 332 | Twisting Slash Mastery | sin cambio | sin cambio | Verificado: la base tiene un solo `/ 100` y nivel 1 = 1.2% (correcto). El `/ 100` extra del documento no está en la base. |
+
+Estado de la lista del PENDIENTES.md (CT 122):
+- 2.1 Elfa (417, 420, 422, 423): APLICADO en staging (sección 4).
+- 2.2 Infinity Arrow (441): APLICADO en staging (sección 9).
+- 2.3 Twisting Slash Mastery (332): NO requiere cambio (verificado).
+- 2.4 Beast Uppercut Mastery (555): APLICADO en staging (sección 9), con decisión de diseño indicada.
+- 2.5 Expansion of Wizardry Str (380): APLICADO en staging (sección 9).
+- 2.6 Unidades de tasas: sin cambio (pendiente de confirmación de diseño).
+
+Pendiente de probar en juego: el daño de Elfa, Infinity Arrow, Expansion of Wizardry y la defensa reducida de Beast Uppercut.
+El servidor de staging reinició a las 02:40 UTC: listener activo. Las 3 excepciones que siguen son las de la configuración JSON de Crywolf (sección 6), no de estos cambios.
+Ningún cambio se aplicó a producción.
