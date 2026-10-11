@@ -116,3 +116,34 @@ Estado de la lista del PENDIENTES.md (CT 122):
 Pendiente de probar en juego: el daño de Elfa, Infinity Arrow, Expansion of Wizardry y la defensa reducida de Beast Uppercut.
 El servidor de staging reinició a las 02:40 UTC: listener activo. Las 3 excepciones que siguen son las de la configuración JSON de Crywolf (sección 6), no de estos cambios.
 Ningún cambio se aplicó a producción.
+
+## 10. Código fuente del cliente en CT 123 (2026-10-11, madrugada)
+- Ubicación: `/root/client-build/MuMain` (832 MB descomprimido).
+- Origen: `git archive` de la rama `codex/ct124-acheron-npcs` en el commit `07550f92`
+  (publicado en GitHub). Incluye todo lo versionado: código C++ (`src/source`), biblioteca C#
+  (`ClientLibrary`), `CMakeLists.txt`, `CMakePresets.json`, documentación y los datos de
+  `src/bin`.
+- No incluye `NuGet.Config` local modificado, ni `out/`, ni `bin/obj` (build).
+- Notas de compilación: `/root/client-build/BUILD_CLIENTE_NOTAS.md` (copia de la nota de memoria
+  `reference_client_build_env`).
+
+IMPORTANTE: el cliente se compila SOLO en Windows (MSVC / Visual Studio 18, vcpkg, CMake/Ninja,
+NativeAOT para `ClientLibrary`). CT 123 es Linux: aquí se puede leer, editar y revisar el código,
+pero NO compilar `Main.exe`. Para compilar hace falta la PC de Windows con las herramientas de
+`BUILD_CLIENTE_NOTAS.md` (incluye el feed NuGet local y el truco de `miniaudio`).
+
+Cambios del cliente que están en ese código (commits del repo, desde `f5f8f0db`):
+- Maestrías y casteo (f5f8f0db), estado y menú de Adniel (c5f04e84, 8c4817e1, 8914ab4b, d6efea66).
+- Tooltip de bonos de Errtel (fe63b004), golpes de área de Blood Storm (233ea2bf).
+- Tabla de maestrías y README (e27f7dbb, 5f2b18dd, 38e43fda).
+- Parche de enfriamiento y script (a0fe2ab0, 62e81472): cambia en el archivo de datos
+  `Data/Local/Eng/skill_eng.bmd` (Blood Storm 5 s, Strengthener 3 s). Ese archivo está en `.gitignore`,
+  así que NO está en el repo: hay que tomarlo de `Mu-STAGING` o regenerarlo con
+  `docs/cliente/parches/blood_storm_cooldown.js`.
+
+Estado del cliente de prueba en Windows: `C:\Users\Meinmundy\Downloads\Mu-STAGING` (Main.exe de la
+última compilación, con `skill_eng.bmd` modificado).
+
+Pendiente para el otro Claude (no tocado en esta sesión):
+- Cliente: el texto de «Criar Errtel» y los botones de Adniel (ver el registro de Adniel en el repo).
+- Revisar que el comando de chat de Adniel responda con mensajes claros.
