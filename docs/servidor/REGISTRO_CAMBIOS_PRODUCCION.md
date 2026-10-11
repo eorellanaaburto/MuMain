@@ -13,12 +13,13 @@ Regla: cada cambio a producción requiere autorización explícita con texto exa
 | S1 | Blood Storm (344) y Strengthener (346) como área alrededor del objetivo (`SkillType = 4`) | `UPDATE config."Skill"` | **Ya aplicado** (autorizado, reinicio hecho) | Nada más |
 | S2 | Swell Life AG (maestría 363): código | `docs/servidor/parches/produccion_cambios_servidor.patch` (archivos `Stats.cs`, `CharacterClassInitialization.cs`, `LifeSwellEffectInitializer.cs`, `SkillList.cs`) | Pendiente | Imagen nueva + reinicio |
 | S3 | Swell Life AG: filas en la base | `docs/servidor/parches/swell_life_ability_staging.sql` | Pendiente | Autorización SQL + reinicio. El `INSERT` del atributo falla si ya existe: revisar antes |
-| S4 | Índice de maestrías (174 entradas nuevas + 344, 346, 363) | `produccion_cambios_servidor.patch` (`GameServer/RemoteView/MasterSkillExtensions.cs`) | Pendiente | Imagen nueva + reinicio. No requiere SQL |
-| S5 | Pentagrama: estado de Adniel con 21 bytes (`OpenNpcWindowPlugIn.cs`) | copia local `deps\OpenNpcWindowPlugIn.cs` (CT 122: `/root/fix-npc41/...`) | Pendiente, no está en el repositorio | Build + reinicio |
+| S4 | Índice de maestrías (174 entradas nuevas + 344, 346, 363; Duel 489 corregido a 55; Fist 325 quitado) | `produccion_cambios_servidor.patch` (`GameServer/RemoteView/MasterSkillExtensions.cs`) | Pendiente | Imagen nueva + reinicio. No requiere SQL |
+| S5 | Pentagrama: estado de Adniel con 21 bytes (`OpenNpcWindowPlugIn.cs`) | `produccion_cambios_servidor.patch` (`GameServer/RemoteView/NPC/OpenNpcWindowPlugIn.cs`) | Pendiente | Imagen nueva + reinicio. Requiere el cliente con el parser de 21 bytes (commit `fe63b004`) |
 
 Notas:
 - S2 y S4 vienen en el mismo parche consolidado, aplicado sobre el código que produjo la
   imagen de producción (`/root/fix-npc41`, verificado por identificadores de la DLL).
+- S2 y S4 y S5 ya están en `produccion_cambios_servidor.patch` (6 archivos). Imagen de staging: `staging-full-20261011`.
 - S2 cambia el comportamiento de Swell Life de 356 y 360: dejan de dar bono pasivo
   permanente y solo aplican con el buff. Confirmar en juego antes de pasar a producción.
 
@@ -43,7 +44,7 @@ C2 en adelante. Cuando se publique, habrá que distribuir el cliente nuevo a los
   `AlternativePublishedPort` = 0). Producción conserva su propia dirección.
 - Contraseñas de la base de staging en `/root/stg.env` de CT 123. No publicar.
 - Cliente de prueba `C:\Users\Meinmundy\Downloads\Mu-STAGING` (lanzador `MU-STAGING.bat`).
-- Imágenes de prueba `ag-test-20261010`, `ag-index-20261010`, `ag-index2-20261010`.
+- Imágenes de prueba `ag-test-20261010`, `ag-index-20261010`, `ag-index2-20261010`, `staging-full-20261011` (la actual).
 - Ajuste de `ARG BUILDPLATFORM` en el Dockerfile de la copia de build (solo entorno de build).
 - Plugins copiados a staging (los mismos que producción, desde las mismas rutas de CT 122).
 - Respaldos del cliente de prueba: `Mu-STAGING\_backup_skill_eng_original.bmd`.
@@ -57,8 +58,8 @@ C2 en adelante. Cuando se publique, habrá que distribuir el cliente nuevo a los
 3. **Daño del Strengthener:** la base tiene 25 (la semilla dice 22). Su bono de maestría
    tiene la misma fórmula que Rageful Blow Strengthener. Confirmar en juego que el bono
    sube el daño con los puntos.
-4. **Índice Duel 489:** el servidor manda 53 y el cliente espera 55. No cambiado.
-5. **Fist 325:** existe en el servidor y no en el árbol del cliente. No cambiado.
+4. ~~Índice Duel 489~~ Corregido en staging a 55 (cliente).
+5. ~~Fist 325~~ Quitado en staging (no existe en el árbol de Fist).
 6. **Advertencias `Unknown plugin type`:** 150 en staging, 450 en producción. Mismo
    comportamiento; revisar si son configuraciones de plugins que ya no existen.
 7. **Excepciones en el historial de producción:** 34 líneas en `mu-openmu`. No revisadas.
@@ -69,7 +70,7 @@ C2 en adelante. Cuando se publique, habrá que distribuir el cliente nuevo a los
 2. Respaldo de la base de producción (`pg_dump`) y de la imagen actual.
 3. S3: SQL de AG (con la revisión del `INSERT` existente).
 4. S2 + S4: construir imagen desde `produccion_cambios_servidor.patch` y reiniciar.
-5. S5 (pentagrama) si se quiere: build aparte.
+5. S5 (pentagrama) va en el mismo parche que S2 y S4 (paso 4).
 6. B1: reemplazar `skill_eng.bmd` en `Mu-S8 v3` y avisar a los jugadores.
 7. Verificar: árbol de maestrías, Blood Storm, Swell Life, Adniel, 6 personajes.
 
