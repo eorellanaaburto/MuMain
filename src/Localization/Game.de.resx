@@ -12086,6 +12086,9 @@
     <value>Um den Combo-Skill nutzen zu können, müssen zunächst der Basic-Skill und der Activation-Skill registriert werden</value>
     <comment>legacy_id=3565</comment>
   </data>
+  <data name="ActivationSkillNeedsTrigger" xml:space="preserve">
+    <value>An activation skill needs Delay or Con enabled to be used.</value>
+  </data>
   <data name="DelayAndConditionSettingMenusCan" xml:space="preserve">
     <value>Die Menüs „Verzögerung“ und „Bedingung“ sind bei Verwendung des Combo-Skills nicht verfügbar.</value>
     <comment>legacy_id=3566</comment>

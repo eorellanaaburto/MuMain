@@ -12085,6 +12085,9 @@
     <value>Untuk menggunakan Combo Skill, Basic Skill dan Activation Skill harus didaftarkan terlebih dahulu</value>
     <comment>legacy_id=3565</comment>
   </data>
+  <data name="ActivationSkillNeedsTrigger" xml:space="preserve">
+    <value>An activation skill needs Delay or Con enabled to be used.</value>
+  </data>
   <data name="DelayAndConditionSettingMenusCan" xml:space="preserve">
     <value>Menu Pengaturan Delay dan Kondisi Tidak Dapat Tersedia Dengan Menggunakan Combo Skill.</value>
     <comment>legacy_id=3566</comment>

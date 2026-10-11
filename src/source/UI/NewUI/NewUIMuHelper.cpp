@@ -706,6 +706,7 @@ bool CNewUIMuHelper::UpdateMouseEvent()
         {
             g_ConsoleDebug->Write(MCD_NORMAL, L"[MU Helper] Clicked slot slot [%d]", iSlotIndex);
             m_aiSelectedSkills[iSlotIndex] = -1;
+            ApplyConfigFromSkillSlot(iSlotIndex, 0);
 
             auto cboxCombo = m_CheckBoxList[CHECKBOX_ID_COMBO];
             if (cboxCombo.box->GetBoxState() == true)
@@ -1140,7 +1141,25 @@ void CNewUIMuHelper::SaveConfig()
     _TempConfig.aiBuff[1] = m_aiSelectedSkills[4] > 0 ? m_aiSelectedSkills[4] : 0;
     _TempConfig.aiBuff[2] = m_aiSelectedSkills[5] > 0 ? m_aiSelectedSkills[5] : 0;
 
+    WarnActivationSkillsWithoutTrigger();
     g_MuHelper.Save(_TempConfig);
+}
+
+void CNewUIMuHelper::WarnActivationSkillsWithoutTrigger() const
+{
+    for (int iSkillSlot = SKILL_SLOT_SKILL2; iSkillSlot <= SKILL_SLOT_SKILL3; ++iSkillSlot)
+    {
+        if (m_aiSelectedSkills[iSkillSlot] <= 0)
+        {
+            continue;
+        }
+
+        const bool bHasTrigger = (_TempConfig.aiSkillCondition[iSkillSlot] & (ON_TIMER | ON_CONDITION)) != 0;
+        if (!bHasTrigger)
+        {
+            g_pSystemLogBox->AddText(I18N::Game::ActivationSkillNeedsTrigger, SEASON3B::TYPE_ERROR_MESSAGE);
+        }
+    }
 }
 
 float CNewUIMuHelper::GetLayerDepth()
@@ -1613,7 +1632,9 @@ void CNewUIMuHelper::AssignSkill(int iSkill)
         {
             int iPrevIndex = GetSkillIndex(iSkill);
             m_aiSelectedSkills[iPrevIndex] = -1;
+            ApplyConfigFromSkillSlot(iPrevIndex, 0);
             m_aiSelectedSkills[m_iSelectedSkillSlot] = iSkill;
+            ApplyConfigFromSkillSlot(m_iSelectedSkillSlot, iSkill);
 
             auto cboxCombo = m_CheckBoxList[CHECKBOX_ID_COMBO];
             if (cboxCombo.box->GetBoxState() == true)

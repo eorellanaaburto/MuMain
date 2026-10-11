@@ -12085,6 +12085,9 @@
     <value>為了使用連擊技能，需要先註冊基本技能和啟動技能</value>
     <comment>legacy_id=3565</comment>
   </data>
+  <data name="ActivationSkillNeedsTrigger" xml:space="preserve">
+    <value>An activation skill needs Delay or Con enabled to be used.</value>
+  </data>
   <data name="DelayAndConditionSettingMenusCan" xml:space="preserve">
     <value>使用組合技能時無法使用延遲和條件設定選單。</value>
     <comment>legacy_id=3566</comment>

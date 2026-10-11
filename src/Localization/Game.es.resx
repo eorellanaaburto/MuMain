@@ -12085,6 +12085,9 @@
     <value>Para utilizar la habilidad combinada, primero se deben registrar la habilidad básica y la habilidad de activación.</value>
     <comment>legacy_id=3565</comment>
   </data>
+  <data name="ActivationSkillNeedsTrigger" xml:space="preserve">
+    <value>Una habilidad de activación necesita Delay o Con activado para usarse.</value>
+  </data>
   <data name="DelayAndConditionSettingMenusCan" xml:space="preserve">
     <value>Los menús de configuración de condición y retraso no pueden estar disponibles al usar la habilidad combinada.</value>
     <comment>legacy_id=3566</comment>

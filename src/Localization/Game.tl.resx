@@ -12085,6 +12085,9 @@
     <value>Upang magamit ang Combo Skill, dapat na irehistro muna ang Basic Skill at Activation Skill</value>
     <comment>legacy_id=3565</comment>
   </data>
+  <data name="ActivationSkillNeedsTrigger" xml:space="preserve">
+    <value>An activation skill needs Delay or Con enabled to be used.</value>
+  </data>
   <data name="DelayAndConditionSettingMenusCan" xml:space="preserve">
     <value>Hindi Magagamit ang Mga Menu ng Delay at Condition Setting Gamit ang Combo Skill.</value>
     <comment>legacy_id=3566</comment>

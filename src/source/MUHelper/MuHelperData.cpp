@@ -1,5 +1,11 @@
 #include "stdafx.h"
 #include "MuHelperData.h"
+#include <algorithm>
+
+namespace
+{
+	constexpr int MAX_DISTANCE_MIN_SECONDS = 999;
+}
 
 namespace MUHelper
 {
@@ -9,7 +15,7 @@ namespace MUHelper
 		memset(&netData, 0, sizeof(netData));
 
 		netData.HuntingRange = static_cast<BYTE>(gameData.iHuntingRange & 0x0F);
-		netData.DistanceMin = static_cast<BYTE>(gameData.iMaxSecondsAway & 0x0F);
+		netData.DistanceMin = static_cast<WORD>(std::clamp(gameData.iMaxSecondsAway, 0, MAX_DISTANCE_MIN_SECONDS));
 		netData.LongDistanceAttack = gameData.bLongRangeCounterAttack ? 1 : 0;
 		netData.OriginalPosition = gameData.bReturnToOriginalPosition ? 1 : 0;
 

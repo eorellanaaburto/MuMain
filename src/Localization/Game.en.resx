@@ -12105,6 +12105,9 @@
     <value>In order to use Combo Skill, Basic Skill and Activation Skill should be registered first</value>
     <comment>legacy_id=3565</comment>
   </data>
+  <data name="ActivationSkillNeedsTrigger" xml:space="preserve">
+    <value>An activation skill needs Delay or Con enabled to be used.</value>
+  </data>
   <data name="DelayAndConditionSettingMenusCan" xml:space="preserve">
     <value>Delay and Condition Setting Menus Can't Be Available With Using Combo Skill.</value>
     <comment>legacy_id=3566</comment>

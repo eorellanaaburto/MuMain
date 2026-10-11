@@ -12085,6 +12085,9 @@
     <value>Para usar a Habilidade Combo, a Habilidade Básica e a Habilidade de Ativação devem ser registradas primeiro</value>
     <comment>legacy_id=3565</comment>
   </data>
+  <data name="ActivationSkillNeedsTrigger" xml:space="preserve">
+    <value>An activation skill needs Delay or Con enabled to be used.</value>
+  </data>
   <data name="DelayAndConditionSettingMenusCan" xml:space="preserve">
     <value>Os menus de configuração de atraso e condição não podem estar disponíveis com o uso da habilidade Combo.</value>
     <comment>legacy_id=3566</comment>

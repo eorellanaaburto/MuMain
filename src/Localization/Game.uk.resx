@@ -12085,6 +12085,9 @@
     <value>Щоб використовувати комбінований навик, спочатку потрібно зареєструвати базовий навик і навик активації</value>
     <comment>legacy_id=3565</comment>
   </data>
+  <data name="ActivationSkillNeedsTrigger" xml:space="preserve">
+    <value>An activation skill needs Delay or Con enabled to be used.</value>
+  </data>
   <data name="DelayAndConditionSettingMenusCan" xml:space="preserve">
     <value>Меню затримки та налаштування стану недоступні з використанням навичок комбінування.</value>
     <comment>legacy_id=3566</comment>

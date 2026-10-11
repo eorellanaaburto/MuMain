@@ -12085,6 +12085,9 @@
     <value>Aby móc korzystać z umiejętności Combo, należy najpierw zarejestrować umiejętność podstawową i umiejętność aktywacyjną</value>
     <comment>legacy_id=3565</comment>
   </data>
+  <data name="ActivationSkillNeedsTrigger" xml:space="preserve">
+    <value>An activation skill needs Delay or Con enabled to be used.</value>
+  </data>
   <data name="DelayAndConditionSettingMenusCan" xml:space="preserve">
     <value>Menu ustawień opóźnienia i warunków nie są dostępne przy użyciu umiejętności Combo.</value>
     <comment>legacy_id=3566</comment>

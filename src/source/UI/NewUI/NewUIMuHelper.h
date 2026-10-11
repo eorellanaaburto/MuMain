@@ -180,6 +180,7 @@ namespace SEASON3B
 
         void ApplyConfigFromCheckbox(int iCheckboxId, bool bState);
         void ApplyConfigFromSkillSlot(int iSlot, int iSkill);
+        void WarnActivationSkillsWithoutTrigger() const;
         void ApplyHuntRangeUpdate(int iDelta);
         void ApplyLootRangeUpdate(int iDelta);
         void SaveExtraItem();
