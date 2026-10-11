@@ -1,0 +1,319 @@
+diff -ruN -x bin -x obj -x Dockerfile -x '*.orig' orig/src/GameLogic/Attributes/Stats.cs new/src/GameLogic/Attributes/Stats.cs
+--- orig/src/GameLogic/Attributes/Stats.cs	2026-10-06 10:37:02.000000000 +0000
++++ new/src/GameLogic/Attributes/Stats.cs	2026-10-10 23:13:52.940230040 +0000
+@@ -1226,6 +1226,11 @@
+     public static AttributeDefinition SwellLifeManaIncrease { get; } = new(new Guid("8B4F1C6D-9A2E-4F7B-A3D5-1E9C7F2A4B6D"), "Swell Life Mana Increase", string.Empty);
+ 
+     /// <summary>
++    /// Gets the swell life skill ability increase attribute definition.
++    /// </summary>
++    public static AttributeDefinition SwellLifeAbilityIncrease { get; } = new(new Guid("8629C9CF-6A0A-4DBF-8253-54D2CD3E9A06"), "Swell Life Ability Increase", string.Empty);
++
++    /// <summary>
+     /// Gets the mana after monster kill attribute definition.
+     /// </summary>
+     public static AttributeDefinition ManaAfterMonsterKillMultiplier { get; } = new(new Guid("3DE9DEE5-C717-456B-8E94-6C224553674F"), "Mana recover after Monster kill, multiplier of max mana", string.Empty);
+diff -ruN -x bin -x obj -x Dockerfile -x '*.orig' orig/src/GameLogic/SkillList.cs new/src/GameLogic/SkillList.cs
+--- orig/src/GameLogic/SkillList.cs	2026-09-04 11:11:06.000000000 +0000
++++ new/src/GameLogic/SkillList.cs	2026-10-10 23:13:52.943558691 +0000
+@@ -19,6 +19,9 @@
+     private const ushort DurabilityReduction1FistMasterSkillId = 578;
+     private const short TwistingSlashMasterySkillId = 332;
+     private const short RagefulBlowMasterySkillId = 333;
++    private const short SwellLifeStrengthenerSkillId = 356;
++    private const short SwellLifeProficiencySkillId = 360;
++    private const short SwellLifeMasterySkillId = 363;
+     private const short TripleShotMasterySkillId = 418;
+ 
+     private readonly short[] _castedSkillsWithPassiveBoost = [TwistingSlashMasterySkillId, RagefulBlowMasterySkillId, TripleShotMasterySkillId];
+@@ -178,6 +181,9 @@
+         this.CreatePowerUpWrappers(skillEntry);
+     }
+ 
++    private static bool IsSwellLifeBuffMaster(short skillNumber) =>
++        skillNumber is SwellLifeStrengthenerSkillId or SwellLifeProficiencySkillId or SwellLifeMasterySkillId;
++
+     private void CreatePowerUpWrappers(SkillEntry skillEntry)
+     {
+         var masterDefinition = skillEntry.Skill!.MasterDefinition;
+diff -ruN -x bin -x obj -x Dockerfile -x '*.orig' orig/src/GameServer/RemoteView/MasterSkillExtensions.cs new/src/GameServer/RemoteView/MasterSkillExtensions.cs
+--- orig/src/GameServer/RemoteView/MasterSkillExtensions.cs	2026-09-04 11:11:06.000000000 +0000
++++ new/src/GameServer/RemoteView/MasterSkillExtensions.cs	2026-10-11 00:05:19.159078057 +0000
+@@ -67,6 +67,31 @@
+                 { 403, 85 },
+                 { 404, 89 },
+                 { 405, 90 },
++                { 315, 23 },
++                { 316, 24 },
++                { 317, 25 },
++                { 318, 26 },
++                { 319, 27 },
++                { 320, 28 },
++                { 375, 30 },
++                { 377, 34 },
++                { 390, 57 },
++                { 341, 59 },
++                { 391, 60 },
++                { 392, 62 },
++                { 393, 64 },
++                { 394, 65 },
++                { 495, 66 },
++                { 497, 70 },
++                { 406, 93 },
++                { 407, 94 },
++                { 366, 96 },
++                { 367, 98 },
++                { 368, 99 },
++                { 369, 100 },
++                { 370, 102 },
++                { 372, 103 },
++                { 371, 106 },
+             }
+         },
+         {
+@@ -116,6 +141,31 @@
+                 { 360, 89 },
+                 { 361, 90 },
+                 { 362, 92 },
++                { 344, 66 },
++                { 346, 70 },
++                { 363, 93 },
++                { 315, 23 },
++                { 316, 24 },
++                { 317, 25 },
++                { 318, 26 },
++                { 319, 27 },
++                { 320, 28 },
++                { 322, 30 },
++                { 324, 34 },
++                { 339, 57 },
++                { 340, 58 },
++                { 341, 59 },
++                { 342, 61 },
++                { 343, 62 },
++                { 345, 65 },
++                { 364, 94 },
++                { 366, 96 },
++                { 367, 98 },
++                { 368, 99 },
++                { 369, 100 },
++                { 370, 102 },
++                { 372, 103 },
++                { 371, 106 },
+             }
+         },
+         {
+@@ -163,6 +213,34 @@
+                 { 440, 83 },
+                 { 441, 89 },
+                 { 442, 90 },
++                { 315, 23 },
++                { 316, 24 },
++                { 317, 25 },
++                { 318, 26 },
++                { 319, 27 },
++                { 320, 28 },
++                { 410, 30 },
++                { 412, 34 },
++                { 425, 58 },
++                { 411, 59 },
++                { 341, 60 },
++                { 426, 61 },
++                { 431, 63 },
++                { 428, 64 },
++                { 429, 65 },
++                { 430, 66 },
++                { 427, 67 },
++                { 432, 68 },
++                { 433, 70 },
++                { 434, 71 },
++                { 443, 94 },
++                { 366, 96 },
++                { 367, 98 },
++                { 368, 99 },
++                { 369, 100 },
++                { 370, 102 },
++                { 372, 103 },
++                { 371, 106 },
+             }
+         },
+         {
+@@ -212,6 +290,33 @@
+                 { 488, 51 },
+                 { 489, 53 },
+                 { 490, 54 },
++                { 344, 66 },
++                { 346, 70 },
++                { 315, 23 },
++                { 316, 24 },
++                { 317, 25 },
++                { 318, 26 },
++                { 319, 27 },
++                { 320, 28 },
++                { 476, 30 },
++                { 478, 34 },
++                { 492, 57 },
++                { 491, 59 },
++                { 341, 60 },
++                { 494, 61 },
++                { 493, 62 },
++                { 496, 63 },
++                { 495, 67 },
++                { 497, 71 },
++                { 407, 93 },
++                { 364, 94 },
++                { 366, 96 },
++                { 367, 98 },
++                { 368, 99 },
++                { 369, 100 },
++                { 370, 102 },
++                { 372, 103 },
++                { 371, 106 },
+             }
+         },
+         {
+@@ -261,6 +366,33 @@
+                 { 533, 84 },
+                 { 534, 89 },
+                 { 535, 90 },
++                { 315, 23 },
++                { 316, 24 },
++                { 317, 25 },
++                { 318, 26 },
++                { 319, 27 },
++                { 320, 28 },
++                { 505, 30 },
++                { 506, 31 },
++                { 507, 34 },
++                { 519, 57 },
++                { 520, 59 },
++                { 341, 60 },
++                { 522, 62 },
++                { 523, 63 },
++                { 521, 66 },
++                { 524, 70 },
++                { 536, 93 },
++                { 366, 94 },
++                { 364, 95 },
++                { 538, 97 },
++                { 369, 98 },
++                { 367, 99 },
++                { 368, 100 },
++                { 539, 101 },
++                { 370, 103 },
++                { 372, 104 },
++                { 371, 107 },
+             }
+         },
+         {
+@@ -306,6 +438,29 @@
+                 { 469, 85 },
+                 { 470, 89 },
+                 { 471, 90 },
++                { 315, 23 },
++                { 316, 24 },
++                { 317, 25 },
++                { 318, 26 },
++                { 319, 27 },
++                { 320, 28 },
++                { 446, 30 },
++                { 447, 34 },
++                { 460, 58 },
++                { 341, 60 },
++                { 459, 61 },
++                { 462, 63 },
++                { 461, 66 },
++                { 463, 70 },
++                { 472, 93 },
++                { 473, 94 },
++                { 366, 96 },
++                { 367, 98 },
++                { 368, 99 },
++                { 369, 100 },
++                { 370, 102 },
++                { 372, 103 },
++                { 371, 106 },
+             }
+         },
+         {
+@@ -348,6 +503,30 @@
+                 { 606, 88 },
+                 { 607, 90 },
+                 { 608, 92 },
++                { 593, 23 },
++                { 594, 24 },
++                { 595, 25 },
++                { 596, 26 },
++                { 597, 27 },
++                { 598, 28 },
++                { 549, 30 },
++                { 550, 34 },
++                { 602, 59 },
++                { 561, 60 },
++                { 562, 61 },
++                { 563, 62 },
++                { 564, 63 },
++                { 565, 66 },
++                { 566, 67 },
++                { 567, 70 },
++                { 609, 94 },
++                { 610, 96 },
++                { 611, 98 },
++                { 612, 99 },
++                { 613, 100 },
++                { 614, 102 },
++                { 616, 103 },
++                { 615, 106 },
+             }
+         },
+     };
+@@ -382,4 +561,4 @@
+ 
+         return 0;
+     }
+-}
+\ No newline at end of file
++}
+diff -ruN -x bin -x obj -x Dockerfile -x '*.orig' orig/src/Persistence/Initialization/CharacterClasses/CharacterClassInitialization.cs new/src/Persistence/Initialization/CharacterClasses/CharacterClassInitialization.cs
+--- orig/src/Persistence/Initialization/CharacterClasses/CharacterClassInitialization.cs	2026-09-04 11:11:06.000000000 +0000
++++ new/src/Persistence/Initialization/CharacterClasses/CharacterClassInitialization.cs	2026-10-10 23:13:52.940515376 +0000
+@@ -119,6 +119,7 @@
+         attributeRelationships.Add(this.CreateAttributeRelationship(Stats.MaximumPhysBaseDmg, 1, Stats.PhysicalBaseDmgIncrease, aggregateType: AggregateType.Multiplicate));
+         attributeRelationships.Add(this.CreateAttributeRelationship(Stats.MaximumHealth, 1, Stats.SwellLifeHealthIncrease, aggregateType: AggregateType.Multiplicate));
+         attributeRelationships.Add(this.CreateAttributeRelationship(Stats.MaximumMana, 1, Stats.SwellLifeManaIncrease, aggregateType: AggregateType.Multiplicate));
++        attributeRelationships.Add(this.CreateAttributeRelationship(Stats.MaximumAbility, 1, Stats.SwellLifeAbilityIncrease, aggregateType: AggregateType.Multiplicate));
+ 
+         // If two weapons are equipped (DK, MG, Sum, RF) we subtract the half of the sum of the speeds again from the attack speed
+         attributeRelationships.Add(this.CreateAttributeRelationship(Stats.AreTwoWeaponsEquipped, 1, Stats.EquippedWeaponCount));
+@@ -171,6 +172,7 @@
+         baseAttributeValues.Add(this.CreateConstValueAttribute(1, Stats.DefenseDecrement));
+         baseAttributeValues.Add(this.CreateConstValueAttribute(1, Stats.SwellLifeHealthIncrease));
+         baseAttributeValues.Add(this.CreateConstValueAttribute(1, Stats.SwellLifeManaIncrease));
++        baseAttributeValues.Add(this.CreateConstValueAttribute(1, Stats.SwellLifeAbilityIncrease));
+         baseAttributeValues.Add(this.CreateConstValueAttribute(0.1f, Stats.DurabilityReductionFactor));
+ 
+         if (isMaster)
+@@ -204,4 +206,4 @@
+         attributeRelationships.Add(this.CreateAttributeRelationship(Stats.PhysicalBaseDmgIncrease, 0.5f, Stats.HasDoubleWield, InputOperator.ExponentiateByAttribute, AggregateType.Multiplicate));
+         attributeRelationships.Add(this.CreateAttributeRelationship(Stats.PhysicalBaseDmgIncrease, 1, Stats.HasDoubleWield));
+     }
+-}
+\ No newline at end of file
++}
+diff -ruN -x bin -x obj -x Dockerfile -x '*.orig' orig/src/Persistence/Initialization/Skills/LifeSwellEffectInitializer.cs new/src/Persistence/Initialization/Skills/LifeSwellEffectInitializer.cs
+--- orig/src/Persistence/Initialization/Skills/LifeSwellEffectInitializer.cs	2026-09-04 11:11:06.000000000 +0000
++++ new/src/Persistence/Initialization/Skills/LifeSwellEffectInitializer.cs	2026-10-10 23:13:52.940625477 +0000
+@@ -73,5 +73,11 @@
+         healthPowerUpDefinition.Boost.RelatedValues.Add(boostPerEnergy);
+         healthPowerUpDefinition.Boost.RelatedValues.Add(boostPerVitality);
+         healthPowerUpDefinition.Boost.RelatedValues.Add(boostPerPartyMember);
++
++        var abilityPowerUpDefinition = this.Context.CreateNew<PowerUpDefinition>();
++        magicEffect.PowerUpDefinitions.Add(abilityPowerUpDefinition);
++        abilityPowerUpDefinition.TargetAttribute = Stats.SwellLifeAbilityIncrease.GetPersistent(this.GameConfiguration);
++        abilityPowerUpDefinition.Boost = this.Context.CreateNew<PowerUpDefinitionValue>();
++        abilityPowerUpDefinition.Boost.ConstantValue.Value = 0f;
+     }
+-}
+\ No newline at end of file
++}
