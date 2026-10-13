@@ -1,0 +1,143 @@
+From 2c4db9fb2632a1cefa8e6ea8b740a09325df2715 Mon Sep 17 00:00:00 2001
+From: openmu-sync <openmu-sync@local>
+Date: Mon, 12 Oct 2026 20:42:32 +0000
+Subject: [PATCH 2/6] fix(muhelper): port unlearned-skill notice and loop fixes
+ onto the Pentagram tree
+
+---
+ GameLogic/MuHelper/MuHelper.cs                | 17 +++++++----
+ .../Properties/PlayerMessage.Designer.cs      |  9 ++++++
+ GameLogic/Properties/PlayerMessage.resx       |  3 ++
+ .../MuHelperSaveDataRequestHandlerPlugin.cs   | 28 +++++++++++++++++++
+ 4 files changed, 51 insertions(+), 6 deletions(-)
+
+diff --git a/GameLogic/MuHelper/MuHelper.cs b/GameLogic/MuHelper/MuHelper.cs
+index 87d9886..4bb2bcb 100644
+--- a/GameLogic/MuHelper/MuHelper.cs
++++ b/GameLogic/MuHelper/MuHelper.cs
+@@ -4,7 +4,6 @@
+ 
+ namespace MUnique.OpenMU.GameLogic.MuHelper;
+ 
+-using System.Diagnostics;
+ using System.Threading;
+ using MUnique.OpenMU.AttributeSystem;
+ using MUnique.OpenMU.GameLogic.Attributes;
+@@ -140,7 +139,8 @@ public class MuHelper : AsyncDisposable
+         {
+             if (this._configuration.PayInterval <= TimeSpan.Zero)
+             {
+-                this._player.Logger.LogDebug("MU Helper PayInterval is {PayInterval}. Stopping for {CharacterName}.", this._configuration.PayInterval, this._player.Name);
++                this._player.Logger.LogWarning("MU Helper PayInterval is {PayInterval}. Stopping for {CharacterName}.", this._configuration.PayInterval, this._player.Name);
++                await this.StopAsync().ConfigureAwait(false);
+                 return;
+             }
+ 
+@@ -158,7 +158,8 @@ public class MuHelper : AsyncDisposable
+         }
+         catch (Exception ex)
+         {
+-            Debug.Fail(ex.Message, ex.StackTrace);
++            this._player.Logger.LogError(ex, "MU Helper loop failed for {CharacterName}.", this._player.Name);
++            await this.StopAsync().ConfigureAwait(false);
+         }
+     }
+ 
+@@ -168,13 +169,17 @@ public class MuHelper : AsyncDisposable
+     private async ValueTask CollectAsync()
+     {
+         var amount = this.CalculateRequiredMoney();
+-        if (amount > 0 && this._player.TryRemoveMoney(amount))
++        if (amount <= 0)
+         {
+-            await this._player.InvokeViewPlugInAsync<IMuHelperStatusUpdatePlugIn>(p => p.ConsumeMoneyAsync((uint)amount)).ConfigureAwait(false);
++            return;
+         }
+-        else
++
++        if (!this._player.TryRemoveMoney(amount))
+         {
+             await this.StopAsync().ConfigureAwait(false);
++            return;
+         }
++
++        await this._player.InvokeViewPlugInAsync<IMuHelperStatusUpdatePlugIn>(p => p.ConsumeMoneyAsync((uint)amount)).ConfigureAwait(false);
+     }
+ }
+\ No newline at end of file
+diff --git a/GameLogic/Properties/PlayerMessage.Designer.cs b/GameLogic/Properties/PlayerMessage.Designer.cs
+index 117ab5a..3ae309a 100644
+--- a/GameLogic/Properties/PlayerMessage.Designer.cs
++++ b/GameLogic/Properties/PlayerMessage.Designer.cs
+@@ -492,6 +492,15 @@ namespace MUnique.OpenMU.GameLogic.Properties {
+             }
+         }
+         
++        /// <summary>
++        ///   Looks up a localized string similar to MU Helper skill {0} is not learned, so it will not be used.
++        /// </summary>
++        public static string MuHelperSkillNotLearned {
++            get {
++                return ResourceManager.GetString("MuHelperSkillNotLearned", resourceCulture);
++            }
++        }
++        
+         /// <summary>
+         ///   Looks up a localized string similar to A character with the same name already exists..
+         /// </summary>
+diff --git a/GameLogic/Properties/PlayerMessage.resx b/GameLogic/Properties/PlayerMessage.resx
+index fb6c43c..0a33d5b 100644
+--- a/GameLogic/Properties/PlayerMessage.resx
++++ b/GameLogic/Properties/PlayerMessage.resx
+@@ -135,6 +135,9 @@
+   <data name="CharacterNotFound" xml:space="preserve">
+     <value>Character '{0}' not found.</value>
+   </data>
++  <data name="MuHelperSkillNotLearned" xml:space="preserve">
++    <value>MU Helper skill {0} is not learned, so it will not be used.</value>
++  </data>
+   <data name="GuildNotFound" xml:space="preserve">
+     <value>Guild {0} not found.</value>
+   </data>
+diff --git a/GameServer/MessageHandler/MuHelper/MuHelperSaveDataRequestHandlerPlugin.cs b/GameServer/MessageHandler/MuHelper/MuHelperSaveDataRequestHandlerPlugin.cs
+index debf81c..d2152fb 100644
+--- a/GameServer/MessageHandler/MuHelper/MuHelperSaveDataRequestHandlerPlugin.cs
++++ b/GameServer/MessageHandler/MuHelper/MuHelperSaveDataRequestHandlerPlugin.cs
+@@ -41,5 +41,33 @@ public class MuHelperSaveDataRequestHandlerPlugin : IPacketHandlerPlugIn
+         {
+             player.MuHelperSettings = MuHelperSettingsSerializer.TryDeserialize(configuration);
+         }
++
++        await NotifyUnlearnedSkillsAsync(player).ConfigureAwait(false);
++    }
++
++    private static async ValueTask NotifyUnlearnedSkillsAsync(Player player)
++    {
++        if (player.MuHelperSettings is not { } settings)
++        {
++            return;
++        }
++
++        var configuredSkillIds = new[]
++        {
++            settings.BasicSkillId,
++            settings.ActivationSkill1Id,
++            settings.ActivationSkill2Id,
++            settings.BuffSkill0Id,
++            settings.BuffSkill1Id,
++            settings.BuffSkill2Id,
++        };
++
++        foreach (var skillId in configuredSkillIds)
++        {
++            if (skillId > 0 && player.SkillList?.GetSkill((ushort)skillId) is null)
++            {
++                await player.ShowLocalizedBlueMessageAsync(nameof(MUnique.OpenMU.GameLogic.Properties.PlayerMessage.MuHelperSkillNotLearned), skillId).ConfigureAwait(false);
++            }
++        }
+     }
+ }
+\ No newline at end of file
+-- 
+2.43.0
+
