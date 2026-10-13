@@ -416,6 +416,7 @@ void UseSkillWarrior(CHARACTER* c, OBJECT* o)
 
         if (LogicSkill == static_cast<ActionSkillType>(344))
         {
+            CreateEffect(MODEL_SKILL_FISSURE, o->Position, o->Angle, o->Light, 0, o);
             BYTE animationCounter = 0;
             SendRequestMagicContinue(Skill, (c->PositionX), (c->PositionY),
                 (BYTE)(o->Angle[2] / 360.f * 256.f), 0, 0, TKey, &animationCounter);
