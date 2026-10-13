@@ -1,0 +1,26 @@
+From d07f43315ae705d647ded510289b78f6128cead1 Mon Sep 17 00:00:00 2001
+From: openmu-sync <openmu-sync@local>
+Date: Mon, 12 Oct 2026 22:47:24 +0000
+Subject: [PATCH 4/6] fix(characters): keep the 6-character limit when initial
+ data is created
+
+---
+ Persistence/Initialization/GameConfigurationInitializerBase.cs | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Persistence/Initialization/GameConfigurationInitializerBase.cs b/Persistence/Initialization/GameConfigurationInitializerBase.cs
+index ba3c42b..97765bc 100644
+--- a/Persistence/Initialization/GameConfigurationInitializerBase.cs
++++ b/Persistence/Initialization/GameConfigurationInitializerBase.cs
+@@ -51,7 +51,7 @@ public abstract class GameConfigurationInitializerBase : InitializerBase
+         this.GameConfiguration.RecoveryInterval = 3000;
+         this.GameConfiguration.MaximumLetters = 50;
+         this.GameConfiguration.LetterSendPrice = 1000;
+-        this.GameConfiguration.MaximumCharactersPerAccount = 5;
++        this.GameConfiguration.MaximumCharactersPerAccount = 6;
+         this.GameConfiguration.CharacterNameRegex = "^[a-zA-Z0-9]{3,10}$";
+         this.GameConfiguration.MaximumPasswordLength = 20;
+         this.GameConfiguration.MaximumPartySize = 5;
+-- 
+2.43.0
+

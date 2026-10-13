@@ -1,0 +1,4010 @@
+From b9a4e9d725124bc3ba32d2b2cf3c91d1fe0f18bd Mon Sep 17 00:00:00 2001
+From: openmu-sync <openmu-sync@local>
+Date: Mon, 12 Oct 2026 22:41:33 +0000
+Subject: [PATCH 3/6] feat(events): custom Crywolf replaces Pentagram Crywolf,
+ Christmas only in December, tzdata for Chile schedule
+
+---
+ GameLogic/NPC/CrywolfInvaderIntelligence.cs   |  266 --
+ .../StartCrywolfEventChatCommandPlugIn.cs     |   40 +-
+ .../InvasionEvents/ChristmasInvasionPlugIn.cs |    2 +-
+ .../ChristmasPeriodicConfiguration.cs         |    2 +-
+ .../InvasionEvents/CrywolfEventPlugIn.cs      | 2313 ++++++++---------
+ .../InvasionEvents/CrywolfGameServerState.cs  |   22 +-
+ .../CrywolfInvaderIntelligence.cs             |  267 +-
+ .../CrywolfPeriodicConfiguration.cs           |   26 -
+ .../InvasionConfigurationDefaults.cs          |   15 +-
+ .../InvasionEvents/WolfAltarNpcPlugin.cs      |   15 +-
+ .../CrywolfChaosRateBenefitHandlerPlugIn.cs   |   54 -
+ .../CrywolfGroupHandlerPlugIn.cs              |   38 -
+ .../CrywolfInfoHandlerPlugIn.cs               |   63 -
+ Network/PacketTwister/PacketTwistRunner.cs    |    1 -
+ .../PacketTwister/PacketTwisterOfCrywolf.cs   |  671 -----
+ Startup/Dockerfile                            |    1 +
+ 16 files changed, 1438 insertions(+), 2358 deletions(-)
+ delete mode 100644 GameLogic/NPC/CrywolfInvaderIntelligence.cs
+ delete mode 100644 GameLogic/PlugIns/InvasionEvents/CrywolfPeriodicConfiguration.cs
+ delete mode 100644 GameServer/MessageHandler/CrywolfChaosRateBenefitHandlerPlugIn.cs
+ delete mode 100644 GameServer/MessageHandler/CrywolfGroupHandlerPlugIn.cs
+ delete mode 100644 GameServer/MessageHandler/CrywolfInfoHandlerPlugIn.cs
+ delete mode 100644 Network/PacketTwister/PacketTwisterOfCrywolf.cs
+
+diff --git a/GameLogic/NPC/CrywolfInvaderIntelligence.cs b/GameLogic/NPC/CrywolfInvaderIntelligence.cs
+deleted file mode 100644
+index f6b1595..0000000
+--- a/GameLogic/NPC/CrywolfInvaderIntelligence.cs
++++ /dev/null
+@@ -1,266 +0,0 @@
+-// <copyright file="CrywolfInvaderIntelligence.cs" company="MUnique">
+-// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+-// </copyright>
+-
+-namespace MUnique.OpenMU.GameLogic.NPC;
+-
+-using MUnique.OpenMU.GameLogic;
+-using MUnique.OpenMU.GameLogic.Attributes;
+-using MUnique.OpenMU.GameLogic.PlugIns.InvasionEvents;
+-using MUnique.OpenMU.Pathfinding;
+-
+-/// <summary>Which of the three Crywolf entry corridors this invader uses.</summary>
+-public enum CrywolfEntry { West, South, East }
+-
+-/// <summary>
+-/// Crywolf sanctuary layout (verified via Terrain34.att byte analysis):
+-///   OUTER WEST ZONE Y=44: X=87-118 fully walkable — West/South monsters gather here.
+-///   LEFT  dead-end corridor Y=37-39: X=96-106 (narrows to X=101-105 at Y=37). Dead end.
+-///   RIGHT corridor Y=37-40: X=140-159 — real entrance to inner sanctuary.
+-///   INNER SANCTUARY Y=27-34: opens at X=122-150 at Y=27.
+-///   Altar positions: Altar1(125,27) Altar2(126,35) Altar3(120,38) Altar4(115,35) Altar5(117,27)
+-///   (116,43) is walkable and within attack range of Altar3 via adjacent tile (117,41).
+-///
+-/// ScopedGridNetwork max segment = 16 tiles per axis — every waypoint step must be ≤16 in X AND Y.
+-/// West: (103,44)→(116,43): ΔX=13,ΔY=1 ✓ — A* routes east at Y=44 then north (all walkable).
+-/// South: ends at (107,43) outer zone — intelligence navigates to nearest altar from there.
+-/// East: (148,38)→(135,27): ΔX=13,ΔY=11 ✓ — diagonal NW through right corridor to sanctuary.
+-/// </summary>
+-public class CrywolfMeleeIntelligence : BasicMonsterIntelligence
+-{
+-    // West: outer zone then Y=44 east to (103,44), then (116,43) near Altar3 attack position.
+-    private static readonly Point[] WestWaypoints  = [new(88, 64), new(88, 52), new(103, 44), new(116, 43)];
+-    // South: outer zone — ends at (107,43), intelligence finds nearest altar from there.
+-    private static readonly Point[] SouthWaypoints = [new(118, 78), new(115, 65), new(112, 54), new(107, 43)];
+-    // East: right corridor → sanctuary. (135,27) is inside X=122-150 open zone at Y=27.
+-    private static readonly Point[] EastWaypoints  = [new(161, 50), new(153, 46), new(148, 38), new(135, 27)];
+-
+-    private readonly CrywolfGameServerState _state;
+-    private readonly Point[] _waypoints;
+-    private int _waypointIndex;
+-
+-    public CrywolfMeleeIntelligence(CrywolfGameServerState state, CrywolfEntry entry = CrywolfEntry.West)
+-    {
+-        this._state = state;
+-        this._waypoints = entry switch
+-        {
+-            CrywolfEntry.South => SouthWaypoints,
+-            CrywolfEntry.East  => EastWaypoints,
+-            _                  => WestWaypoints,
+-        };
+-        this.CanWalkOnSafezone = true;
+-    }
+-
+-    public override bool CanWalkOn(Point target)
+-    {
+-        // Allow movement on safezone tiles (AIgrid=129) — outer field is always safezone.
+-        return this.Monster.CurrentMap?.Terrain.AIgrid[target.X, target.Y] != 0;
+-    }
+-
+-    protected override async ValueTask<IAttackable?> SearchNextTargetAsync()
+-    {
+-        // Only target Players from base — prevents attacking guards/NPCs.
+-        var baseTarget = await base.SearchNextTargetAsync().ConfigureAwait(false);
+-        if (baseTarget is Player) return baseTarget;
+-        // Only return altar once inside the sanctuary (waypoints done).
+-        if (this._waypointIndex >= this._waypoints.Length)
+-            return this._state.GetNearestAltar(this.Monster.Position, 255);
+-        return null;
+-    }
+-
+-    protected override async ValueTask TickWithoutTargetAsync()
+-    {
+-        if (this.Monster.Attributes[Stats.IsFrozen] > 0) return;
+-
+-        if (this._waypointIndex < this._waypoints.Length)
+-        {
+-            var target = this._waypoints[this._waypointIndex];
+-            var pos    = this.Monster.Position;
+-            var dist   = Math.Abs((int)pos.X - (int)target.X) + Math.Abs((int)pos.Y - (int)target.Y);
+-            if (dist <= 3) { this._waypointIndex++; return; }
+-            if (!await this.Monster.WalkToAsync(target).ConfigureAwait(false))
+-            {
+-                // Pathfinder failed — step one tile toward waypoint to avoid getting stuck.
+-                var dx = Math.Sign((int)target.X - (int)pos.X);
+-                var dy = Math.Sign((int)target.Y - (int)pos.Y);
+-                var step = new Point((byte)(pos.X + dx), (byte)(pos.Y + dy));
+-                if (this.CanWalkOn(step))
+-                    await this.Monster.WalkToAsync(step).ConfigureAwait(false);
+-                else
+-                    await this.Monster.RandomMoveAsync().ConfigureAwait(false);
+-            }
+-            return;
+-        }
+-
+-        // Inside altar zone — march toward nearest altar; never idle.
+-        var nearestAltar = this._state.GetNearestAltar(this.Monster.Position, 255);
+-        if (nearestAltar is not null)
+-        {
+-            if (!await this.Monster.WalkToAsync(nearestAltar.Position).ConfigureAwait(false))
+-                await this.Monster.RandomMoveAsync().ConfigureAwait(false);
+-            return;
+-        }
+-
+-        await this.Monster.RandomMoveAsync().ConfigureAwait(false);
+-    }
+-}
+-
+-/// <summary>
+-/// Same two-corridor routing as CrywolfMeleeIntelligence but ALTARS first, players as fallback.
+-/// </summary>
+-public class CrywolfAltarTargeterIntelligence : BasicMonsterIntelligence
+-{
+-    private static readonly Point[] WestWaypoints  = [new(88, 64), new(88, 52), new(103, 44), new(116, 43)];
+-    private static readonly Point[] SouthWaypoints = [new(118, 78), new(115, 65), new(112, 54), new(107, 43)];
+-    private static readonly Point[] EastWaypoints  = [new(161, 50), new(153, 46), new(148, 38), new(135, 27)];
+-
+-    private readonly CrywolfGameServerState _state;
+-    private readonly Point[] _waypoints;
+-    private int _waypointIndex;
+-
+-    public CrywolfAltarTargeterIntelligence(CrywolfGameServerState state, CrywolfEntry entry = CrywolfEntry.West)
+-    {
+-        this._state = state;
+-        this._waypoints = entry switch
+-        {
+-            CrywolfEntry.South => SouthWaypoints,
+-            CrywolfEntry.East  => EastWaypoints,
+-            _                  => WestWaypoints,
+-        };
+-        this.CanWalkOnSafezone = true;
+-    }
+-
+-    public override bool CanWalkOn(Point target)
+-    {
+-        // Allow movement on safezone tiles (AIgrid=129) — outer field is always safezone.
+-        return this.Monster.CurrentMap?.Terrain.AIgrid[target.X, target.Y] != 0;
+-    }
+-
+-    protected override async ValueTask<IAttackable?> SearchNextTargetAsync()
+-    {
+-        // Altars first once inside the sanctuary (waypoints done).
+-        if (this._waypointIndex >= this._waypoints.Length)
+-        {
+-            var altar = this._state.GetNearestAltar(this.Monster.Position, 255);
+-            if (altar is not null) return altar;
+-        }
+-        // Only target Players — prevents attacking guards/NPCs.
+-        var baseTarget = await base.SearchNextTargetAsync().ConfigureAwait(false);
+-        return baseTarget is Player ? baseTarget : null;
+-    }
+-
+-    protected override async ValueTask TickWithoutTargetAsync()
+-    {
+-        if (this.Monster.Attributes[Stats.IsFrozen] > 0) return;
+-
+-        if (this._waypointIndex < this._waypoints.Length)
+-        {
+-            var target = this._waypoints[this._waypointIndex];
+-            var pos    = this.Monster.Position;
+-            var dist   = Math.Abs((int)pos.X - (int)target.X) + Math.Abs((int)pos.Y - (int)target.Y);
+-            if (dist <= 3) { this._waypointIndex++; return; }
+-            if (!await this.Monster.WalkToAsync(target).ConfigureAwait(false))
+-            {
+-                var dx = Math.Sign((int)target.X - (int)pos.X);
+-                var dy = Math.Sign((int)target.Y - (int)pos.Y);
+-                var step = new Point((byte)(pos.X + dx), (byte)(pos.Y + dy));
+-                if (this.CanWalkOn(step))
+-                    await this.Monster.WalkToAsync(step).ConfigureAwait(false);
+-                else
+-                    await this.Monster.RandomMoveAsync().ConfigureAwait(false);
+-            }
+-            return;
+-        }
+-
+-        // Altar zone — always chase nearest living altar with unlimited range.
+-        var nearestAltar = this._state.GetNearestAltar(this.Monster.Position, 255);
+-        if (nearestAltar is not null)
+-        {
+-            if (!await this.Monster.WalkToAsync(nearestAltar.Position).ConfigureAwait(false))
+-                await this.Monster.RandomMoveAsync().ConfigureAwait(false);
+-            return;
+-        }
+-
+-        await this.Monster.RandomMoveAsync().ConfigureAwait(false);
+-    }
+-}
+-
+-/// <summary>
+-/// Balgass boss. Spawns at (118,68) south of the temple and marches through waypoints
+-/// into the sanctuary to attack the Wolf Statue, then altars, then players.
+-/// </summary>
+-public class CrywolfBossIntelligence : BasicMonsterIntelligence
+-{
+-    // Two waypoints guide Balgass from spawn (118,68) into the temple (Wolf Statue ~121,31).
+-    // Each segment ≤16 tiles per axis (ScopedGridNetwork limit).
+-    private static readonly Point[] BossWaypoints = [new(118, 55), new(120, 40)];
+-
+-    private readonly CrywolfGameServerState _state;
+-    private int _waypointIndex;
+-
+-    public CrywolfBossIntelligence(CrywolfGameServerState state)
+-    {
+-        this._state = state;
+-        this.CanWalkOnSafezone = true;
+-    }
+-
+-    public override bool CanWalkOn(Point target)
+-        => this.Monster.CurrentMap?.Terrain.AIgrid[target.X, target.Y] != 0;
+-
+-    protected override async ValueTask<IAttackable?> SearchNextTargetAsync()
+-    {
+-        // While still navigating, only engage Players — no NPCs.
+-        if (this._waypointIndex < BossWaypoints.Length)
+-        {
+-            var t = await base.SearchNextTargetAsync().ConfigureAwait(false);
+-            return t is Player ? t : null;
+-        }
+-
+-        // Inside the temple — Wolf Statue first, then altars, then Players only.
+-        var statue = this._state.WolfStatue;
+-        if (statue is not null && statue.IsAlive) return statue;
+-        var altar = this._state.GetNearestAltar(this.Monster.Position, this.Monster.Definition.ViewRange);
+-        if (altar is not null) return altar;
+-        var baseTarget = await base.SearchNextTargetAsync().ConfigureAwait(false);
+-        return baseTarget is Player ? baseTarget : null;
+-    }
+-
+-    protected override async ValueTask TickWithoutTargetAsync()
+-    {
+-        if (this._waypointIndex < BossWaypoints.Length)
+-        {
+-            var target = BossWaypoints[this._waypointIndex];
+-            var pos    = this.Monster.Position;
+-            var dist   = Math.Abs((int)pos.X - (int)target.X) + Math.Abs((int)pos.Y - (int)target.Y);
+-            if (dist <= 3) { this._waypointIndex++; return; }
+-            if (!await this.Monster.WalkToAsync(target).ConfigureAwait(false))
+-            {
+-                var dx   = Math.Sign((int)target.X - (int)pos.X);
+-                var dy   = Math.Sign((int)target.Y - (int)pos.Y);
+-                var step = new Point((byte)(pos.X + dx), (byte)(pos.Y + dy));
+-                if (this.CanWalkOn(step))
+-                    await this.Monster.WalkToAsync(step).ConfigureAwait(false);
+-                else
+-                    await this.Monster.RandomMoveAsync().ConfigureAwait(false);
+-            }
+-            return;
+-        }
+-
+-        // Inside the temple — march toward Wolf Statue or altars.
+-        var statue2 = this._state.WolfStatue;
+-        if (statue2 is not null && statue2.IsAlive)
+-        {
+-            if (!await this.Monster.WalkToAsync(statue2.Position).ConfigureAwait(false))
+-                await this.Monster.RandomMoveAsync().ConfigureAwait(false);
+-            return;
+-        }
+-        var nearestAltar = this._state.GetNearestAltar(this.Monster.Position, 255);
+-        if (nearestAltar is not null)
+-        {
+-            if (!await this.Monster.WalkToAsync(nearestAltar.Position).ConfigureAwait(false))
+-                await this.Monster.RandomMoveAsync().ConfigureAwait(false);
+-            return;
+-        }
+-        await this.Monster.RandomMoveAsync().ConfigureAwait(false);
+-    }
+-}
+diff --git a/GameLogic/PlugIns/ChatCommands/StartCrywolfEventChatCommandPlugIn.cs b/GameLogic/PlugIns/ChatCommands/StartCrywolfEventChatCommandPlugIn.cs
+index e007811..491416c 100644
+--- a/GameLogic/PlugIns/ChatCommands/StartCrywolfEventChatCommandPlugIn.cs
++++ b/GameLogic/PlugIns/ChatCommands/StartCrywolfEventChatCommandPlugIn.cs
+@@ -5,18 +5,15 @@
+ namespace MUnique.OpenMU.GameLogic.PlugIns.ChatCommands;
+ 
+ using System.Runtime.InteropServices;
+-using MUnique.OpenMU.GameLogic.PlugIns;
++using MUnique.OpenMU.PlugIns;
+ using MUnique.OpenMU.GameLogic.PlugIns.InvasionEvents;
+ using MUnique.OpenMU.GameLogic.PlugIns.PeriodicTasks;
+-using MUnique.OpenMU.PlugIns;
+ 
+ /// <summary>
+-/// Chat command /startcw - forces the Crywolf event to (re)start immediately (GM only).
+-/// Resets any running instance and spawns fresh monsters.
++/// A chat command plugin which handles the startcw command.
+ /// </summary>
+-[Guid("D4E5F6A7-B8C9-4023-DE56-F7A8BC900004")]
++[Guid("D1CAB365-4035-412D-ACC3-D97350BCA6A3")]
+ [PlugIn]
+-[Display(Name = "StartCrywolfEvent", Description = "Forces the Crywolf event to start immediately.")]
+ [ChatCommandHelp(Command, CharacterStatus.GameMaster)]
+ public class StartCrywolfEventChatCommandPlugIn : IChatCommandPlugIn
+ {
+@@ -25,35 +22,14 @@ public class StartCrywolfEventChatCommandPlugIn : IChatCommandPlugIn
+     /// <inheritdoc />
+     public string Key => Command;
+ 
+-    /// <inheritdoc />
++    /// <inheritdoc/>
+     public CharacterStatus MinCharacterStatusRequirement => CharacterStatus.GameMaster;
+ 
+     /// <inheritdoc />
+-    public async ValueTask HandleCommandAsync(Player player, string command)
++    public ValueTask HandleCommandAsync(Player player, string command)
+     {
+-        var crywolf = player.GameContext.PlugInManager
+-            .GetActivePlugInsOf<IPeriodicTaskPlugIn>()
+-            .OfType<CrywolfEventPlugIn>()
+-            .FirstOrDefault();
+-
+-        if (crywolf is null)
+-        {
+-            await player.ShowBlueMessageAsync("Crywolf event plugin is not active.").ConfigureAwait(false);
+-            return;
+-        }
+-
+-        // Reset any currently running instance so the event can restart immediately.
+-        var state = crywolf.GetPublicState(player.GameContext);
+-        if (state is not null)
+-        {
+-            await state.CleanUpMonstersAsync().ConfigureAwait(false);
+-            state.Reset();
+-            state.State = PeriodicTaskState.NotStarted;
+-            state.NextRunUtc = DateTime.UtcNow;
+-            state.LastRunUtc = DateTime.MinValue;
+-        }
+-
+-        crywolf.ForceStart();
+-        await player.ShowBlueMessageAsync("[Crywolf] Event restarting - prepare to defend the Wolf Altars!").ConfigureAwait(false);
++        var crywolf = player.GameContext.PlugInManager.GetActivePlugInsOf<IPeriodicTaskPlugIn>().OfType<CrywolfEventPlugIn>().FirstOrDefault();
++        crywolf?.ForceStart();
++        return ValueTask.CompletedTask;
+     }
+ }
+diff --git a/GameLogic/PlugIns/InvasionEvents/ChristmasInvasionPlugIn.cs b/GameLogic/PlugIns/InvasionEvents/ChristmasInvasionPlugIn.cs
+index 78e8624..1529180 100644
+--- a/GameLogic/PlugIns/InvasionEvents/ChristmasInvasionPlugIn.cs
++++ b/GameLogic/PlugIns/InvasionEvents/ChristmasInvasionPlugIn.cs
+@@ -31,7 +31,7 @@ public sealed class ChristmasInvasionPlugIn : BaseInvasionPlugIn<ChristmasPeriod
+     {
+         return new ChristmasPeriodicConfiguration
+         {
+-            EventMonth = 10,
++            EventMonth = 12,
+             TaskDuration = TimeSpan.FromMinutes(50),
+             PreStartMessageDelay = TimeSpan.FromSeconds(3),
+             StartMessage = "[{mapName}] Christmas! Santa's little helpers and snowmen have appeared!",
+diff --git a/GameLogic/PlugIns/InvasionEvents/ChristmasPeriodicConfiguration.cs b/GameLogic/PlugIns/InvasionEvents/ChristmasPeriodicConfiguration.cs
+index cf22c97..ca51b19 100644
+--- a/GameLogic/PlugIns/InvasionEvents/ChristmasPeriodicConfiguration.cs
++++ b/GameLogic/PlugIns/InvasionEvents/ChristmasPeriodicConfiguration.cs
+@@ -12,7 +12,7 @@ public class ChristmasPeriodicConfiguration : PeriodicInvasionConfiguration
+     /// <summary>
+     /// Gets or sets the month (1-12) in which the event is active. Default: October.
+     /// </summary>
+-    public int EventMonth { get; set; } = 10;
++    public int EventMonth { get; set; } = 12;
+ 
+     /// <inheritdoc />
+     public override bool IsItTimeToStart(TimeZoneInfo serverTimeZone)
+diff --git a/GameLogic/PlugIns/InvasionEvents/CrywolfEventPlugIn.cs b/GameLogic/PlugIns/InvasionEvents/CrywolfEventPlugIn.cs
+index 751f71d..2768614 100644
+--- a/GameLogic/PlugIns/InvasionEvents/CrywolfEventPlugIn.cs
++++ b/GameLogic/PlugIns/InvasionEvents/CrywolfEventPlugIn.cs
+@@ -1,1171 +1,1142 @@
+-// <copyright file="CrywolfEventPlugIn.cs" company="MUnique">
+-// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+-// </copyright>
+-
+-namespace MUnique.OpenMU.GameLogic.PlugIns.InvasionEvents;
+-
+-using System.Runtime.InteropServices;
+-using System.Threading;
+-using Microsoft.Extensions.Logging;
+-using MUnique.OpenMU.AttributeSystem;
+-using System.IO;
+-using MUnique.OpenMU.DataModel.Configuration;
+-using MUnique.OpenMU.DataModel.Configuration.Items;
+-using MUnique.OpenMU.DataModel.Entities;
+-using MUnique.OpenMU.GameLogic;
+-using MUnique.OpenMU.GameLogic.Attributes;
+-using MUnique.OpenMU.GameLogic.MiniGames;
+-using MUnique.OpenMU.GameLogic.NPC;
+-using MUnique.OpenMU.GameLogic.PlugIns.PeriodicTasks;
+-using MUnique.OpenMU.GameLogic.Views.Inventory;
+-using MUnique.OpenMU.Pathfinding;
+-using MUnique.OpenMU.PlugIns;
+-
+-/// <summary>
+-/// Crywolf Fortress defense event \u2014 Build P.
+-///
+-/// Timeline (15 min total, 6 waves ~100s apart, Balgass at T+10):
+-///   T+00  Terrain flipped, altars/statue spawned, Wave 1 horde invades (all 3 entries).
+-///   T+01:40  Wave 2 \u2014 Balram commanders (3 per entry).
+-///   T+03:20  Wave 3 \u2014 Horde 2 Lance Scouts (x3 per entry).
+-///   T+05:00  Wave 4 \u2014 Dark Elf commanders (3 per entry).
+-///   T+06:40  Wave 5 \u2014 Horde 3 Werewolves (x3 per entry).
+-///   T+08:20  Wave 6 \u2014 Soram + Death Spirit elite (south heavy).
+-///   T+10:00  Wave 7 \u2014 BALGASS boss (Berserker+Requiem aura).
+-///   T+15:00  Event ends \u2014 victory/defeat assessed.
+-///
+-/// Victory: ArmySpawnSucceeded AND BossSpawned AND BossKilled (mata a Balgass = victoria)
+-/// </summary>
+-[PlugIn]
+-[Display(Name = "Crywolf Event", Description = "Full Crywolf Fortress defense event with Wolf Altars.")]
+-[Guid("C3D4E5F6-A7B8-4912-CD45-EF67AB890003")]
+-public sealed class CrywolfEventPlugIn : BaseInvasionPlugIn<CrywolfPeriodicConfiguration>, ISupportDefaultCustomConfiguration
+-{
+-    private const int StatueMaxHealth = 1_500_000;
+-    private const int AltarMaxHealth  = 1_000_000;
+-    private const int BossMaxHealth   = 70_000_000;
+-
+-    private int _onFinishedGuard; // Interlocked guard \u2014 prevents double OnFinishedAsync execution
+-
+-    private static readonly TimeSpan WaveInterval   = TimeSpan.FromSeconds(100); // 6\ufffd100s = T+10 Balgass
+-    private static readonly TimeSpan MonitorInterval = TimeSpan.FromSeconds(3);
+-
+-    // Attack boost multiplier for all spawned monsters (\ufffd2.0 = double base attack)
+-    private const float AttackMultiplier = 2.0f;
+-
+-    // Full-map combat area sent to clients when the event starts.
+-    // This enables PvM attacks everywhere on the Crywolf map.
+-    private static readonly (byte X1, byte Y1, byte X2, byte Y2) SanctuaryArea = (0, 0, 255, 255);
+-
+-    // During the event the entire Crywolf map becomes a battle zone \u2014 no safezone anywhere.
+-    // This ensures monsters can walk and attack everywhere (IsAtSafezone() \u2192 false).
+-
+-    // Wolf Statue (#204) + 5 Wolf Altars (#205-209).
+-    private static readonly (ushort Number, byte X, byte Y)[] AltarSpawns =
+-    [
+-        (204, 121, 031), // Wolf Statue \u2014 primary Balgass target
+-        (205, 125, 027), // Wolf Altar 1
+-        (206, 126, 035), // Wolf Altar 2
+-        (207, 120, 038), // Wolf Altar 3
+-        (208, 115, 035), // Wolf Altar 4
+-        (209, 117, 027), // Wolf Altar 5
+-    ];
+-
+-    // \u2500\u2500 Spawn positions: 3 entry corridors, ~25-30 per entry \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+-    // All terrain positions verified walkable via Terrain34.att.
+-    // All monsters march to altar zone (116,36) via 3-waypoint A* path.
+-
+-    // WEST flank (X=83-93, Y=60-76): left corridor outside sanctuary.
+-    private static readonly (byte X, byte Y)[] WestHordePos =
+-    [
+-        (84, 60), (87, 60), (90, 60), (93, 60),
+-        (84, 63), (87, 63), (90, 63),
+-        (83, 65), (86, 65), (89, 65),
+-        (83, 67), (86, 67), (89, 67), (92, 67),
+-        (84, 70), (87, 70), (90, 70), (93, 70),
+-        (84, 73), (87, 73), (90, 73), (93, 73),
+-        (85, 76), (88, 76), (91, 76),
+-    ];
+-
+-    // SOUTH center (X=108-128, Y=72-90): deep south, wide center approach.
+-    private static readonly (byte X, byte Y)[] SouthHordePos =
+-    [
+-        (108, 72), (112, 72), (116, 72), (120, 72), (124, 72), (128, 72),
+-        (109, 75), (113, 75), (117, 75), (121, 75), (125, 75),
+-        (110, 78), (114, 78), (118, 78), (122, 78), (126, 78),
+-        (111, 81), (115, 81), (119, 81), (123, 81),
+-        (112, 84), (116, 84), (120, 84), (124, 84),
+-        (113, 87), (117, 87), (121, 87), (125, 87),
+-        (114, 90), (118, 90),
+-    ];
+-
+-    // EAST flank (X=160-173, Y=43-55): right side, distinctly east approach.
+-    private static readonly (byte X, byte Y)[] EastHordePos =
+-    [
+-        (160, 43), (163, 43), (166, 43), (170, 43), (173, 43),
+-        (161, 46), (164, 46), (167, 46), (170, 46), (173, 46),
+-        (162, 49), (165, 49), (168, 49), (171, 49),
+-        (161, 52), (164, 52), (167, 52), (170, 52),
+-        (162, 55), (165, 55), (168, 55), (171, 55),
+-    ];
+-
+-    // Commander positions (3 per entry, reserved for elite wave 6).
+-    private static readonly (byte X, byte Y)[] WestCmdPos  = [(86, 61), (88, 64), (85, 67)];
+-    private static readonly (byte X, byte Y)[] SouthCmdPos = [(113, 73), (118, 76), (121, 80)];
+-    private static readonly (byte X, byte Y)[] EastCmdPos  = [(164, 44), (168, 47), (165, 50)];
+-
+-    // Large commander positions (15 per entry, waves 2 and 4).
+-    private static readonly (byte X, byte Y)[] WestCmd15Pos =
+-    [
+-        (84, 60), (87, 60), (90, 60), (93, 60),
+-        (84, 63), (87, 63), (90, 63),
+-        (83, 65), (86, 65), (89, 65),
+-        (83, 67), (86, 67), (89, 67), (92, 67),
+-        (84, 70),
+-    ];
+-    private static readonly (byte X, byte Y)[] SouthCmd15Pos =
+-    [
+-        (108, 72), (112, 72), (116, 72), (120, 72), (124, 72), (128, 72),
+-        (109, 75), (113, 75), (117, 75), (121, 75), (125, 75),
+-        (110, 78), (114, 78), (118, 78), (122, 78),
+-    ];
+-    private static readonly (byte X, byte Y)[] EastCmd15Pos =
+-    [
+-        (160, 43), (163, 43), (166, 43), (170, 43), (173, 43),
+-        (161, 46), (164, 46), (167, 46), (170, 46), (173, 46),
+-        (162, 49), (165, 49), (168, 49), (171, 49),
+-        (161, 52),
+-    ];
+-
+-    // Kill-point values.
+-    private const int PtHorde       = 200;
+-    private const int PtBalram      = 600;
+-    private const int PtCommander   = 3_000;
+-    private const int PtSoram       = 700;
+-    private const int PtDeathSpirit = 600;
+-    private const int PtDeathTrineo = 1_000;
+-    private const int PtBoss        = 7_000;
+-    private const int PtElfContract  = 6_000;
+-
+-    // Death Trineo (#348) long-range siege positions \u2014 south approach.
+-    private static readonly (byte X, byte Y)[] DeathTrineoPos =
+-        [(116, 80), (120, 80), (116, 84), (120, 84)];
+-
+-    /// <inheritdoc />
+-    public object CreateDefaultConfig() => new CrywolfPeriodicConfiguration
+-    {
+-        TaskDuration = TimeSpan.FromMinutes(40),
+-        PreStartMessageDelay = TimeSpan.FromSeconds(3),
+-        StartMessage = "[Crywolf] Balgass forces attack! Defend the Wolf Altars!",
+-        EndMessage = "[Crywolf] The Crywolf event has ended.",
+-        UtcDayOfWeek = DayOfWeek.Sunday,
+-        Timetable = [new TimeOnly(2, 0)],
+-        Mobs =
+-        [
+-            new(InvasionMonsters.Balram, 10, [InvasionMaps.CrywolfFortress], SpawnMapStrategy.AllMaps),
+-            new(InvasionMonsters.Soram,  10, [InvasionMaps.CrywolfFortress], SpawnMapStrategy.AllMaps),
+-        ],
+-    };
+-
+-    /// <inheritdoc />
+-    protected override InvasionGameServerState CreateState(IGameContext gameContext)
+-        => new CrywolfGameServerState(gameContext);
+-
+-    public CrywolfGameServerState? GetPublicState(IGameContext gameContext)
+-        => this.GetStateByGameContext(gameContext) as CrywolfGameServerState;
+-
+-    // For invader spawns outside the sanctuary (safezone already cleared before this runs).
+-    private static Point FindNearestWalkableTile(GameMapTerrain terrain, byte cx, byte cy, int radius = 15)
+-    {
+-        if (terrain.WalkMap[cx, cy] && !terrain.SafezoneMap[cx, cy])
+-            return new Point(cx, cy);
+-
+-        for (int r = 1; r <= radius; r++)
+-        {
+-            for (int dx = -r; dx <= r; dx++)
+-            for (int dy = -r; dy <= r; dy++)
+-            {
+-                if (Math.Abs(dx) != r && Math.Abs(dy) != r) continue;
+-                int nx = cx + dx, ny = cy + dy;
+-                if (nx < 0 || nx > 255 || ny < 0 || ny > 255) continue;
+-                byte bx = (byte)nx, by = (byte)ny;
+-                if (terrain.WalkMap[bx, by] && !terrain.SafezoneMap[bx, by])
+-                    return new Point(bx, by);
+-            }
+-        }
+-
+-        return new Point(cx, cy);
+-    }
+-
+-    // For altar/statue spawns inside the sanctuary (safezone already cleared; only needs WalkMap=true).
+-    private static Point FindNearestWalkableAnywhere(GameMapTerrain terrain, byte cx, byte cy, int radius = 10)
+-    {
+-        if (terrain.WalkMap[cx, cy]) return new Point(cx, cy);
+-
+-        for (int r = 1; r <= radius; r++)
+-        {
+-            for (int dx = -r; dx <= r; dx++)
+-            for (int dy = -r; dy <= r; dy++)
+-            {
+-                if (Math.Abs(dx) != r && Math.Abs(dy) != r) continue;
+-                int nx = cx + dx, ny = cy + dy;
+-                if (nx < 0 || nx > 255 || ny < 0 || ny > 255) continue;
+-                byte bx = (byte)nx, by = (byte)ny;
+-                if (terrain.WalkMap[bx, by]) return new Point(bx, by);
+-            }
+-        }
+-
+-        return new Point(cx, cy);
+-    }
+-
+-    /// <inheritdoc />
+-    protected override async ValueTask SpawnMobsOnMapsAsync(InvasionGameServerState state)
+-    {
+-        await CheckAndRevertShadowBonusIfExpiredAsync(state.Context).ConfigureAwait(false);
+-
+-        if (state is not CrywolfGameServerState crywolfState) return;
+-
+-        if (crywolfState.IsCrywolfRunning)
+-        {
+-            var ctxLog = state.Context.LoggerFactory.CreateLogger(this.GetType());
+-            ctxLog.LogWarning("[Crywolf] Evento ya en ejecuci\ufffdn \u2014 inicio ignorado.");
+-            return;
+-        }
+-
+-        Interlocked.Exchange(ref this._onFinishedGuard, 0); // reset guard for new event run
+-        crywolfState.IsCrywolfRunning = true;
+-        crywolfState.EventStartedAt   = DateTimeOffset.UtcNow;
+-        crywolfState.ResetInvasionTracking();
+-
+-        var ctx    = state.Context;
+-        var logger = ctx.LoggerFactory.CreateLogger(this.GetType());
+-
+-        CrywolfContractRegistry.Register(ctx, crywolfState);
+-
+-        var gameMap = await ctx.GetMapAsync(InvasionMaps.CrywolfFortress).ConfigureAwait(false);
+-        if (gameMap is null)
+-        {
+-            logger.LogError("[Crywolf] Mapa CrywolfFortress no encontrado \u2014 evento cancelado.");
+-            crywolfState.IsCrywolfRunning = false;
+-            CrywolfContractRegistry.Unregister(ctx);
+-            return;
+-        }
+-
+-        crywolfState.CrywolfMap = gameMap;
+-
+-        // \u2500\u2500 Phase 1: Flip ENTIRE MAP safezone \u2192 battle zone \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+-        // All safezone tiles removed so monsters walk and attack freely everywhere.
+-        var terrain = gameMap.Terrain;
+-        for (int ix = 0; ix <= 255; ix++)
+-        for (int iy = 0; iy <= 255; iy++)
+-        {
+-            byte bx = (byte)ix, by = (byte)iy;
+-            if (!terrain.SafezoneMap[bx, by]) continue;
+-            terrain.SafezoneMap[bx, by] = false;
+-            terrain.UpdateAiGridValue(bx, by);
+-            crywolfState.FlippedTiles.Add((bx, by));
+-        }
+-
+-        logger.LogInformation("[Crywolf] Mapa completo: {Count} tiles safezone \u2192 zona de batalla.", crywolfState.FlippedTiles.Count);
+-
+-        // Notify clients that the entire map is now a combat zone.
+-        var (ax1, ay1, ax2, ay2) = SanctuaryArea;
+-        await ctx.ForEachPlayerAsync(p =>
+-        {
+-            if (!ReferenceEquals(p.CurrentMap, gameMap)) return Task.CompletedTask;
+-            return p.InvokeViewPlugInAsync<IChangeTerrainAttributesViewPlugin>(v =>
+-                v.ChangeAttributesAsync(TerrainAttributeType.Safezone, false, [(ax1, ay1, ax2, ay2)])).AsTask();
+-        }).ConfigureAwait(false);
+-
+-        // \u2500\u2500 Phase 2: Spawn Wolf Statue + Wolf Altars \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+-        int altarCount = 0;
+-        foreach (var (npcNumber, sx, sy) in AltarSpawns)
+-        {
+-            var def = ctx.Configuration.Monsters.FirstOrDefault(m => m.Number == npcNumber);
+-            if (def is null)
+-            {
+-                logger.LogWarning("[Crywolf] Phase2: NPC #{N} no encontrado \u2014 omitido.", npcNumber);
+-                continue;
+-            }
+-
+-            // Use WalkMap-only search: safezone already cleared, statue/altars may sit on terrain walls.
+-            var spawnPt   = FindNearestWalkableAnywhere(terrain, sx, sy);
+-            int hpOverride = npcNumber == 204 ? StatueMaxHealth : AltarMaxHealth;
+-
+-            var area = new MonsterSpawnArea
+-            {
+-                GameMap               = gameMap.Definition,
+-                MonsterDefinition     = def,
+-                SpawnTrigger          = SpawnTrigger.OnceAtEventStart,
+-                Quantity              = 1,
+-                X1 = spawnPt.X, X2 = spawnPt.X,
+-                Y1 = spawnPt.Y, Y2 = spawnPt.Y,
+-                Direction             = Direction.South,
+-                MaximumHealthOverride = hpOverride,
+-            };
+-
+-            Monster altar;
+-            try
+-            {
+-                altar = new Monster(area, def, gameMap,
+-                    ctx.DropGenerator, new NullMonsterIntelligence(),
+-                    ctx.PlugInManager, ctx.PathFinderPool);
+-                altar.Initialize();
+-            }
+-            catch (Exception ex)
+-            {
+-                logger.LogError(ex, "[Crywolf] Phase2: Error spawneando NPC #{N}.", npcNumber);
+-                continue;
+-            }
+-
+-            if (!altar.IsAlive) continue;
+-
+-            // Scale Stats.MaximumHealth so the client HP bar matches the override HP.
+-            var altarBaseMaxHp = altar.Attributes[Stats.MaximumHealth];
+-            if (altarBaseMaxHp > 0)
+-            {
+-                altar.Attributes.AddElement(
+-                    new ConstantElement((float)hpOverride / (float)altarBaseMaxHp, AggregateType.Multiplicate),
+-                    Stats.MaximumHealth);
+-            }
+-
+-            await gameMap.AddAsync(altar).ConfigureAwait(false);
+-            altar.OnSpawn();
+-            state.AddMonster(altar);
+-
+-            if (npcNumber == 204)
+-            {
+-                // Wolf Statue: all players blocked \u2014 only monster invaders can damage it.
+-                altar.AttackBlocker = attacker => attacker is Player;
+-                crywolfState.TrackWolfStatue(altar);
+-                logger.LogInformation("[Crywolf] Wolf Statue spawneada en ({X},{Y}) HP={H}.", spawnPt.X, spawnPt.Y, StatueMaxHealth);
+-            }
+-            else if (npcNumber is >= 205 and <= 209)
+-            {
+-                // Wolf Altars: non-Elf players blocked. Elves pass through for contract activation
+-                // (WolfAltarGotHitPlugin restores their damage and creates the contract).
+-                altar.AttackBlocker = attacker =>
+-                    attacker is Player player
+-                    && !ElfClassNumbers.Contains((int)(player.SelectedCharacter?.CharacterClass?.Number ?? 0));
+-
+-                int idx = npcNumber - 205;
+-                crywolfState.TrackAltarMonster(idx, altar);
+-                int displayNum = npcNumber - 204;
+-                altar.Died += (_, info) =>
+-                {
+-                    string byPlayer = info.KillerId > 0 ? " (por jugador \u2014 TRAMPA)" : string.Empty;
+-                    _ = ctx.SendGlobalNotificationAsync(
+-                        $"[Crywolf] \ufffdWolf Altar {displayNum} destruido{byPlayer}! Altares restantes: {crywolfState.AltarsAlive}/5")
+-                        .AsTask();
+-                };
+-                altarCount++;
+-            }
+-        }
+-
+-        crywolfState.InitializeAltars(altarCount);
+-        logger.LogInformation("[Crywolf] {A}/5 Wolf Altars + Wolf Statue listos.", altarCount);
+-
+-        // \u2500\u2500 Phase 3: Start background wave scheduler \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+-        var cts = new CancellationTokenSource();
+-        crywolfState.EventCts = cts;
+-
+-        _ = Task.Run(() => MonitorContractsAsync(crywolfState, cts.Token), cts.Token);
+-        _ = Task.Run(() => AltarHpBroadcastAsync(crywolfState, ctx, cts.Token), cts.Token);
+-        _ = Task.Run(() => ContractElfSnapBackAsync(crywolfState, cts.Token), cts.Token);
+-        _ = Task.Run(() => PrepPhaseElfProximityAsync(crywolfState, ctx, cts.Token), cts.Token);
+-        _ = Task.Run(() => WaveSchedulerAsync(crywolfState, state, ctx, gameMap, logger, cts.Token), cts.Token);
+-
+-        // Boss-killed watcher: ends event when Balgass dies.
+-        // Uses absolute deadline (T+30min) \u2014 NOT IsCrywolfRunning \u2014 so the base class
+-        // timer firing at TaskDuration does NOT cut the loop before the boss is killed.
+-        _ = Task.Run(async () =>
+-        {
+-            try
+-            {
+-                var deadline = crywolfState.EventStartedAt + TimeSpan.FromMinutes(30);
+-                while (!crywolfState.BossKilled && !crywolfState.CrywolfFailed
+-                       && DateTimeOffset.UtcNow < deadline)
+-                    await Task.Delay(500).ConfigureAwait(false);
+-
+-                if (crywolfState.BossKilled)
+-                {
+-                    await Task.Delay(3000).ConfigureAwait(false); // 3s victory pause
+-                    if (!cts.IsCancellationRequested)
+-                        await cts.CancelAsync().ConfigureAwait(false);
+-                    await this.OnFinishedAsync(state).ConfigureAwait(false);
+-                }
+-                else if (!crywolfState.CrywolfFailed)
+-                {
+-                    // Absolute deadline reached with boss alive \u2014 end as defeat.
+-                    crywolfState.CrywolfFailed = true;
+-                    if (!cts.IsCancellationRequested)
+-                        await cts.CancelAsync().ConfigureAwait(false);
+-                    await this.OnFinishedAsync(state).ConfigureAwait(false);
+-                }
+-                // CrywolfFailed=true \u2192 defeat watcher already handles OnFinishedAsync.
+-            }
+-            catch (Exception ex) { logger.LogError(ex, "[Crywolf] Error en boss-killed watcher."); }
+-        }, CancellationToken.None);
+-
+-        // Defeat watcher: ends event immediately when altars/statue are destroyed.
+-        _ = Task.Run(async () =>
+-        {
+-            try
+-            {
+-                while (!crywolfState.CrywolfFailed && crywolfState.IsCrywolfRunning)
+-                    await Task.Delay(500).ConfigureAwait(false);
+-                if (crywolfState.CrywolfFailed)
+-                {
+-                    await Task.Delay(2000).ConfigureAwait(false); // 2s dramatic pause
+-                    if (!crywolfState.BossKilled) // boss-killed watcher takes precedence for victory
+-                    {
+-                        if (!cts.IsCancellationRequested)
+-                            await cts.CancelAsync().ConfigureAwait(false);
+-                        await this.OnFinishedAsync(state).ConfigureAwait(false);
+-                    }
+-                }
+-            }
+-            catch (Exception ex) { logger.LogError(ex, "[Crywolf] Error en defeat watcher."); }
+-        }, CancellationToken.None);
+-
+-        crywolfState.SetArmySpawnSucceeded(true);
+-
+-        await ctx.SendGlobalNotificationAsync(
+-            "[Crywolf] \ufffdPreparaci\ufffdn Crywolf! Elfas: tienen 5 MINUTOS para pararse junto a un Wolf Altar (rango 5 tiles) y activarlo.")
+-            .ConfigureAwait(false);
+-    }
+-
+-    // \u2500\u2500 Wave Scheduler \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+-
+-    private static async Task WaveSchedulerAsync(
+-        CrywolfGameServerState crywolfState, InvasionGameServerState invasionState,
+-        IGameContext ctx, GameMap gameMap, ILogger logger, CancellationToken token)
+-    {
+-        try
+-        {
+-            // \u2500\u2500 Phase 0: Up to 5 minutes prep \u2014 waves start THE MOMENT an elf activates \u2500\u2500
+-            var prepDeadline = DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5);
+-            bool warnedTwo = false, warnedOne = false;
+-
+-            while (true)
+-            {
+-                await Task.Delay(2000, token).ConfigureAwait(false);
+-                if (token.IsCancellationRequested || crywolfState.CrywolfFailed) return;
+-
+-                if (crywolfState.ActiveContractCount > 0)
+-                {
+-                    await ctx.SendGlobalNotificationAsync("[Crywolf] ? \ufffdAltar activado! \ufffdLas hordas de Balgass emergen!").ConfigureAwait(false);
+-                    break;
+-                }
+-
+-                var remaining = prepDeadline - DateTimeOffset.UtcNow;
+-                if (remaining <= TimeSpan.Zero)
+-                {
+-                    logger.LogInformation("[Crywolf] Sin contratos de Elfa \u2014 evento cancelado.");
+-                    crywolfState.CrywolfFailed = true;
+-                    await ctx.SendGlobalNotificationAsync("[Crywolf] \u274c Ninguna Elfa activ\ufffd altares. EVENTO CANCELADO.").ConfigureAwait(false);
+-                    return;
+-                }
+-
+-                if (!warnedTwo && remaining.TotalMinutes <= 2.0)
+-                {
+-                    warnedTwo = true;
+-                    await ctx.SendGlobalNotificationAsync("[Crywolf] \u26a0 2 minutos para activar altares.").ConfigureAwait(false);
+-                }
+-                else if (!warnedOne && remaining.TotalMinutes <= 1.0)
+-                {
+-                    warnedOne = true;
+-                    await ctx.SendGlobalNotificationAsync("[Crywolf] \u26a0 \ufffd1 MINUTO para activar altares! Sin Elfas = evento cancelado.").ConfigureAwait(false);
+-                }
+-            }
+-
+-            // Wave 1: T=0 \u2014 Horde 1 (Hammer Scout #310) x3 per entry
+-            logger.LogInformation("[Crywolf] Oleada 1: Horde #310 \ufffd 3 entradas.");
+-            await ctx.SendGlobalNotificationAsync("[Crywolf] \u2694 OLEADA 1/7 \u2014 \ufffdHordas de Hammer Scouts invaden por todas las entradas!").ConfigureAwait(false);
+-            await SpawnHordeAsync(310, CrywolfEntry.West, WestHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
+-            await SpawnHordeAsync(310, CrywolfEntry.South, SouthHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
+-            await SpawnHordeAsync(310, CrywolfEntry.East, EastHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
+-
+-            await Task.Delay(WaveInterval, token).ConfigureAwait(false);
+-            if (token.IsCancellationRequested || crywolfState.CrywolfFailed) return;
+-
+-            // Wave 2: T=2min \u2014 Balram (#316) commanders, double count (2\ufffd per entry)
+-            logger.LogInformation("[Crywolf] Oleada 2: Balram #316 comandantes \ufffd2.");
+-            await ctx.SendGlobalNotificationAsync("[Crywolf] \u2694 OLEADA 2/7 \u2014 \ufffdLos Balram comandantes lideran el ataque por todos los flancos!").ConfigureAwait(false);
+-            await SpawnCommandersAsync(316, false, PtBalram, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
+-            await SpawnCommandersAsync(316, false, PtBalram, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
+-
+-            await Task.Delay(WaveInterval, token).ConfigureAwait(false);
+-            if (token.IsCancellationRequested || crywolfState.CrywolfFailed) return;
+-
+-            // Wave 3: T=4min \u2014 Horde 2 (Lance Scout #311) x3 per entry
+-            logger.LogInformation("[Crywolf] Oleada 3: Horde #311 \ufffd 3 entradas.");
+-            await ctx.SendGlobalNotificationAsync("[Crywolf] \u2694 OLEADA 3/7 \u2014 \ufffdSegunda horda: Lance Scouts atacan simult\ufffdneamente!").ConfigureAwait(false);
+-            await SpawnHordeAsync(311, CrywolfEntry.West, WestHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
+-            await SpawnHordeAsync(311, CrywolfEntry.South, SouthHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
+-            await SpawnHordeAsync(311, CrywolfEntry.East, EastHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
+-
+-            await Task.Delay(WaveInterval, token).ConfigureAwait(false);
+-            if (token.IsCancellationRequested || crywolfState.CrywolfFailed) return;
+-
+-            // Wave 4: T=6min \u2014 Dark Elf (#340) commanders, 3 per entry
+-            logger.LogInformation("[Crywolf] Oleada 4: Dark Elf #340 comandantes.");
+-            await ctx.SendGlobalNotificationAsync("[Crywolf] \u2694 OLEADA 4/7 \u2014 \ufffd\ufffdDark Elves de Balgass emergen!! \ufffdM\ufffdxima alerta defensiva!").ConfigureAwait(false);
+-            await SpawnCommandersAsync(340, true, PtCommander, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
+-
+-            await Task.Delay(WaveInterval, token).ConfigureAwait(false);
+-            if (token.IsCancellationRequested || crywolfState.CrywolfFailed) return;
+-
+-            // Wave 5: T=8min \u2014 Horde 3 (Werewolf #313) x3 per entry
+-            logger.LogInformation("[Crywolf] Oleada 5: Horde #313 \ufffd 3 entradas.");
+-            await ctx.SendGlobalNotificationAsync("[Crywolf] \u2694 OLEADA 5/7 \u2014 \ufffdTercera horda: Werewolves furiosos desde todos los flancos!").ConfigureAwait(false);
+-            await SpawnHordeAsync(313, CrywolfEntry.West, WestHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
+-            await SpawnHordeAsync(313, CrywolfEntry.South, SouthHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
+-            await SpawnHordeAsync(313, CrywolfEntry.East, EastHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
+-
+-            await Task.Delay(WaveInterval, token).ConfigureAwait(false);
+-            if (token.IsCancellationRequested || crywolfState.CrywolfFailed) return;
+-
+-            // Wave 6: T=10min \u2014 Soram (#317) + Death Spirit (#345) + Death Trineo (#348)
+-            logger.LogInformation("[Crywolf] Oleada 6: Soram #317 + Death Spirit #345 + Death Trineo #348.");
+-            await ctx.SendGlobalNotificationAsync("[Crywolf] \u2694 OLEADA 6/7 \u2014 \ufffdSoram y Death Spirits invaden en formaci\ufffdn de \ufffdlite! \ufffdPreparad la defensa final!").ConfigureAwait(false);
+-            await SpawnEliteWaveAsync(crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
+-
+-            await Task.Delay(WaveInterval, token).ConfigureAwait(false);
+-            if (token.IsCancellationRequested || crywolfState.CrywolfFailed) return;
+-
+-            // Wave 7: T=12min \u2014 BALGASS boss (#349)
+-            logger.LogInformation("[Crywolf] Oleada 7: BALGASS boss #349.");
+-            await SpawnBossAsync(crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
+-        }
+-        catch (OperationCanceledException) { }
+-        catch (Exception ex) { logger.LogError(ex, "[Crywolf] Error en WaveScheduler."); }
+-    }
+-
+-    // \u2500\u2500 Wave spawn helpers \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+-
+-    private static async ValueTask SpawnHordeAsync(
+-        ushort mobId, CrywolfEntry entry, (byte X, byte Y)[] positions,
+-        CrywolfGameServerState crywolfState, InvasionGameServerState invasionState,
+-        IGameContext ctx, GameMap gameMap, ILogger logger)
+-    {
+-        foreach (var (x, y) in positions)
+-        {
+-            // All horde monsters target altars first \u2014 players as fallback.
+-            var ai = new CrywolfAltarTargeterIntelligence(crywolfState, entry);
+-            await SpawnInvaderAsync(mobId, x, y, ai, crywolfState, invasionState, ctx, gameMap, logger,
+-                isDarkElf: false, killPoints: PtHorde).ConfigureAwait(false);
+-        }
+-    }
+-
+-    private static async ValueTask SpawnCommandersAsync(
+-        ushort mobId, bool isDarkElf, int killPts,
+-        CrywolfGameServerState crywolfState, InvasionGameServerState invasionState,
+-        IGameContext ctx, GameMap gameMap, ILogger logger)
+-    {
+-        // 15 commanders per entry, all targeting altars first.
+-        foreach (var (x, y) in WestCmd15Pos)
+-        {
+-            var ai = new CrywolfAltarTargeterIntelligence(crywolfState, CrywolfEntry.West);
+-            await SpawnInvaderAsync(mobId, x, y, ai, crywolfState, invasionState, ctx, gameMap, logger, isDarkElf, killPts).ConfigureAwait(false);
+-        }
+-        foreach (var (x, y) in SouthCmd15Pos)
+-        {
+-            var ai = new CrywolfAltarTargeterIntelligence(crywolfState, CrywolfEntry.South);
+-            await SpawnInvaderAsync(mobId, x, y, ai, crywolfState, invasionState, ctx, gameMap, logger, isDarkElf, killPts).ConfigureAwait(false);
+-        }
+-        foreach (var (x, y) in EastCmd15Pos)
+-        {
+-            var ai = new CrywolfAltarTargeterIntelligence(crywolfState, CrywolfEntry.East);
+-            await SpawnInvaderAsync(mobId, x, y, ai, crywolfState, invasionState, ctx, gameMap, logger, isDarkElf, killPts).ConfigureAwait(false);
+-        }
+-    }
+-
+-    private static async ValueTask SpawnEliteWaveAsync(
+-        CrywolfGameServerState crywolfState, InvasionGameServerState invasionState,
+-        IGameContext ctx, GameMap gameMap, ILogger logger)
+-    {
+-        // WEST: 10\ufffdSoram (altar) + 10\ufffdDeath Spirit (melee) = 20
+-        for (int i = 0; i < 10; i++)
+-            await SpawnInvaderAsync(317, WestHordePos[i].X, WestHordePos[i].Y,
+-                new CrywolfAltarTargeterIntelligence(crywolfState, CrywolfEntry.West),
+-                crywolfState, invasionState, ctx, gameMap, logger, killPoints: PtSoram).ConfigureAwait(false);
+-        for (int i = 10; i < 20; i++)
+-            await SpawnInvaderAsync(345, WestHordePos[i].X, WestHordePos[i].Y,
+-                new CrywolfMeleeIntelligence(crywolfState, CrywolfEntry.West),
+-                crywolfState, invasionState, ctx, gameMap, logger, killPoints: PtDeathSpirit).ConfigureAwait(false);
+-
+-        // SOUTH: 8\ufffdSoram (altar) + 8\ufffdDeath Spirit (melee) + 4\ufffdDeath Trineo = 20
+-        for (int i = 0; i < 8; i++)
+-            await SpawnInvaderAsync(317, SouthHordePos[i].X, SouthHordePos[i].Y,
+-                new CrywolfAltarTargeterIntelligence(crywolfState, CrywolfEntry.South),
+-                crywolfState, invasionState, ctx, gameMap, logger, killPoints: PtSoram).ConfigureAwait(false);
+-        for (int i = 8; i < 16; i++)
+-            await SpawnInvaderAsync(345, SouthHordePos[i].X, SouthHordePos[i].Y,
+-                new CrywolfMeleeIntelligence(crywolfState, CrywolfEntry.South),
+-                crywolfState, invasionState, ctx, gameMap, logger, killPoints: PtDeathSpirit).ConfigureAwait(false);
+-        foreach (var (x, y) in DeathTrineoPos)
+-            await SpawnInvaderAsync(348, x, y,
+-                new CrywolfAltarTargeterIntelligence(crywolfState, CrywolfEntry.South),
+-                crywolfState, invasionState, ctx, gameMap, logger, killPoints: PtDeathTrineo).ConfigureAwait(false);
+-
+-        // EAST: 10\ufffdSoram (altar) + 10\ufffdDeath Spirit (melee) = 20
+-        for (int i = 0; i < 10; i++)
+-            await SpawnInvaderAsync(317, EastHordePos[i].X, EastHordePos[i].Y,
+-                new CrywolfAltarTargeterIntelligence(crywolfState, CrywolfEntry.East),
+-                crywolfState, invasionState, ctx, gameMap, logger, killPoints: PtSoram).ConfigureAwait(false);
+-        for (int i = 10; i < 20; i++)
+-            await SpawnInvaderAsync(345, EastHordePos[i].X, EastHordePos[i].Y,
+-                new CrywolfMeleeIntelligence(crywolfState, CrywolfEntry.East),
+-                crywolfState, invasionState, ctx, gameMap, logger, killPoints: PtDeathSpirit).ConfigureAwait(false);
+-    }
+-
+-    private static async ValueTask SpawnBossAsync(
+-        CrywolfGameServerState crywolfState, InvasionGameServerState invasionState,
+-        IGameContext ctx, GameMap gameMap, ILogger logger)
+-    {
+-        if (crywolfState.BossSpawned || crywolfState.CrywolfFailed) return;
+-
+-        var bossDef = ctx.Configuration.Monsters.FirstOrDefault(m => m.Number == 349);
+-        if (bossDef is null)
+-        {
+-            logger.LogError("[Crywolf] Definici\ufffdn de Balgass (#349) no encontrada \u2014 boss no aparece.");
+-            return;
+-        }
+-
+-        // Balgass aparece en el corredor sur antes del santuario, camina hacia la Wolf Statue.
+-        // Evitar (128,29) que overlapa visualmente con la Wolf Statue y bloquea clicks de jugadores.
+-        var terrain = gameMap.Terrain;
+-        var spawnPt = FindNearestWalkableTile(terrain, 118, 68);
+-        if (!terrain.WalkMap[spawnPt.X, spawnPt.Y])
+-        {
+-            logger.LogError("[Crywolf] Sin tile walkable para Balgass.");
+-            return;
+-        }
+-
+-        var area = new MonsterSpawnArea
+-        {
+-            GameMap               = gameMap.Definition,
+-            MonsterDefinition     = bossDef,
+-            SpawnTrigger          = SpawnTrigger.OnceAtEventStart,
+-            Quantity              = 1,
+-            X1 = spawnPt.X, X2 = spawnPt.X,
+-            Y1 = spawnPt.Y, Y2 = spawnPt.Y,
+-            MaximumHealthOverride = BossMaxHealth,
+-        };
+-
+-        var boss = new Monster(area, bossDef, gameMap,
+-            ctx.DropGenerator, new CrywolfBossIntelligence(crywolfState),
+-            ctx.PlugInManager, ctx.PathFinderPool);
+-
+-        boss.Initialize();
+-        if (!boss.IsAlive)
+-        {
+-            logger.LogError("[Crywolf] Balgass no inicializ\ufffd correctamente.");
+-            return;
+-        }
+-
+-        await gameMap.AddAsync(boss).ConfigureAwait(false);
+-        boss.OnSpawn();
+-        boss.StartAI();
+-        invasionState.AddMonster(boss);
+-        crywolfState.BossMonster = boss;
+-        crywolfState.SetBossSpawned();
+-
+-        // Scale Stats.MaximumHealth to match MaximumHealthOverride so the client HP bar
+-        // covers the full 70M in one segment instead of cycling multiple complete bars.
+-        var bossBaseMaxHp = boss.Attributes[Stats.MaximumHealth];
+-        if (bossBaseMaxHp > 0)
+-        {
+-            boss.Attributes.AddElement(
+-                new ConstantElement((float)BossMaxHealth / (float)bossBaseMaxHp, AggregateType.Multiplicate),
+-                Stats.MaximumHealth);
+-        }
+-
+-        // Visual aura: Berserker (81) = red aggressive glow, Requiem (74) = dark death aura.
+-        // No stat powerups \u2014 purely visual; duration covers the full event window.
+-        foreach (var effectNum in new short[] { 81, 74 })
+-        {
+-            var effectDef = ctx.Configuration.MagicEffects.FirstOrDefault(e => e.Number == effectNum && e.InformObservers);
+-            if (effectDef is not null)
+-            {
+-                var aura = new MagicEffect(TimeSpan.FromMinutes(10), effectDef);
+-                await boss.MagicEffectList.AddEffectAsync(aura).ConfigureAwait(false);
+-            }
+-        }
+-
+-        boss.Died += (_, info) =>
+-        {
+-            crywolfState.SetBossKilled();
+-            if (info.KillerId > 0)
+-                crywolfState.AddKillPoints(info.KillerName, PtBoss);
+-            _ = ctx.SendGlobalNotificationAsync("[Crywolf] \ufffdBALGASS fue derrotado! \ufffdLa defensa resisti\ufffd!").AsTask();
+-        };
+-
+-        await ctx.SendGlobalNotificationAsync(
+-            "[Crywolf] ? OLEADA 7/7 \u2014 \ufffd\ufffdBALGASS ha aparecido y marcha hacia la Wolf Statue!! \ufffdQuedan 3 minutos! ?")
+-            .ConfigureAwait(false);
+-        logger.LogInformation("[Crywolf] BALGASS apareci\ufffd en altar zone ({X},{Y}) HP={H}.", spawnPt.X, spawnPt.Y, BossMaxHealth);
+-    }
+-
+-    // \u2500\u2500 Single invader spawn helper \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+-
+-    private static async ValueTask<Monster?> SpawnInvaderAsync(
+-        ushort mobId, byte x, byte y, INpcIntelligence ai,
+-        CrywolfGameServerState crywolfState, InvasionGameServerState invasionState,
+-        IGameContext ctx, GameMap gameMap, ILogger logger,
+-        bool isDarkElf = false, int killPoints = 0)
+-    {
+-        var def = ctx.Configuration.Monsters.FirstOrDefault(m => m.Number == mobId);
+-        if (def is null)
+-        {
+-            logger.LogError("[Crywolf] Monster #{Id} no encontrado en config.", mobId);
+-            return null;
+-        }
+-
+-        var terrain = gameMap.Terrain;
+-        // Use WalkMap-only search: outer field (Y>58) is still SafezoneMap=true after the flip,
+-        // so FindNearestWalkableTile would relocate all outside spawns into the sanctuary.
+-        // FindNearestWalkableAnywhere respects the intended spawn position; CanWalkOnSafezone=true
+-        // lets invaders walk out of the outer safezone field toward the sanctuary.
+-        var spawnPt = FindNearestWalkableAnywhere(terrain, x, y);
+-
+-        // HP \ufffd3 vs. database base value (double the previous 1.5\ufffd event bonus)
+-        var hpOverride = (int)(def[Stats.MaximumHealth] * 3.0f);
+-
+-        var area = new MonsterSpawnArea
+-        {
+-            GameMap               = gameMap.Definition,
+-            MonsterDefinition     = def,
+-            SpawnTrigger          = SpawnTrigger.OnceAtEventStart,
+-            Quantity              = 1,
+-            X1 = spawnPt.X, X2 = spawnPt.X,
+-            Y1 = spawnPt.Y, Y2 = spawnPt.Y,
+-            MaximumHealthOverride = hpOverride,
+-        };
+-
+-        Monster invader;
+-        try
+-        {
+-            invader = new Monster(area, def, gameMap,
+-                ctx.DropGenerator, ai, ctx.PlugInManager, ctx.PathFinderPool);
+-            invader.Initialize();
+-        }
+-        catch (Exception ex)
+-        {
+-            logger.LogError(ex, "[Crywolf] Error creando Monster #{Id} en ({X},{Y}).", mobId, x, y);
+-            return null;
+-        }
+-
+-        if (!invader.IsAlive) return null;
+-
+-        await gameMap.AddAsync(invader).ConfigureAwait(false);
+-        invader.OnSpawn();
+-        invader.StartAI();
+-        invasionState.AddMonster(invader);
+-        crywolfState.TrackInvader(invader, isDarkElf: isDarkElf, killPoints: killPoints);
+-
+-        // +40% attack damage on all event invaders.
+-        var boost = new ConstantElement(AttackMultiplier, AggregateType.Multiplicate);
+-        invader.Attributes.AddElement(boost, Stats.MinimumPhysBaseDmg);
+-        invader.Attributes.AddElement(new ConstantElement(AttackMultiplier, AggregateType.Multiplicate), Stats.MaximumPhysBaseDmg);
+-        invader.Attributes.AddElement(new ConstantElement(AttackMultiplier, AggregateType.Multiplicate), Stats.MinimumWizBaseDmg);
+-        invader.Attributes.AddElement(new ConstantElement(AttackMultiplier, AggregateType.Multiplicate), Stats.MaximumWizBaseDmg);
+-
+-        // Scale Stats.MaximumHealth to match hpOverride so client HP bar shows one full segment.
+-        var invaderBaseMaxHp = invader.Attributes[Stats.MaximumHealth];
+-        if (invaderBaseMaxHp > 0)
+-        {
+-            invader.Attributes.AddElement(
+-                new ConstantElement((float)hpOverride / (float)invaderBaseMaxHp, AggregateType.Multiplicate),
+-                Stats.MaximumHealth);
+-        }
+-
+-        return invader;
+-    }
+-
+-    // \u2500\u2500 Contract monitor \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+-
+-    private static async Task AltarHpBroadcastAsync(CrywolfGameServerState state, IGameContext ctx, CancellationToken token)
+-    {
+-        while (!token.IsCancellationRequested)
+-        {
+-            try
+-            {
+-                await Task.Delay(TimeSpan.FromSeconds(30), token).ConfigureAwait(false);
+-                var report  = state.GetAltarHpReport();
+-                var statue  = state.GetStatueHpReport();
+-                var elapsed  = DateTimeOffset.UtcNow - state.EventStartedAt;
+-                var remaining = TimeSpan.FromMinutes(30) - elapsed;
+-                string timeStr = remaining > TimeSpan.Zero
+-                    ? $"{(int)remaining.TotalMinutes:D2}:{remaining.Seconds:D2}"
+-                    : "00:00";
+-                await ctx.SendGlobalNotificationAsync(
+-                    $"[Crywolf] \u23f1 {timeStr} | Estatua: {statue} | {report}").ConfigureAwait(false);
+-            }
+-            catch (OperationCanceledException) { break; }
+-            catch { /* absorb */ }
+-        }
+-    }
+-
+-    // \u2500\u2500 Proximity-based contract creation (prep phase) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+-    // Elf players within ActivationRange tiles of any altar auto-receive a contract.
+-    // This replaces the attack-based activation (which requires terrain notification to work).
+-    private const int ElfActivationRange = 5;
+-    private static readonly HashSet<int> ElfClassNumbers = [8, 10, 11];
+-
+-    private static async Task PrepPhaseElfProximityAsync(
+-        CrywolfGameServerState state, IGameContext ctx, CancellationToken token)
+-    {
+-        while (!token.IsCancellationRequested)
+-        {
+-            try
+-            {
+-                await Task.Delay(2000, token).ConfigureAwait(false);
+-                if (state.CrywolfMap is not { } map) continue;
+-
+-                await ctx.ForEachPlayerAsync(async player =>
+-                {
+-                    if (!ReferenceEquals(player.CurrentMap, map)) return;
+-                    var classNum = (int)(player.SelectedCharacter?.CharacterClass?.Number ?? 0);
+-                    if (!ElfClassNumbers.Contains(classNum)) return;
+-
+-                    var elfPos = player.Position;
+-                    for (int i = 0; i < 5; i++)
+-                    {
+-                        var altarPos = state.GetAltarPosition(i);
+-                        if (altarPos is null) continue;
+-                        var dist = Math.Abs((int)elfPos.X - (int)altarPos.Value.X)
+-                                 + Math.Abs((int)elfPos.Y - (int)altarPos.Value.Y);
+-                        if (dist > ElfActivationRange) continue;
+-
+-                        var result = state.TryMakeContract(player, i);
+-                        if (result == CrywolfGameServerState.ContractResult.Success)
+-                        {
+-                            await player.ShowBlueMessageAsync(
+-                                $"[Crywolf] \ufffdContrato activado! Permanece a {CrywolfGameServerState.ContractBreakRange} tiles del Altar.")
+-                                .ConfigureAwait(false);
+-                        }
+-                    }
+-                }).ConfigureAwait(false);
+-            }
+-            catch (OperationCanceledException) { break; }
+-            catch { /* absorb */ }
+-        }
+-    }
+-
+-    private static async Task ContractElfSnapBackAsync(CrywolfGameServerState state, CancellationToken token)
+-    {
+-        while (!token.IsCancellationRequested)
+-        {
+-            try
+-            {
+-                await Task.Delay(500, token).ConfigureAwait(false);
+-                await state.SnapContractedElfsAsync().ConfigureAwait(false);
+-            }
+-            catch (OperationCanceledException) { break; }
+-            catch { /* absorb */ }
+-        }
+-    }
+-
+-    private static async Task MonitorContractsAsync(CrywolfGameServerState state, CancellationToken token)
+-    {
+-        var ctx = state.Context;
+-        int tick = 0;
+-        while (!token.IsCancellationRequested)
+-        {
+-            try
+-            {
+-                await Task.Delay(MonitorInterval, token).ConfigureAwait(false);
+-                state.CheckAndBreakMovedContracts();
+-
+-                tick++; // tick kept for future use
+-            }
+-            catch (OperationCanceledException) { break; }
+-            catch { /* absorb */ }
+-        }
+-    }
+-
+-    /// <inheritdoc />
+-    protected override async ValueTask OnFinishedAsync(InvasionGameServerState state)
+-    {
+-        // If base timer fires while Balgass is still alive, let the boss-killed watcher
+-        // call this method once the boss dies (watcher uses absolute deadline, not IsCrywolfRunning).
+-        if (state is CrywolfGameServerState cs0 && cs0.BossSpawned && !cs0.BossKilled && !cs0.CrywolfFailed)
+-            return;
+-
+-        // Guard against double-execution (boss-killed watcher + defeat watcher both call this).
+-        if (Interlocked.Exchange(ref this._onFinishedGuard, 1) != 0) return;
+-
+-        if (state is not CrywolfGameServerState crywolfState)
+-        {
+-            await base.OnFinishedAsync(state).ConfigureAwait(false);
+-            return;
+-        }
+-
+-        var ctx    = state.Context;
+-        var logger = ctx.LoggerFactory.CreateLogger(this.GetType());
+-
+-        if (crywolfState.EventCts is { } cts)
+-            await cts.CancelAsync().ConfigureAwait(false);
+-        CrywolfContractRegistry.Unregister(ctx);
+-
+-        bool armyOk       = crywolfState.ArmySpawnSucceeded;
+-        bool bossDefeated = crywolfState.BossSpawned && crywolfState.BossKilled;
+-        bool victory      = armyOk && bossDefeated; // Matar a Balgass = victoria
+-
+-        logger.LogInformation(
+-            "[Crywolf] RESULTADO: Army={A} BossSpawned={BS} BossKilled={BK} Victoria={V}",
+-            armyOk, crywolfState.BossSpawned, crywolfState.BossKilled, victory);
+-
+-        crywolfState.RecordActiveContracts();
+-        await AwardParticipantsAsync(crywolfState, ctx, victory).ConfigureAwait(false);
+-
+-        // Remove surviving invaders \u2014 they must not linger after the event ends.
+-        var eventMap = crywolfState.CrywolfMap;
+-        if (eventMap is not null)
+-        {
+-            foreach (var invader in crywolfState.GetAndClearInvaders())
+-            {
+-                try { await eventMap.RemoveAsync(invader).ConfigureAwait(false); }
+-                catch { /* ignore individual failures */ }
+-            }
+-            if (crywolfState.BossMonster is { IsAlive: true } boss)
+-            {
+-                try { await eventMap.RemoveAsync(boss).ConfigureAwait(false); }
+-                catch { /* ignore */ }
+-            }
+-        }
+-
+-        var map = crywolfState.CrywolfMap;
+-        if (map is not null && crywolfState.FlippedTiles.Count > 0)
+-        {
+-            var t = map.Terrain;
+-            // Compute the bounding box of only the tiles that were originally safezone (sanctuary area).
+-            // This avoids telling clients the full map is safezone \u2014 only the temple is restored.
+-            byte minX = 255, minY = 255, maxX = 0, maxY = 0;
+-            foreach (var (x, y) in crywolfState.FlippedTiles)
+-            {
+-                t.SafezoneMap[x, y] = true;
+-                t.UpdateAiGridValue(x, y);
+-                if (x < minX) minX = x;
+-                if (y < minY) minY = y;
+-                if (x > maxX) maxX = x;
+-                if (y > maxY) maxY = y;
+-            }
+-            crywolfState.FlippedTiles.Clear();
+-
+-            // Restore only the sanctuary bounding box on the client side \u2014 outer areas stay non-safezone.
+-            await ctx.ForEachPlayerAsync(p =>
+-            {
+-                if (!ReferenceEquals(p.CurrentMap, map)) return Task.CompletedTask;
+-                return p.InvokeViewPlugInAsync<IChangeTerrainAttributesViewPlugin>(v =>
+-                    v.ChangeAttributesAsync(TerrainAttributeType.Safezone, true, [(minX, minY, maxX, maxY)])).AsTask();
+-            }).ConfigureAwait(false);
+-        }
+-
+-        crywolfState.CrywolfFailed = !victory;
+-        crywolfState.CrywolfMap    = null;
+-
+-        string defeatReason = !armyOk
+-            ? "El ej\ufffdrcito invasor no pudo desplegarse."
+-            : crywolfState.CrywolfFailed && !crywolfState.WolfStatueAlive
+-                ? "\ufffdLa Wolf Statue fue destruida!"
+-                : crywolfState.AltarsAlive <= 0
+-                    ? "Todos los Wolf Altars fueron destruidos."
+-                    : "Balgass no fue derrotado a tiempo.";
+-
+-        string globalMsg = victory
+-            ? "? [Crywolf] \ufffdVICTORIA! La Wolf Statue resisti\ufffd. \ufffdH\ufffdroes de Crywolf recompensados con EXP! ?"
+-            : $"[Crywolf] DERROTA. {defeatReason} Sin recompensas.";
+-
+-        await ctx.SendGlobalNotificationAsync(globalMsg).ConfigureAwait(false);
+-
+-        crywolfState.IsCrywolfRunning = false;
+-
+-        await base.OnFinishedAsync(state).ConfigureAwait(false);
+-    }
+-
+-    private static async Task AwardParticipantsAsync(CrywolfGameServerState state, IGameContext ctx, bool victory)
+-    {
+-        var crywolfMap = state.CrywolfMap;
+-        var elfBonuses = new HashSet<Player>(state.GetElfContractBonuses());
+-
+-        // Collect participants and compute SHARED rank from total team kill points.
+-        var participants = new List<Player>();
+-        int totalPts = 0;
+-        await ctx.ForEachPlayerAsync(player =>
+-        {
+-            if (crywolfMap is not null && !ReferenceEquals(player.CurrentMap, crywolfMap)) return Task.CompletedTask;
+-            participants.Add(player);
+-            totalPts += state.GetPlayerPoints(player) + (elfBonuses.Contains(player) ? PtElfContract : 0);
+-            return Task.CompletedTask;
+-        }).ConfigureAwait(false);
+-
+-        int rankIdx = totalPts switch
+-        {
+-            <= 1_000  => 0, // D
+-            <= 3_000  => 1, // C
+-            <= 5_000  => 2, // B
+-            <= 10_000 => 3, // A
+-            _         => 4  // S
+-        };
+-        string rank = rankIdx switch { 0 => "D", 1 => "C", 2 => "B", 3 => "A", _ => "S" };
+-
+-        int exp = victory ? rankIdx switch
+-        {
+-            0 => 50_000,
+-            1 => 250_000,
+-            2 => 600_000,
+-            3 => 1_000_000,
+-            _ => 1_800_000
+-        } : 0;
+-
+-        // Award every participant the same rank.
+-        foreach (var player in participants)
+-        {
+-            var character = player.SelectedCharacter;
+-            if (victory && exp > 0 && character is not null)
+-                character.Experience += exp;
+-
+-            await player.ShowBlueMessageAsync(
+-                $"[Crywolf] Rank {rank} \u2014 {totalPts:N0} pts totales"
+-                + (exp > 0 ? $" | +{exp:N0} EXP" : string.Empty)).ConfigureAwait(false);
+-
+-            if (!victory) continue;
+-
+-            // 10\u00d7 Caja de Kundun +5
+-            await GiveBoxOfKundunAsync(player, ctx, 12).ConfigureAwait(false);
+-
+-            // 1 item excelente FULL nivel m\u00e1ximo: arma O armadura, aleatorio para la clase
+-            await GiveExcellentItemAsync(player, ctx).ConfigureAwait(false);
+-        }
+-
+-        if (victory && participants.Count > 0)
+-        {
+-            var names = participants
+-                .Select(p => p.SelectedCharacter?.Name)
+-                .Where(n => n is not null)
+-                .Select(n => n!)
+-                .ToList();
+-            await ActivateShadowBonusAsync(ctx, names).ConfigureAwait(false);
+-        }
+-    }
+-
+-    private static async ValueTask GiveBoxOfKundunAsync(Player player, IGameContext ctx, int level)
+-    {
+-        // Box of Luck family: Group=14, Number=11. Level 8=BoK+1 \u2026 12=BoK+5.
+-        var bokDef = ctx.Configuration.Items.FirstOrDefault(i => i.Group == 14 && i.Number == 11);
+-        if (bokDef is null) return;
+-
+-        byte itemLevel = (byte)Math.Min(level, bokDef.MaximumItemLevel);
+-        for (int i = 0; i < 10; i++)
+-        {
+-            var item = new TemporaryItem { Definition = bokDef, Level = itemLevel, Durability = 1 };
+-            await DeliverItemAsync(player, item).ConfigureAwait(false);
+-        }
+-    }
+-
+-    private static async ValueTask GiveExcellentItemAsync(Player player, IGameContext ctx)
+-    {
+-        var charClass = player.SelectedCharacter?.CharacterClass;
+-        if (charClass is null) return;
+-
+-        // Groups 0-5: weapons. Groups 6-11: armor (helm/armor/pants/gloves/boots/shield).
+-        // Excludes ammunition and items without excellent options.
+-        var eligible = ctx.Configuration.Items
+-            .Where(i => i.Group <= 11
+-                        && !i.IsAmmunition
+-                        && i.DropLevel >= 130
+-                        && i.QualifiedCharacters.Contains(charClass)
+-                        && i.PossibleItemOptions.Any(o =>
+-                               o.PossibleOptions.Any(p => p.OptionType == ItemOptionTypes.Excellent)))
+-            .ToList();
+-
+-        if (eligible.Count == 0) return;
+-
+-        var itemDef   = eligible[Random.Shared.Next(eligible.Count)];
+-        byte itemLevel = (byte)Math.Min(15, (int)itemDef.MaximumItemLevel);
+-
+-        var item = new TemporaryItem
+-        {
+-            Definition = itemDef,
+-            Level      = itemLevel,
+-            HasSkill   = itemDef.Skill is not null,
+-            Durability = itemDef.Durability,
+-        };
+-
+-        // All excellent options
+-        foreach (var opt in itemDef.PossibleItemOptions
+-                     .SelectMany(o => o.PossibleOptions)
+-                     .Where(p => p.OptionType == ItemOptionTypes.Excellent))
+-            item.ItemOptions.Add(new ItemOptionLink { ItemOption = opt });
+-
+-        // Luck
+-        var luckOpt = itemDef.PossibleItemOptions
+-            .SelectMany(o => o.PossibleOptions)
+-            .FirstOrDefault(p => p.OptionType == ItemOptionTypes.Luck);
+-        if (luckOpt is not null)
+-            item.ItemOptions.Add(new ItemOptionLink { ItemOption = luckOpt });
+-
+-        await DeliverItemAsync(player, item).ConfigureAwait(false);
+-        string tipo = itemDef.Group <= 5 ? "arma" : "armadura";
+-        await player.ShowBlueMessageAsync($"[Crywolf] \ufffdPremio! {tipo} excelente FULL nivel m\ufffdximo entregada.").ConfigureAwait(false);
+-    }
+-
+-    private static async Task ActivateShadowBonusAsync(IGameContext ctx, List<string> participantNames)
+-    {
+-        const string ExpiryFile = "/opt/mu-online/shadow-bonus-expiry.txt";
+-        if (File.Exists(ExpiryFile)) return; // bonus already active
+-
+-        if (participantNames.Count == 0) return;
+-
+-        var expiry = DateTime.UtcNow.AddDays(2);
+-        await File.WriteAllTextAsync(ExpiryFile, $"{expiry:O}|{string.Join(",", participantNames)}").ConfigureAwait(false);
+-        ShadowBonusManager.Activate(expiry, participantNames);
+-
+-        await ctx.SendGlobalNotificationAsync(
+-            $"[Crywolf] ¡VICTORIA! Shadow Machine +10% por 2 días para {participantNames.Count} héroe(s) del evento. ¡Mejora tus armas!")
+-            .ConfigureAwait(false);
+-    }
+-
+-    private static async Task CheckAndRevertShadowBonusIfExpiredAsync(IGameContext ctx)
+-    {
+-        const string ExpiryFile = "/opt/mu-online/shadow-bonus-expiry.txt";
+-        if (!File.Exists(ExpiryFile)) return;
+-
+-        var content = await File.ReadAllTextAsync(ExpiryFile).ConfigureAwait(false);
+-        var parts = content.Split('|');
+-        if (parts.Length < 2) { ShadowBonusManager.Clear(); return; }
+-
+-        if (!DateTime.TryParse(parts[0], null, System.Globalization.DateTimeStyles.RoundtripKind, out var expiry)
+-            || DateTime.UtcNow < expiry)
+-            return; // not expired yet
+-
+-        ShadowBonusManager.Clear();
+-        await ctx.SendGlobalNotificationAsync(
+-            "[Crywolf] Bonus Shadow Machine expirado. ¡Hasta la próxima victoria!")
+-            .ConfigureAwait(false);
+-    }
+-
+-    private static async ValueTask DeliverItemAsync(Player player, Item item)
+-    {
+-        // CollectionAdapter (EF-backed) requires EntityFramework.Model.Item \u2014 TemporaryItem must be
+-        // converted to a persistent entity before touching the inventory storage.
+-        var persistentItem = item is TemporaryItem tmp
+-            ? tmp.MakePersistent(player.PersistenceContext)
+-            : item;
+-
+-        if (player.Inventory is not null && await player.Inventory.AddItemAsync(persistentItem).ConfigureAwait(false))
+-        {
+-            await player.InvokeViewPlugInAsync<IItemAppearPlugIn>(p => p.ItemAppearAsync(persistentItem)).ConfigureAwait(false);
+-        }
+-        else
+-        {
+-            var map = player.CurrentMap;
+-            if (map is null) return;
+-            var pos = map.Terrain.GetRandomCoordinate(player.Position, 2);
+-            await map.AddAsync(new DroppedItem(persistentItem, pos, map, player)).ConfigureAwait(false);
+-        }
+-    }
+-}
++// <copyright file="CrywolfEventPlugIn.cs" company="MUnique">
++// Licensed under the MIT License. See LICENSE file in the project root for full license information.
++// </copyright>
++
++namespace MUnique.OpenMU.GameLogic.PlugIns.InvasionEvents;
++
++using System.Runtime.InteropServices;
++using System.Threading;
++using Microsoft.Extensions.Logging;
++using MUnique.OpenMU.AttributeSystem;
++using MUnique.OpenMU.DataModel.Configuration;
++using MUnique.OpenMU.DataModel.Configuration.Items;
++using MUnique.OpenMU.DataModel.Entities;
++using MUnique.OpenMU.GameLogic;
++using MUnique.OpenMU.GameLogic.Attributes;
++using MUnique.OpenMU.GameLogic.MiniGames;
++using MUnique.OpenMU.GameLogic.NPC;
++using MUnique.OpenMU.GameLogic.PlugIns.PeriodicTasks;
++using MUnique.OpenMU.GameLogic.Views.Inventory;
++using MUnique.OpenMU.Pathfinding;
++using MUnique.OpenMU.PlugIns;
++
++/// <summary>
++/// Crywolf Fortress defense event â€” Build P.
++///
++/// Timeline (15 min total, 6 waves ~100s apart, Balgass at T+10):
++///   T+00  Terrain flipped, altars/statue spawned, Wave 1 horde invades (all 3 entries).
++///   T+01:40  Wave 2 â€” Balram commanders (3 per entry).
++///   T+03:20  Wave 3 â€” Horde 2 Lance Scouts (x3 per entry).
++///   T+05:00  Wave 4 â€” Dark Elf commanders (3 per entry).
++///   T+06:40  Wave 5 â€” Horde 3 Werewolves (x3 per entry).
++///   T+08:20  Wave 6 â€” Soram + Death Spirit elite (south heavy).
++///   T+10:00  Wave 7 â€” BALGASS boss (Berserker+Requiem aura).
++///   T+15:00  Event ends â€” victory/defeat assessed.
++///
++/// Victory: ArmySpawnSucceeded AND BossSpawned AND BossKilled (mata a Balgass = victoria)
++/// </summary>
++[PlugIn]
++[Display(Name = "Crywolf Event", Description = "Full Crywolf Fortress defense event with Wolf Altars.")]
++[Guid("C3D4E5F6-A7B8-4912-CD45-EF67AB890003")]
++public sealed class CrywolfEventPlugIn : BaseInvasionPlugIn<PeriodicInvasionConfiguration>, ISupportDefaultCustomConfiguration
++{
++    private const int StatueMaxHealth = 1_500_000;
++    private const int AltarMaxHealth  = 1_000_000;
++    private const int BossMaxHealth   = 70_000_000;
++
++    private int _onFinishedGuard; // Interlocked guard â€” prevents double OnFinishedAsync execution
++
++    private static readonly TimeSpan WaveInterval   = TimeSpan.FromSeconds(100); // 6Ã—100s = T+10 Balgass
++    private static readonly TimeSpan MonitorInterval = TimeSpan.FromSeconds(3);
++
++    // Attack boost multiplier for all spawned monsters (Ã—2.0 = double base attack)
++    private const float AttackMultiplier = 2.0f;
++
++    // Full-map combat area sent to clients when the event starts.
++    // This enables PvM attacks everywhere on the Crywolf map.
++    private static readonly (byte X1, byte Y1, byte X2, byte Y2) SanctuaryArea = (0, 0, 255, 255);
++
++    // During the event the entire Crywolf map becomes a battle zone â€” no safezone anywhere.
++    // This ensures monsters can walk and attack everywhere (IsAtSafezone() â†’ false).
++
++    // Wolf Statue (#204) + 5 Wolf Altars (#205-209).
++    private static readonly (ushort Number, byte X, byte Y)[] AltarSpawns =
++    [
++        (204, 121, 031), // Wolf Statue â€” primary Balgass target
++        (205, 125, 027), // Wolf Altar 1
++        (206, 126, 035), // Wolf Altar 2
++        (207, 120, 038), // Wolf Altar 3
++        (208, 115, 035), // Wolf Altar 4
++        (209, 117, 027), // Wolf Altar 5
++    ];
++
++    // â”€â”€ Spawn positions: 3 entry corridors, ~25-30 per entry â”€â”€â”€â”€â”€â”€â”€â”€â”€
++    // All terrain positions verified walkable via Terrain34.att.
++    // All monsters march to altar zone (116,36) via 3-waypoint A* path.
++
++    // WEST flank (X=83-93, Y=60-76): left corridor outside sanctuary.
++    private static readonly (byte X, byte Y)[] WestHordePos =
++    [
++        (84, 60), (87, 60), (90, 60), (93, 60),
++        (84, 63), (87, 63), (90, 63),
++        (83, 65), (86, 65), (89, 65),
++        (83, 67), (86, 67), (89, 67), (92, 67),
++        (84, 70), (87, 70), (90, 70), (93, 70),
++        (84, 73), (87, 73), (90, 73), (93, 73),
++        (85, 76), (88, 76), (91, 76),
++    ];
++
++    // SOUTH center (X=108-128, Y=72-90): deep south, wide center approach.
++    private static readonly (byte X, byte Y)[] SouthHordePos =
++    [
++        (108, 72), (112, 72), (116, 72), (120, 72), (124, 72), (128, 72),
++        (109, 75), (113, 75), (117, 75), (121, 75), (125, 75),
++        (110, 78), (114, 78), (118, 78), (122, 78), (126, 78),
++        (111, 81), (115, 81), (119, 81), (123, 81),
++        (112, 84), (116, 84), (120, 84), (124, 84),
++        (113, 87), (117, 87), (121, 87), (125, 87),
++        (114, 90), (118, 90),
++    ];
++
++    // EAST flank (X=160-173, Y=43-55): right side, distinctly east approach.
++    private static readonly (byte X, byte Y)[] EastHordePos =
++    [
++        (160, 43), (163, 43), (166, 43), (170, 43), (173, 43),
++        (161, 46), (164, 46), (167, 46), (170, 46), (173, 46),
++        (162, 49), (165, 49), (168, 49), (171, 49),
++        (161, 52), (164, 52), (167, 52), (170, 52),
++        (162, 55), (165, 55), (168, 55), (171, 55),
++    ];
++
++    // Commander positions (3 per entry, reserved for elite wave 6).
++    private static readonly (byte X, byte Y)[] WestCmdPos  = [(86, 61), (88, 64), (85, 67)];
++    private static readonly (byte X, byte Y)[] SouthCmdPos = [(113, 73), (118, 76), (121, 80)];
++    private static readonly (byte X, byte Y)[] EastCmdPos  = [(164, 44), (168, 47), (165, 50)];
++
++    // Large commander positions (15 per entry, waves 2 and 4).
++    private static readonly (byte X, byte Y)[] WestCmd15Pos =
++    [
++        (84, 60), (87, 60), (90, 60), (93, 60),
++        (84, 63), (87, 63), (90, 63),
++        (83, 65), (86, 65), (89, 65),
++        (83, 67), (86, 67), (89, 67), (92, 67),
++        (84, 70),
++    ];
++    private static readonly (byte X, byte Y)[] SouthCmd15Pos =
++    [
++        (108, 72), (112, 72), (116, 72), (120, 72), (124, 72), (128, 72),
++        (109, 75), (113, 75), (117, 75), (121, 75), (125, 75),
++        (110, 78), (114, 78), (118, 78), (122, 78),
++    ];
++    private static readonly (byte X, byte Y)[] EastCmd15Pos =
++    [
++        (160, 43), (163, 43), (166, 43), (170, 43), (173, 43),
++        (161, 46), (164, 46), (167, 46), (170, 46), (173, 46),
++        (162, 49), (165, 49), (168, 49), (171, 49),
++        (161, 52),
++    ];
++
++    // Kill-point values.
++    private const int PtHorde       = 200;
++    private const int PtBalram      = 600;
++    private const int PtCommander   = 3_000;
++    private const int PtSoram       = 700;
++    private const int PtDeathSpirit = 600;
++    private const int PtDeathTrineo = 1_000;
++    private const int PtBoss        = 7_000;
++    private const int PtElfContract  = 6_000;
++
++    // Death Trineo (#348) long-range siege positions â€” south approach.
++    private static readonly (byte X, byte Y)[] DeathTrineoPos =
++        [(116, 80), (120, 80), (116, 84), (120, 84)];
++
++    private static readonly TimeZoneInfo ChileTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Santiago");
++
++    private bool _isManualStartRequested;
++
++    /// <summary>
++    /// Starts the event on the next check, regardless of the schedule.
++    /// </summary>
++    public new void ForceStart()
++    {
++        this._isManualStartRequested = true;
++        base.ForceStart();
++    }
++
++    /// <inheritdoc />
++    protected override bool IsItTimeToStart(IGameContext gameContext)
++    {
++        if (this._isManualStartRequested)
++        {
++            this._isManualStartRequested = false;
++            return true;
++        }
++
++        var chileNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ChileTimeZone);
++        return chileNow.DayOfWeek == DayOfWeek.Saturday && chileNow.Hour == 23 && chileNow.Minute == 0 && chileNow.Second < 5;
++    }
++
++    /// <inheritdoc />
++    public object CreateDefaultConfig() => InvasionConfigurationDefaults.Crywolf;
++
++    /// <inheritdoc />
++    protected override InvasionGameServerState CreateState(IGameContext gameContext)
++        => new CrywolfGameServerState(gameContext);
++
++    public CrywolfGameServerState? GetPublicState(IGameContext gameContext)
++        => this.GetStateByGameContext(gameContext) as CrywolfGameServerState;
++
++    // For invader spawns outside the sanctuary (safezone already cleared before this runs).
++    private static Point FindNearestWalkableTile(GameMapTerrain terrain, byte cx, byte cy, int radius = 15)
++    {
++        if (terrain.WalkMap[cx, cy] && !terrain.SafezoneMap[cx, cy])
++            return new Point(cx, cy);
++
++        for (int r = 1; r <= radius; r++)
++        {
++            for (int dx = -r; dx <= r; dx++)
++            for (int dy = -r; dy <= r; dy++)
++            {
++                if (Math.Abs(dx) != r && Math.Abs(dy) != r) continue;
++                int nx = cx + dx, ny = cy + dy;
++                if (nx < 0 || nx > 255 || ny < 0 || ny > 255) continue;
++                byte bx = (byte)nx, by = (byte)ny;
++                if (terrain.WalkMap[bx, by] && !terrain.SafezoneMap[bx, by])
++                    return new Point(bx, by);
++            }
++        }
++
++        return new Point(cx, cy);
++    }
++
++    // For altar/statue spawns inside the sanctuary (safezone already cleared; only needs WalkMap=true).
++    private static Point FindNearestWalkableAnywhere(GameMapTerrain terrain, byte cx, byte cy, int radius = 10)
++    {
++        if (terrain.WalkMap[cx, cy]) return new Point(cx, cy);
++
++        for (int r = 1; r <= radius; r++)
++        {
++            for (int dx = -r; dx <= r; dx++)
++            for (int dy = -r; dy <= r; dy++)
++            {
++                if (Math.Abs(dx) != r && Math.Abs(dy) != r) continue;
++                int nx = cx + dx, ny = cy + dy;
++                if (nx < 0 || nx > 255 || ny < 0 || ny > 255) continue;
++                byte bx = (byte)nx, by = (byte)ny;
++                if (terrain.WalkMap[bx, by]) return new Point(bx, by);
++            }
++        }
++
++        return new Point(cx, cy);
++    }
++
++    /// <inheritdoc />
++    protected override async ValueTask SpawnMobsOnMapsAsync(InvasionGameServerState state)
++    {
++        if (state is not CrywolfGameServerState crywolfState) return;
++
++        if (crywolfState.IsCrywolfRunning)
++        {
++            var ctxLog = state.Context.LoggerFactory.CreateLogger(this.GetType());
++            ctxLog.LogWarning("[Crywolf] Evento ya en ejecuciÃ³n â€” inicio ignorado.");
++            return;
++        }
++
++        Interlocked.Exchange(ref this._onFinishedGuard, 0); // reset guard for new event run
++        crywolfState.IsCrywolfRunning = true;
++        crywolfState.EventStartedAt   = DateTimeOffset.UtcNow;
++        crywolfState.ResetInvasionTracking();
++
++        var ctx    = state.Context;
++        var logger = ctx.LoggerFactory.CreateLogger(this.GetType());
++
++        CrywolfContractRegistry.Register(ctx, crywolfState);
++
++        var gameMap = await ctx.GetMapAsync(InvasionMaps.CrywolfFortress).ConfigureAwait(false);
++        if (gameMap is null)
++        {
++            logger.LogError("[Crywolf] Mapa CrywolfFortress no encontrado â€” evento cancelado.");
++            crywolfState.IsCrywolfRunning = false;
++            CrywolfContractRegistry.Unregister(ctx);
++            return;
++        }
++
++        crywolfState.CrywolfMap = gameMap;
++
++        // â”€â”€ Phase 1: Flip ENTIRE MAP safezone â†’ battle zone â”€â”€â”€â”€â”€â”€â”€â”€â”€
++        // All safezone tiles removed so monsters walk and attack freely everywhere.
++        var terrain = gameMap.Terrain;
++        for (int ix = 0; ix <= 255; ix++)
++        for (int iy = 0; iy <= 255; iy++)
++        {
++            byte bx = (byte)ix, by = (byte)iy;
++            if (!terrain.SafezoneMap[bx, by]) continue;
++            terrain.SafezoneMap[bx, by] = false;
++            terrain.UpdateAiGridValue(bx, by);
++            crywolfState.FlippedTiles.Add((bx, by));
++        }
++
++        logger.LogInformation("[Crywolf] Mapa completo: {Count} tiles safezone â†’ zona de batalla.", crywolfState.FlippedTiles.Count);
++
++        // Notify clients that the entire map is now a combat zone.
++        var (ax1, ay1, ax2, ay2) = SanctuaryArea;
++        await ctx.ForEachPlayerAsync(p =>
++        {
++            if (!ReferenceEquals(p.CurrentMap, gameMap)) return Task.CompletedTask;
++            return p.InvokeViewPlugInAsync<IChangeTerrainAttributesViewPlugin>(v =>
++                v.ChangeAttributesAsync(TerrainAttributeType.Safezone, false, [(ax1, ay1, ax2, ay2)])).AsTask();
++        }).ConfigureAwait(false);
++
++        // â”€â”€ Phase 2: Spawn Wolf Statue + Wolf Altars â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
++        int altarCount = 0;
++        foreach (var (npcNumber, sx, sy) in AltarSpawns)
++        {
++            var def = ctx.Configuration.Monsters.FirstOrDefault(m => m.Number == npcNumber);
++            if (def is null)
++            {
++                logger.LogWarning("[Crywolf] Phase2: NPC #{N} no encontrado â€” omitido.", npcNumber);
++                continue;
++            }
++
++            // Use WalkMap-only search: safezone already cleared, statue/altars may sit on terrain walls.
++            var spawnPt   = FindNearestWalkableAnywhere(terrain, sx, sy);
++            int hpOverride = npcNumber == 204 ? StatueMaxHealth : AltarMaxHealth;
++
++            var area = new MonsterSpawnArea
++            {
++                GameMap               = gameMap.Definition,
++                MonsterDefinition     = def,
++                SpawnTrigger          = SpawnTrigger.OnceAtEventStart,
++                Quantity              = 1,
++                X1 = spawnPt.X, X2 = spawnPt.X,
++                Y1 = spawnPt.Y, Y2 = spawnPt.Y,
++                Direction             = Direction.South,
++                MaximumHealthOverride = hpOverride,
++            };
++
++            Monster altar;
++            try
++            {
++                altar = new Monster(area, def, gameMap,
++                    ctx.DropGenerator, new NullMonsterIntelligence(),
++                    ctx.PlugInManager, ctx.PathFinderPool);
++                altar.Initialize();
++            }
++            catch (Exception ex)
++            {
++                logger.LogError(ex, "[Crywolf] Phase2: Error spawneando NPC #{N}.", npcNumber);
++                continue;
++            }
++
++            if (!altar.IsAlive) continue;
++
++            // Scale Stats.MaximumHealth so the client HP bar matches the override HP.
++            var altarBaseMaxHp = altar.Attributes[Stats.MaximumHealth];
++            if (altarBaseMaxHp > 0)
++            {
++                altar.Attributes.AddElement(
++                    new ConstantElement((float)hpOverride / (float)altarBaseMaxHp, AggregateType.Multiplicate),
++                    Stats.MaximumHealth);
++            }
++
++            await gameMap.AddAsync(altar).ConfigureAwait(false);
++            altar.OnSpawn();
++            state.AddMonster(altar);
++
++            if (npcNumber == 204)
++            {
++                // Wolf Statue: all players blocked â€” only monster invaders can damage it.
++                altar.AttackBlocker = attacker => attacker is Player;
++                crywolfState.TrackWolfStatue(altar);
++                logger.LogInformation("[Crywolf] Wolf Statue spawneada en ({X},{Y}) HP={H}.", spawnPt.X, spawnPt.Y, StatueMaxHealth);
++            }
++            else if (npcNumber is >= 205 and <= 209)
++            {
++                // Wolf Altars: non-Elf players blocked. Elves pass through for contract activation
++                // (WolfAltarGotHitPlugin restores their damage and creates the contract).
++                altar.AttackBlocker = attacker =>
++                    attacker is Player player
++                    && !ElfClassNumbers.Contains((int)(player.SelectedCharacter?.CharacterClass?.Number ?? 0));
++
++                int idx = npcNumber - 205;
++                crywolfState.TrackAltarMonster(idx, altar);
++                int displayNum = npcNumber - 204;
++                altar.Died += (_, info) =>
++                {
++                    string byPlayer = info.KillerId > 0 ? " (por jugador â€” TRAMPA)" : string.Empty;
++                    _ = ctx.SendGlobalNotificationAsync(
++                        $"[Crywolf] Â¡Wolf Altar {displayNum} destruido{byPlayer}! Altares restantes: {crywolfState.AltarsAlive}/5")
++                        .AsTask();
++                };
++                altarCount++;
++            }
++        }
++
++        crywolfState.InitializeAltars(altarCount);
++        logger.LogInformation("[Crywolf] {A}/5 Wolf Altars + Wolf Statue listos.", altarCount);
++
++        // â”€â”€ Phase 3: Start background wave scheduler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
++        var cts = new CancellationTokenSource();
++        crywolfState.EventCts = cts;
++
++        _ = Task.Run(() => MonitorContractsAsync(crywolfState, cts.Token), cts.Token);
++        _ = Task.Run(() => AltarHpBroadcastAsync(crywolfState, ctx, cts.Token), cts.Token);
++        _ = Task.Run(() => ContractElfSnapBackAsync(crywolfState, cts.Token), cts.Token);
++        _ = Task.Run(() => PrepPhaseElfProximityAsync(crywolfState, ctx, cts.Token), cts.Token);
++        _ = Task.Run(() => WaveSchedulerAsync(crywolfState, state, ctx, gameMap, logger, cts.Token), cts.Token);
++
++        // Boss-killed watcher: ends event when Balgass dies.
++        // Uses absolute deadline (T+30min) â€” NOT IsCrywolfRunning â€” so the base class
++        // timer firing at TaskDuration does NOT cut the loop before the boss is killed.
++        _ = Task.Run(async () =>
++        {
++            try
++            {
++                var deadline = crywolfState.EventStartedAt + TimeSpan.FromMinutes(30);
++                while (!crywolfState.BossKilled && !crywolfState.CrywolfFailed
++                       && DateTimeOffset.UtcNow < deadline)
++                    await Task.Delay(500).ConfigureAwait(false);
++
++                if (crywolfState.BossKilled)
++                {
++                    await Task.Delay(3000).ConfigureAwait(false); // 3s victory pause
++                    if (!cts.IsCancellationRequested)
++                        await cts.CancelAsync().ConfigureAwait(false);
++                    await this.OnFinishedAsync(state).ConfigureAwait(false);
++                }
++                else if (!crywolfState.CrywolfFailed)
++                {
++                    // Absolute deadline reached with boss alive â€” end as defeat.
++                    crywolfState.CrywolfFailed = true;
++                    if (!cts.IsCancellationRequested)
++                        await cts.CancelAsync().ConfigureAwait(false);
++                    await this.OnFinishedAsync(state).ConfigureAwait(false);
++                }
++                // CrywolfFailed=true â†’ defeat watcher already handles OnFinishedAsync.
++            }
++            catch (Exception ex) { logger.LogError(ex, "[Crywolf] Error en boss-killed watcher."); }
++        }, CancellationToken.None);
++
++        // Defeat watcher: ends event immediately when altars/statue are destroyed.
++        _ = Task.Run(async () =>
++        {
++            try
++            {
++                while (!crywolfState.CrywolfFailed && crywolfState.IsCrywolfRunning)
++                    await Task.Delay(500).ConfigureAwait(false);
++                if (crywolfState.CrywolfFailed)
++                {
++                    await Task.Delay(2000).ConfigureAwait(false); // 2s dramatic pause
++                    if (!crywolfState.BossKilled) // boss-killed watcher takes precedence for victory
++                    {
++                        if (!cts.IsCancellationRequested)
++                            await cts.CancelAsync().ConfigureAwait(false);
++                        await this.OnFinishedAsync(state).ConfigureAwait(false);
++                    }
++                }
++            }
++            catch (Exception ex) { logger.LogError(ex, "[Crywolf] Error en defeat watcher."); }
++        }, CancellationToken.None);
++
++        crywolfState.SetArmySpawnSucceeded(true);
++
++        await ctx.SendGlobalNotificationAsync(
++            "[Crywolf] Â¡PreparaciÃ³n Crywolf! Elfas: tienen 5 MINUTOS para pararse junto a un Wolf Altar (rango 5 tiles) y activarlo.")
++            .ConfigureAwait(false);
++    }
++
++    // â”€â”€ Wave Scheduler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
++
++    private static async Task WaveSchedulerAsync(
++        CrywolfGameServerState crywolfState, InvasionGameServerState invasionState,
++        IGameContext ctx, GameMap gameMap, ILogger logger, CancellationToken token)
++    {
++        try
++        {
++            // â”€â”€ Phase 0: Up to 5 minutes prep â€” waves start THE MOMENT an elf activates â”€â”€
++            var prepDeadline = DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5);
++            bool warnedTwo = false, warnedOne = false;
++
++            while (true)
++            {
++                await Task.Delay(2000, token).ConfigureAwait(false);
++                if (token.IsCancellationRequested || crywolfState.CrywolfFailed) return;
++
++                if (crywolfState.ActiveContractCount > 0)
++                {
++                    await ctx.SendGlobalNotificationAsync("[Crywolf] âœ… Â¡Altar activado! Â¡Las hordas de Balgass emergen!").ConfigureAwait(false);
++                    break;
++                }
++
++                var remaining = prepDeadline - DateTimeOffset.UtcNow;
++                if (remaining <= TimeSpan.Zero)
++                {
++                    logger.LogInformation("[Crywolf] Sin contratos de Elfa â€” evento cancelado.");
++                    crywolfState.CrywolfFailed = true;
++                    await ctx.SendGlobalNotificationAsync("[Crywolf] âŒ Ninguna Elfa activÃ³ altares. EVENTO CANCELADO.").ConfigureAwait(false);
++                    return;
++                }
++
++                if (!warnedTwo && remaining.TotalMinutes <= 2.0)
++                {
++                    warnedTwo = true;
++                    await ctx.SendGlobalNotificationAsync("[Crywolf] âš  2 minutos para activar altares.").ConfigureAwait(false);
++                }
++                else if (!warnedOne && remaining.TotalMinutes <= 1.0)
++                {
++                    warnedOne = true;
++                    await ctx.SendGlobalNotificationAsync("[Crywolf] âš  Â¡1 MINUTO para activar altares! Sin Elfas = evento cancelado.").ConfigureAwait(false);
++                }
++            }
++
++            // Wave 1: T=0 â€” Horde 1 (Hammer Scout #310) x3 per entry
++            logger.LogInformation("[Crywolf] Oleada 1: Horde #310 Ã— 3 entradas.");
++            await ctx.SendGlobalNotificationAsync("[Crywolf] âš” OLEADA 1/7 â€” Â¡Hordas de Hammer Scouts invaden por todas las entradas!").ConfigureAwait(false);
++            await SpawnHordeAsync(310, CrywolfEntry.West, WestHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
++            await SpawnHordeAsync(310, CrywolfEntry.South, SouthHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
++            await SpawnHordeAsync(310, CrywolfEntry.East, EastHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
++
++            await Task.Delay(WaveInterval, token).ConfigureAwait(false);
++            if (token.IsCancellationRequested || crywolfState.CrywolfFailed) return;
++
++            // Wave 2: T=2min â€” Balram (#316) commanders, double count (2Ã— per entry)
++            logger.LogInformation("[Crywolf] Oleada 2: Balram #316 comandantes Ã—2.");
++            await ctx.SendGlobalNotificationAsync("[Crywolf] âš” OLEADA 2/7 â€” Â¡Los Balram comandantes lideran el ataque por todos los flancos!").ConfigureAwait(false);
++            await SpawnCommandersAsync(316, false, PtBalram, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
++            await SpawnCommandersAsync(316, false, PtBalram, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
++
++            await Task.Delay(WaveInterval, token).ConfigureAwait(false);
++            if (token.IsCancellationRequested || crywolfState.CrywolfFailed) return;
++
++            // Wave 3: T=4min â€” Horde 2 (Lance Scout #311) x3 per entry
++            logger.LogInformation("[Crywolf] Oleada 3: Horde #311 Ã— 3 entradas.");
++            await ctx.SendGlobalNotificationAsync("[Crywolf] âš” OLEADA 3/7 â€” Â¡Segunda horda: Lance Scouts atacan simultÃ¡neamente!").ConfigureAwait(false);
++            await SpawnHordeAsync(311, CrywolfEntry.West, WestHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
++            await SpawnHordeAsync(311, CrywolfEntry.South, SouthHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
++            await SpawnHordeAsync(311, CrywolfEntry.East, EastHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
++
++            await Task.Delay(WaveInterval, token).ConfigureAwait(false);
++            if (token.IsCancellationRequested || crywolfState.CrywolfFailed) return;
++
++            // Wave 4: T=6min â€” Dark Elf (#340) commanders, 3 per entry
++            logger.LogInformation("[Crywolf] Oleada 4: Dark Elf #340 comandantes.");
++            await ctx.SendGlobalNotificationAsync("[Crywolf] âš” OLEADA 4/7 â€” Â¡Â¡Dark Elves de Balgass emergen!! Â¡MÃ¡xima alerta defensiva!").ConfigureAwait(false);
++            await SpawnCommandersAsync(340, true, PtCommander, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
++
++            await Task.Delay(WaveInterval, token).ConfigureAwait(false);
++            if (token.IsCancellationRequested || crywolfState.CrywolfFailed) return;
++
++            // Wave 5: T=8min â€” Horde 3 (Werewolf #313) x3 per entry
++            logger.LogInformation("[Crywolf] Oleada 5: Horde #313 Ã— 3 entradas.");
++            await ctx.SendGlobalNotificationAsync("[Crywolf] âš” OLEADA 5/7 â€” Â¡Tercera horda: Werewolves furiosos desde todos los flancos!").ConfigureAwait(false);
++            await SpawnHordeAsync(313, CrywolfEntry.West, WestHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
++            await SpawnHordeAsync(313, CrywolfEntry.South, SouthHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
++            await SpawnHordeAsync(313, CrywolfEntry.East, EastHordePos, crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
++
++            await Task.Delay(WaveInterval, token).ConfigureAwait(false);
++            if (token.IsCancellationRequested || crywolfState.CrywolfFailed) return;
++
++            // Wave 6: T=10min â€” Soram (#317) + Death Spirit (#345) + Death Trineo (#348)
++            logger.LogInformation("[Crywolf] Oleada 6: Soram #317 + Death Spirit #345 + Death Trineo #348.");
++            await ctx.SendGlobalNotificationAsync("[Crywolf] âš” OLEADA 6/7 â€” Â¡Soram y Death Spirits invaden en formaciÃ³n de Ã©lite! Â¡Preparad la defensa final!").ConfigureAwait(false);
++            await SpawnEliteWaveAsync(crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
++
++            await Task.Delay(WaveInterval, token).ConfigureAwait(false);
++            if (token.IsCancellationRequested || crywolfState.CrywolfFailed) return;
++
++            // Wave 7: T=12min â€” BALGASS boss (#349)
++            logger.LogInformation("[Crywolf] Oleada 7: BALGASS boss #349.");
++            await SpawnBossAsync(crywolfState, invasionState, ctx, gameMap, logger).ConfigureAwait(false);
++        }
++        catch (OperationCanceledException) { }
++        catch (Exception ex) { logger.LogError(ex, "[Crywolf] Error en WaveScheduler."); }
++    }
++
++    // â”€â”€ Wave spawn helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
++
++    private static async ValueTask SpawnHordeAsync(
++        ushort mobId, CrywolfEntry entry, (byte X, byte Y)[] positions,
++        CrywolfGameServerState crywolfState, InvasionGameServerState invasionState,
++        IGameContext ctx, GameMap gameMap, ILogger logger)
++    {
++        foreach (var (x, y) in positions)
++        {
++            // All horde monsters target altars first â€” players as fallback.
++            var ai = new CrywolfAltarTargeterIntelligence(crywolfState, entry);
++            await SpawnInvaderAsync(mobId, x, y, ai, crywolfState, invasionState, ctx, gameMap, logger,
++                isDarkElf: false, killPoints: PtHorde).ConfigureAwait(false);
++        }
++    }
++
++    private static async ValueTask SpawnCommandersAsync(
++        ushort mobId, bool isDarkElf, int killPts,
++        CrywolfGameServerState crywolfState, InvasionGameServerState invasionState,
++        IGameContext ctx, GameMap gameMap, ILogger logger)
++    {
++        // 15 commanders per entry, all targeting altars first.
++        foreach (var (x, y) in WestCmd15Pos)
++        {
++            var ai = new CrywolfAltarTargeterIntelligence(crywolfState, CrywolfEntry.West);
++            await SpawnInvaderAsync(mobId, x, y, ai, crywolfState, invasionState, ctx, gameMap, logger, isDarkElf, killPts).ConfigureAwait(false);
++        }
++        foreach (var (x, y) in SouthCmd15Pos)
++        {
++            var ai = new CrywolfAltarTargeterIntelligence(crywolfState, CrywolfEntry.South);
++            await SpawnInvaderAsync(mobId, x, y, ai, crywolfState, invasionState, ctx, gameMap, logger, isDarkElf, killPts).ConfigureAwait(false);
++        }
++        foreach (var (x, y) in EastCmd15Pos)
++        {
++            var ai = new CrywolfAltarTargeterIntelligence(crywolfState, CrywolfEntry.East);
++            await SpawnInvaderAsync(mobId, x, y, ai, crywolfState, invasionState, ctx, gameMap, logger, isDarkElf, killPts).ConfigureAwait(false);
++        }
++    }
++
++    private static async ValueTask SpawnEliteWaveAsync(
++        CrywolfGameServerState crywolfState, InvasionGameServerState invasionState,
++        IGameContext ctx, GameMap gameMap, ILogger logger)
++    {
++        // WEST: 10Ã—Soram (altar) + 10Ã—Death Spirit (melee) = 20
++        for (int i = 0; i < 10; i++)
++            await SpawnInvaderAsync(317, WestHordePos[i].X, WestHordePos[i].Y,
++                new CrywolfAltarTargeterIntelligence(crywolfState, CrywolfEntry.West),
++                crywolfState, invasionState, ctx, gameMap, logger, killPoints: PtSoram).ConfigureAwait(false);
++        for (int i = 10; i < 20; i++)
++            await SpawnInvaderAsync(345, WestHordePos[i].X, WestHordePos[i].Y,
++                new CrywolfMeleeIntelligence(crywolfState, CrywolfEntry.West),
++                crywolfState, invasionState, ctx, gameMap, logger, killPoints: PtDeathSpirit).ConfigureAwait(false);
++
++        // SOUTH: 8Ã—Soram (altar) + 8Ã—Death Spirit (melee) + 4Ã—Death Trineo = 20
++        for (int i = 0; i < 8; i++)
++            await SpawnInvaderAsync(317, SouthHordePos[i].X, SouthHordePos[i].Y,
++                new CrywolfAltarTargeterIntelligence(crywolfState, CrywolfEntry.South),
++                crywolfState, invasionState, ctx, gameMap, logger, killPoints: PtSoram).ConfigureAwait(false);
++        for (int i = 8; i < 16; i++)
++            await SpawnInvaderAsync(345, SouthHordePos[i].X, SouthHordePos[i].Y,
++                new CrywolfMeleeIntelligence(crywolfState, CrywolfEntry.South),
++                crywolfState, invasionState, ctx, gameMap, logger, killPoints: PtDeathSpirit).ConfigureAwait(false);
++        foreach (var (x, y) in DeathTrineoPos)
++            await SpawnInvaderAsync(348, x, y,
++                new CrywolfAltarTargeterIntelligence(crywolfState, CrywolfEntry.South),
++                crywolfState, invasionState, ctx, gameMap, logger, killPoints: PtDeathTrineo).ConfigureAwait(false);
++
++        // EAST: 10Ã—Soram (altar) + 10Ã—Death Spirit (melee) = 20
++        for (int i = 0; i < 10; i++)
++            await SpawnInvaderAsync(317, EastHordePos[i].X, EastHordePos[i].Y,
++                new CrywolfAltarTargeterIntelligence(crywolfState, CrywolfEntry.East),
++                crywolfState, invasionState, ctx, gameMap, logger, killPoints: PtSoram).ConfigureAwait(false);
++        for (int i = 10; i < 20; i++)
++            await SpawnInvaderAsync(345, EastHordePos[i].X, EastHordePos[i].Y,
++                new CrywolfMeleeIntelligence(crywolfState, CrywolfEntry.East),
++                crywolfState, invasionState, ctx, gameMap, logger, killPoints: PtDeathSpirit).ConfigureAwait(false);
++    }
++
++    private static async ValueTask SpawnBossAsync(
++        CrywolfGameServerState crywolfState, InvasionGameServerState invasionState,
++        IGameContext ctx, GameMap gameMap, ILogger logger)
++    {
++        if (crywolfState.BossSpawned || crywolfState.CrywolfFailed) return;
++
++        var bossDef = ctx.Configuration.Monsters.FirstOrDefault(m => m.Number == 349);
++        if (bossDef is null)
++        {
++            logger.LogError("[Crywolf] DefiniciÃ³n de Balgass (#349) no encontrada â€” boss no aparece.");
++            return;
++        }
++
++        // Balgass aparece en el corredor sur antes del santuario, camina hacia la Wolf Statue.
++        // Evitar (128,29) que overlapa visualmente con la Wolf Statue y bloquea clicks de jugadores.
++        var terrain = gameMap.Terrain;
++        var spawnPt = FindNearestWalkableTile(terrain, 118, 68);
++        if (!terrain.WalkMap[spawnPt.X, spawnPt.Y])
++        {
++            logger.LogError("[Crywolf] Sin tile walkable para Balgass.");
++            return;
++        }
++
++        var area = new MonsterSpawnArea
++        {
++            GameMap               = gameMap.Definition,
++            MonsterDefinition     = bossDef,
++            SpawnTrigger          = SpawnTrigger.OnceAtEventStart,
++            Quantity              = 1,
++            X1 = spawnPt.X, X2 = spawnPt.X,
++            Y1 = spawnPt.Y, Y2 = spawnPt.Y,
++            MaximumHealthOverride = BossMaxHealth,
++        };
++
++        var boss = new Monster(area, bossDef, gameMap,
++            ctx.DropGenerator, new CrywolfBossIntelligence(crywolfState),
++            ctx.PlugInManager, ctx.PathFinderPool);
++
++        boss.Initialize();
++        if (!boss.IsAlive)
++        {
++            logger.LogError("[Crywolf] Balgass no inicializÃ³ correctamente.");
++            return;
++        }
++
++        await gameMap.AddAsync(boss).ConfigureAwait(false);
++        boss.OnSpawn();
++        boss.StartAI();
++        invasionState.AddMonster(boss);
++        crywolfState.BossMonster = boss;
++        crywolfState.SetBossSpawned();
++
++        // Balgass hits 5Ã— harder than a normal invader (invaders already Ã—1.4; boss Ã—7 total vs base).
++        const float BossAttackMult = 5.0f;
++        boss.Attributes.AddElement(new ConstantElement(BossAttackMult, AggregateType.Multiplicate), Stats.MinimumPhysBaseDmg);
++        boss.Attributes.AddElement(new ConstantElement(BossAttackMult, AggregateType.Multiplicate), Stats.MaximumPhysBaseDmg);
++        boss.Attributes.AddElement(new ConstantElement(BossAttackMult, AggregateType.Multiplicate), Stats.MinimumWizBaseDmg);
++        boss.Attributes.AddElement(new ConstantElement(BossAttackMult, AggregateType.Multiplicate), Stats.MaximumWizBaseDmg);
++
++        // Scale Stats.MaximumHealth to match MaximumHealthOverride so the client HP bar
++        // covers the full 70M in one segment instead of cycling multiple complete bars.
++        var bossBaseMaxHp = boss.Attributes[Stats.MaximumHealth];
++        if (bossBaseMaxHp > 0)
++        {
++            boss.Attributes.AddElement(
++                new ConstantElement((float)BossMaxHealth / (float)bossBaseMaxHp, AggregateType.Multiplicate),
++                Stats.MaximumHealth);
++        }
++
++        // Visual aura: Berserker (81) = red aggressive glow, Requiem (74) = dark death aura.
++        // No stat powerups â€” purely visual; duration covers the full event window.
++        foreach (var effectNum in new short[] { 81, 74 })
++        {
++            var effectDef = ctx.Configuration.MagicEffects.FirstOrDefault(e => e.Number == effectNum && e.InformObservers);
++            if (effectDef is not null)
++            {
++                var aura = new MagicEffect(TimeSpan.FromMinutes(10), effectDef);
++                await boss.MagicEffectList.AddEffectAsync(aura).ConfigureAwait(false);
++            }
++        }
++
++        boss.Died += (_, info) =>
++        {
++            crywolfState.SetBossKilled();
++            if (info.KillerId > 0)
++                crywolfState.AddKillPoints(info.KillerName, PtBoss);
++            _ = ctx.SendGlobalNotificationAsync("[Crywolf] Â¡BALGASS fue derrotado! Â¡La defensa resistiÃ³!").AsTask();
++        };
++
++        await ctx.SendGlobalNotificationAsync(
++            "[Crywolf] â˜… OLEADA 7/7 â€” Â¡Â¡BALGASS ha aparecido y marcha hacia la Wolf Statue!! Â¡Quedan 3 minutos! â˜…")
++            .ConfigureAwait(false);
++        logger.LogInformation("[Crywolf] BALGASS apareciÃ³ en altar zone ({X},{Y}) HP={H}.", spawnPt.X, spawnPt.Y, BossMaxHealth);
++    }
++
++    // â”€â”€ Single invader spawn helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
++
++    private static async ValueTask<Monster?> SpawnInvaderAsync(
++        ushort mobId, byte x, byte y, INpcIntelligence ai,
++        CrywolfGameServerState crywolfState, InvasionGameServerState invasionState,
++        IGameContext ctx, GameMap gameMap, ILogger logger,
++        bool isDarkElf = false, int killPoints = 0)
++    {
++        var def = ctx.Configuration.Monsters.FirstOrDefault(m => m.Number == mobId);
++        if (def is null)
++        {
++            logger.LogError("[Crywolf] Monster #{Id} no encontrado en config.", mobId);
++            return null;
++        }
++
++        var terrain = gameMap.Terrain;
++        // Use WalkMap-only search: outer field (Y>58) is still SafezoneMap=true after the flip,
++        // so FindNearestWalkableTile would relocate all outside spawns into the sanctuary.
++        // FindNearestWalkableAnywhere respects the intended spawn position; CanWalkOnSafezone=true
++        // lets invaders walk out of the outer safezone field toward the sanctuary.
++        var spawnPt = FindNearestWalkableAnywhere(terrain, x, y);
++
++        // HP Ã—3 vs. database base value (double the previous 1.5Ã— event bonus)
++        var hpOverride = (int)(def[Stats.MaximumHealth] * 3.0f);
++
++        var area = new MonsterSpawnArea
++        {
++            GameMap               = gameMap.Definition,
++            MonsterDefinition     = def,
++            SpawnTrigger          = SpawnTrigger.OnceAtEventStart,
++            Quantity              = 1,
++            X1 = spawnPt.X, X2 = spawnPt.X,
++            Y1 = spawnPt.Y, Y2 = spawnPt.Y,
++            MaximumHealthOverride = hpOverride,
++        };
++
++        Monster invader;
++        try
++        {
++            invader = new Monster(area, def, gameMap,
++                ctx.DropGenerator, ai, ctx.PlugInManager, ctx.PathFinderPool);
++            invader.Initialize();
++        }
++        catch (Exception ex)
++        {
++            logger.LogError(ex, "[Crywolf] Error creando Monster #{Id} en ({X},{Y}).", mobId, x, y);
++            return null;
++        }
++
++        if (!invader.IsAlive) return null;
++
++        await gameMap.AddAsync(invader).ConfigureAwait(false);
++        invader.OnSpawn();
++        invader.StartAI();
++        invasionState.AddMonster(invader);
++        crywolfState.TrackInvader(invader, isDarkElf: isDarkElf, killPoints: killPoints);
++
++        // +40% attack damage on all event invaders.
++        var boost = new ConstantElement(AttackMultiplier, AggregateType.Multiplicate);
++        invader.Attributes.AddElement(boost, Stats.MinimumPhysBaseDmg);
++        invader.Attributes.AddElement(new ConstantElement(AttackMultiplier, AggregateType.Multiplicate), Stats.MaximumPhysBaseDmg);
++        invader.Attributes.AddElement(new ConstantElement(AttackMultiplier, AggregateType.Multiplicate), Stats.MinimumWizBaseDmg);
++        invader.Attributes.AddElement(new ConstantElement(AttackMultiplier, AggregateType.Multiplicate), Stats.MaximumWizBaseDmg);
++
++        // Scale Stats.MaximumHealth to match hpOverride so client HP bar shows one full segment.
++        var invaderBaseMaxHp = invader.Attributes[Stats.MaximumHealth];
++        if (invaderBaseMaxHp > 0)
++        {
++            invader.Attributes.AddElement(
++                new ConstantElement((float)hpOverride / (float)invaderBaseMaxHp, AggregateType.Multiplicate),
++                Stats.MaximumHealth);
++        }
++
++        return invader;
++    }
++
++    // â”€â”€ Contract monitor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
++
++    private static async Task AltarHpBroadcastAsync(CrywolfGameServerState state, IGameContext ctx, CancellationToken token)
++    {
++        while (!token.IsCancellationRequested)
++        {
++            try
++            {
++                await Task.Delay(TimeSpan.FromSeconds(30), token).ConfigureAwait(false);
++                var report  = state.GetAltarHpReport();
++                var statue  = state.GetStatueHpReport();
++                var elapsed  = DateTimeOffset.UtcNow - state.EventStartedAt;
++                var remaining = TimeSpan.FromMinutes(30) - elapsed;
++                string timeStr = remaining > TimeSpan.Zero
++                    ? $"{(int)remaining.TotalMinutes:D2}:{remaining.Seconds:D2}"
++                    : "00:00";
++                await ctx.SendGlobalNotificationAsync(
++                    $"[Crywolf] â± {timeStr} | Estatua: {statue} | {report}").ConfigureAwait(false);
++            }
++            catch (OperationCanceledException) { break; }
++            catch { /* absorb */ }
++        }
++    }
++
++    // â”€â”€ Proximity-based contract creation (prep phase) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
++    // Elf players within ActivationRange tiles of any altar auto-receive a contract.
++    // This replaces the attack-based activation (which requires terrain notification to work).
++    private const int ElfActivationRange = 5;
++    private static readonly HashSet<int> ElfClassNumbers = [8, 10, 11];
++
++    private static async Task PrepPhaseElfProximityAsync(
++        CrywolfGameServerState state, IGameContext ctx, CancellationToken token)
++    {
++        while (!token.IsCancellationRequested)
++        {
++            try
++            {
++                await Task.Delay(2000, token).ConfigureAwait(false);
++                if (state.CrywolfMap is not { } map) continue;
++
++                await ctx.ForEachPlayerAsync(async player =>
++                {
++                    if (!ReferenceEquals(player.CurrentMap, map)) return;
++                    var classNum = (int)(player.SelectedCharacter?.CharacterClass?.Number ?? 0);
++                    if (!ElfClassNumbers.Contains(classNum)) return;
++
++                    var elfPos = player.Position;
++                    for (int i = 0; i < 5; i++)
++                    {
++                        var altarPos = state.GetAltarPosition(i);
++                        if (altarPos is null) continue;
++                        var dist = Math.Abs((int)elfPos.X - (int)altarPos.Value.X)
++                                 + Math.Abs((int)elfPos.Y - (int)altarPos.Value.Y);
++                        if (dist > ElfActivationRange) continue;
++
++                        var result = state.TryMakeContract(player, i);
++                        if (result == CrywolfGameServerState.ContractResult.Success)
++                        {
++                            await player.ShowBlueMessageAsync(
++                                $"[Crywolf] Â¡Contrato activado! Permanece a {CrywolfGameServerState.ContractBreakRange} tiles del Altar.")
++                                .ConfigureAwait(false);
++                        }
++                    }
++                }).ConfigureAwait(false);
++            }
++            catch (OperationCanceledException) { break; }
++            catch { /* absorb */ }
++        }
++    }
++
++    private static async Task ContractElfSnapBackAsync(CrywolfGameServerState state, CancellationToken token)
++    {
++        while (!token.IsCancellationRequested)
++        {
++            try
++            {
++                await Task.Delay(500, token).ConfigureAwait(false);
++                await state.SnapContractedElfsAsync().ConfigureAwait(false);
++            }
++            catch (OperationCanceledException) { break; }
++            catch { /* absorb */ }
++        }
++    }
++
++    private static async Task MonitorContractsAsync(CrywolfGameServerState state, CancellationToken token)
++    {
++        var ctx = state.Context;
++        int tick = 0;
++        while (!token.IsCancellationRequested)
++        {
++            try
++            {
++                await Task.Delay(MonitorInterval, token).ConfigureAwait(false);
++                state.CheckAndBreakMovedContracts();
++
++                tick++; // tick kept for future use
++            }
++            catch (OperationCanceledException) { break; }
++            catch { /* absorb */ }
++        }
++    }
++
++    /// <inheritdoc />
++    protected override async ValueTask OnFinishedAsync(InvasionGameServerState state)
++    {
++        // If base timer fires while Balgass is still alive, let the boss-killed watcher
++        // call this method once the boss dies (watcher uses absolute deadline, not IsCrywolfRunning).
++        if (state is CrywolfGameServerState cs0 && cs0.BossSpawned && !cs0.BossKilled && !cs0.CrywolfFailed)
++            return;
++
++        // Guard against double-execution (boss-killed watcher + defeat watcher both call this).
++        if (Interlocked.Exchange(ref this._onFinishedGuard, 1) != 0) return;
++
++        if (state is not CrywolfGameServerState crywolfState)
++        {
++            await base.OnFinishedAsync(state).ConfigureAwait(false);
++            return;
++        }
++
++        var ctx    = state.Context;
++        var logger = ctx.LoggerFactory.CreateLogger(this.GetType());
++
++        if (crywolfState.EventCts is { } cts)
++            await cts.CancelAsync().ConfigureAwait(false);
++        CrywolfContractRegistry.Unregister(ctx);
++
++        bool armyOk       = crywolfState.ArmySpawnSucceeded;
++        bool bossDefeated = crywolfState.BossSpawned && crywolfState.BossKilled;
++        bool victory      = armyOk && bossDefeated; // Matar a Balgass = victoria
++
++        logger.LogInformation(
++            "[Crywolf] RESULTADO: Army={A} BossSpawned={BS} BossKilled={BK} Victoria={V}",
++            armyOk, crywolfState.BossSpawned, crywolfState.BossKilled, victory);
++
++        crywolfState.RecordActiveContracts();
++        await AwardParticipantsAsync(crywolfState, ctx, victory).ConfigureAwait(false);
++
++        // Remove surviving invaders â€” they must not linger after the event ends.
++        var eventMap = crywolfState.CrywolfMap;
++        if (eventMap is not null)
++        {
++            foreach (var invader in crywolfState.GetAndClearInvaders())
++            {
++                try { await eventMap.RemoveAsync(invader).ConfigureAwait(false); }
++                catch { /* ignore individual failures */ }
++            }
++            if (crywolfState.BossMonster is { IsAlive: true } boss)
++            {
++                try { await eventMap.RemoveAsync(boss).ConfigureAwait(false); }
++                catch { /* ignore */ }
++            }
++        }
++
++        var map = crywolfState.CrywolfMap;
++        if (map is not null && crywolfState.FlippedTiles.Count > 0)
++        {
++            var t = map.Terrain;
++            // Compute the bounding box of only the tiles that were originally safezone (sanctuary area).
++            // This avoids telling clients the full map is safezone â€” only the temple is restored.
++            byte minX = 255, minY = 255, maxX = 0, maxY = 0;
++            foreach (var (x, y) in crywolfState.FlippedTiles)
++            {
++                t.SafezoneMap[x, y] = true;
++                t.UpdateAiGridValue(x, y);
++                if (x < minX) minX = x;
++                if (y < minY) minY = y;
++                if (x > maxX) maxX = x;
++                if (y > maxY) maxY = y;
++            }
++            crywolfState.FlippedTiles.Clear();
++
++            // Restore only the sanctuary bounding box on the client side â€” outer areas stay non-safezone.
++            await ctx.ForEachPlayerAsync(p =>
++            {
++                if (!ReferenceEquals(p.CurrentMap, map)) return Task.CompletedTask;
++                return p.InvokeViewPlugInAsync<IChangeTerrainAttributesViewPlugin>(v =>
++                    v.ChangeAttributesAsync(TerrainAttributeType.Safezone, true, [(minX, minY, maxX, maxY)])).AsTask();
++            }).ConfigureAwait(false);
++        }
++
++        crywolfState.CrywolfFailed = !victory;
++        crywolfState.CrywolfMap    = null;
++
++        string defeatReason = !armyOk
++            ? "El ejÃ©rcito invasor no pudo desplegarse."
++            : crywolfState.CrywolfFailed && !crywolfState.WolfStatueAlive
++                ? "Â¡La Wolf Statue fue destruida!"
++                : crywolfState.AltarsAlive <= 0
++                    ? "Todos los Wolf Altars fueron destruidos."
++                    : "Balgass no fue derrotado a tiempo.";
++
++        string globalMsg = victory
++            ? "â˜… [Crywolf] Â¡VICTORIA! La Wolf Statue resistiÃ³. Â¡HÃ©roes de Crywolf recompensados con EXP! â˜…"
++            : $"[Crywolf] DERROTA. {defeatReason} Sin recompensas.";
++
++        await ctx.SendGlobalNotificationAsync(globalMsg).ConfigureAwait(false);
++
++        crywolfState.IsCrywolfRunning = false;
++
++        await base.OnFinishedAsync(state).ConfigureAwait(false);
++    }
++
++    private static async Task AwardParticipantsAsync(CrywolfGameServerState state, IGameContext ctx, bool victory)
++    {
++        var crywolfMap = state.CrywolfMap;
++        var elfBonuses = new HashSet<Player>(state.GetElfContractBonuses());
++
++        // Collect participants and compute SHARED rank from total team kill points.
++        var participants = new List<Player>();
++        int totalPts = 0;
++        await ctx.ForEachPlayerAsync(player =>
++        {
++            if (crywolfMap is not null && !ReferenceEquals(player.CurrentMap, crywolfMap)) return Task.CompletedTask;
++            participants.Add(player);
++            totalPts += state.GetPlayerPoints(player) + (elfBonuses.Contains(player) ? PtElfContract : 0);
++            return Task.CompletedTask;
++        }).ConfigureAwait(false);
++
++        int rankIdx = totalPts switch
++        {
++            <= 1_000  => 0, // D
++            <= 3_000  => 1, // C
++            <= 5_000  => 2, // B
++            <= 10_000 => 3, // A
++            _         => 4  // S
++        };
++        string rank = rankIdx switch { 0 => "D", 1 => "C", 2 => "B", 3 => "A", _ => "S" };
++
++        int exp = victory ? rankIdx switch
++        {
++            0 => 50_000,
++            1 => 250_000,
++            2 => 600_000,
++            3 => 1_000_000,
++            _ => 1_800_000
++        } : 0;
++
++        // Award every participant the same rank.
++        foreach (var player in participants)
++        {
++            var character = player.SelectedCharacter;
++            if (victory && exp > 0 && character is not null)
++                character.Experience += exp;
++
++            await player.ShowBlueMessageAsync(
++                $"[Crywolf] Rank {rank} â€” {totalPts:N0} pts totales"
++                + (exp > 0 ? $" | +{exp:N0} EXP" : string.Empty)).ConfigureAwait(false);
++
++            if (!victory) continue;
++
++            // 10Ã— Caja de Kundun +5
++            await GiveBoxOfKundunAsync(player, ctx, 12).ConfigureAwait(false);
++
++            // 1 item excelente FULL nivel mÃ¡ximo: arma O armadura, aleatorio para la clase
++            await GiveExcellentItemAsync(player, ctx).ConfigureAwait(false);
++        }
++    }
++
++    private static async ValueTask GiveBoxOfKundunAsync(Player player, IGameContext ctx, int level)
++    {
++        // Box of Luck family: Group=14, Number=11. Level 8=BoK+1 â€¦ 12=BoK+5.
++        var bokDef = ctx.Configuration.Items.FirstOrDefault(i => i.Group == 14 && i.Number == 11);
++        if (bokDef is null) return;
++
++        byte itemLevel = (byte)Math.Min(level, bokDef.MaximumItemLevel);
++        for (int i = 0; i < 10; i++)
++        {
++            var item = new TemporaryItem { Definition = bokDef, Level = itemLevel, Durability = 1 };
++            await DeliverItemAsync(player, item).ConfigureAwait(false);
++        }
++    }
++
++    private static async ValueTask GiveExcellentItemAsync(Player player, IGameContext ctx)
++    {
++        var charClass = player.SelectedCharacter?.CharacterClass;
++        if (charClass is null) return;
++
++        // Groups 0-5: weapons. Groups 6-11: armor (helm/armor/pants/gloves/boots/shield).
++        // Excludes ammunition and items without excellent options.
++        var eligible = ctx.Configuration.Items
++            .Where(i => i.Group <= 11
++                        && !i.IsAmmunition
++                        && i.QualifiedCharacters.Contains(charClass)
++                        && i.PossibleItemOptions.Any(o =>
++                               o.PossibleOptions.Any(p => p.OptionType == ItemOptionTypes.Excellent)))
++            .ToList();
++
++        if (eligible.Count == 0) return;
++
++        var itemDef   = eligible[Random.Shared.Next(eligible.Count)];
++        byte itemLevel = (byte)Math.Min(15, (int)itemDef.MaximumItemLevel);
++
++        var item = new TemporaryItem
++        {
++            Definition = itemDef,
++            Level      = itemLevel,
++            HasSkill   = itemDef.Skill is not null,
++            Durability = itemDef.Durability,
++        };
++
++        // All excellent options
++        foreach (var opt in itemDef.PossibleItemOptions
++                     .SelectMany(o => o.PossibleOptions)
++                     .Where(p => p.OptionType == ItemOptionTypes.Excellent))
++            item.ItemOptions.Add(new ItemOptionLink { ItemOption = opt });
++
++        // Luck
++        var luckOpt = itemDef.PossibleItemOptions
++            .SelectMany(o => o.PossibleOptions)
++            .FirstOrDefault(p => p.OptionType == ItemOptionTypes.Luck);
++        if (luckOpt is not null)
++            item.ItemOptions.Add(new ItemOptionLink { ItemOption = luckOpt });
++
++        await DeliverItemAsync(player, item).ConfigureAwait(false);
++        string tipo = itemDef.Group <= 5 ? "arma" : "armadura";
++        await player.ShowBlueMessageAsync($"[Crywolf] Â¡Premio! {tipo} excelente FULL nivel mÃ¡ximo entregada.").ConfigureAwait(false);
++    }
++
++    private static async ValueTask DeliverItemAsync(Player player, Item item)
++    {
++        // CollectionAdapter (EF-backed) requires EntityFramework.Model.Item â€” TemporaryItem must be
++        // converted to a persistent entity before touching the inventory storage.
++        var persistentItem = item is TemporaryItem tmp
++            ? tmp.MakePersistent(player.PersistenceContext)
++            : item;
++
++        if (player.Inventory is not null && await player.Inventory.AddItemAsync(persistentItem).ConfigureAwait(false))
++        {
++            await player.InvokeViewPlugInAsync<IItemAppearPlugIn>(p => p.ItemAppearAsync(persistentItem)).ConfigureAwait(false);
++        }
++        else
++        {
++            var map = player.CurrentMap;
++            if (map is null) return;
++            var pos = map.Terrain.GetRandomCoordinate(player.Position, 2);
++            await map.AddAsync(new DroppedItem(persistentItem, pos, map, player)).ConfigureAwait(false);
++        }
++    }
++}
+diff --git a/GameLogic/PlugIns/InvasionEvents/CrywolfGameServerState.cs b/GameLogic/PlugIns/InvasionEvents/CrywolfGameServerState.cs
+index eeed8f7..2188656 100644
+--- a/GameLogic/PlugIns/InvasionEvents/CrywolfGameServerState.cs
++++ b/GameLogic/PlugIns/InvasionEvents/CrywolfGameServerState.cs
+@@ -111,15 +111,7 @@ public class CrywolfGameServerState : InvasionGameServerState
+         var ctx = this.Context;
+         statue.Died += (_, info) =>
+         {
+-            if (info.KillerId > 0)
+-            {
+-                // Player killed the Wolf Statue — WolfAltarGotHitPlugin should prevent this,
+-                // but a fatal one-shot can slip through. End the event and warn admins.
+-                _ = ctx.SendGlobalNotificationAsync(
+-                    "★ [Crywolf] TRAMPA: Un jugador destruyó la Wolf Statue. DERROTA. ★")
+-                    .AsTask();
+-            }
+-
++            if (info.KillerId > 0) return; // immune to players — only invaders can destroy the Wolf Statue
+             this.CrywolfFailed = true;
+             this.EventCts?.Cancel();
+             _ = ctx.SendGlobalNotificationAsync(
+@@ -144,18 +136,10 @@ public class CrywolfGameServerState : InvasionGameServerState
+ 
+     public void OnAltarDestroyed(int altarIndex, long killerId = 0L)
+     {
++        // Altars are immune to player attacks — only invader monsters can destroy them.
++        if (killerId > 0L) return;
+         this.BreakContract(altarIndex, notifyElf: true);
+         Interlocked.Decrement(ref this._altarsAlive);
+-
+-        if (killerId > 0L)
+-        {
+-            // Player killed the altar — WolfAltarGotHitPlugin should prevent this,
+-            // but a fatal one-shot can slip through. Still count it as a loss.
+-            _ = this.Context.SendGlobalNotificationAsync(
+-                $"[Crywolf] ⚠ TRAMPA: Un jugador destruyó el Wolf Altar {altarIndex + 1}.")
+-                .AsTask();
+-        }
+-
+         if (this._altarsAlive <= 0)
+         {
+             this.CrywolfFailed = true;
+diff --git a/GameLogic/PlugIns/InvasionEvents/CrywolfInvaderIntelligence.cs b/GameLogic/PlugIns/InvasionEvents/CrywolfInvaderIntelligence.cs
+index ff7bd09..af12b5e 100644
+--- a/GameLogic/PlugIns/InvasionEvents/CrywolfInvaderIntelligence.cs
++++ b/GameLogic/PlugIns/InvasionEvents/CrywolfInvaderIntelligence.cs
+@@ -1 +1,266 @@
+-// placeholder
++// <copyright file="CrywolfInvaderIntelligence.cs" company="MUnique">
++// Licensed under the MIT License. See LICENSE file in the project root for full license information.
++// </copyright>
++
++namespace MUnique.OpenMU.GameLogic.NPC;
++
++using MUnique.OpenMU.GameLogic;
++using MUnique.OpenMU.GameLogic.Attributes;
++using MUnique.OpenMU.GameLogic.PlugIns.InvasionEvents;
++using MUnique.OpenMU.Pathfinding;
++
++/// <summary>Which of the three Crywolf entry corridors this invader uses.</summary>
++public enum CrywolfEntry { West, South, East }
++
++/// <summary>
++/// Two-corridor sanctuary layout (verified via Terrain34.att):
++///   LEFT  corridor X=88-118: accessible from West/South entries.
++///             → Left-passage altars at X=102-105, Y=35-38 (Altars 3 and 4).
++///   RIGHT corridor X=140-160: accessible from East entry.
++///             → Main altar zone X=122-133 Y=27-33 via east path (Wolf Statue + Altars 1,2,5).
++///   The two corridors meet ONLY at Y=27 (X=122-150 fully walkable).
++///
++/// ScopedGridNetwork max segment = 16 tiles per axis — every waypoint step must be ≤16 in X AND Y.
++/// Advance threshold = 3 tiles (Manhattan). Worst-case positions per corridor:
++/// West spawns:  X=83-93,  Y=60-76 → advance from WP0 at ~(88,67), next ΔY=15 ✓
++/// South spawns: X=108-128,Y=72-90 → advance from WP0 at ~(121,78), next ΔX=6,ΔY=13 ✓
++/// East spawns:  X=160-173,Y=43-55 → advance from WP0 at ~(164,53), next ΔX=11,ΔY=7 ✓
++/// </summary>
++public class CrywolfMeleeIntelligence : BasicMonsterIntelligence
++{
++    // West: advance threshold=3. Each segment ≤16 per axis from worst-case advance position.
++    private static readonly Point[] WestWaypoints  = [new(88, 64), new(88, 52), new(91, 44), new(103, 37)];
++    // South: advance threshold=3. Each segment ≤16 per axis from worst-case advance position.
++    private static readonly Point[] SouthWaypoints = [new(118, 78), new(115, 65), new(112, 54), new(107, 43), new(103, 37)];
++    // East: existing waypoints already satisfy ≤16 per axis with threshold=3.
++    private static readonly Point[] EastWaypoints  = [new(161, 50), new(153, 46), new(148, 38), new(135, 27)];
++
++    private readonly CrywolfGameServerState _state;
++    private readonly Point[] _waypoints;
++    private int _waypointIndex;
++
++    public CrywolfMeleeIntelligence(CrywolfGameServerState state, CrywolfEntry entry = CrywolfEntry.West)
++    {
++        this._state = state;
++        this._waypoints = entry switch
++        {
++            CrywolfEntry.South => SouthWaypoints,
++            CrywolfEntry.East  => EastWaypoints,
++            _                  => WestWaypoints,
++        };
++        this.CanWalkOnSafezone = true;
++    }
++
++    public override bool CanWalkOn(Point target)
++    {
++        // Allow movement on safezone tiles (AIgrid=129) — outer field is always safezone.
++        return this.Monster.CurrentMap?.Terrain.AIgrid[target.X, target.Y] != 0;
++    }
++
++    protected override async ValueTask<IAttackable?> SearchNextTargetAsync()
++    {
++        // Only target Players from base — prevents attacking guards/NPCs.
++        var baseTarget = await base.SearchNextTargetAsync().ConfigureAwait(false);
++        if (baseTarget is Player) return baseTarget;
++        // Only return altar once inside the sanctuary (waypoints done).
++        if (this._waypointIndex >= this._waypoints.Length)
++            return this._state.GetNearestAltar(this.Monster.Position, 255);
++        return null;
++    }
++
++    protected override async ValueTask TickWithoutTargetAsync()
++    {
++        if (this.Monster.Attributes[Stats.IsFrozen] > 0) return;
++
++        if (this._waypointIndex < this._waypoints.Length)
++        {
++            var target = this._waypoints[this._waypointIndex];
++            var pos    = this.Monster.Position;
++            var dist   = Math.Abs((int)pos.X - (int)target.X) + Math.Abs((int)pos.Y - (int)target.Y);
++            if (dist <= 3) { this._waypointIndex++; return; }
++            if (!await this.Monster.WalkToAsync(target).ConfigureAwait(false))
++            {
++                // Pathfinder failed — step one tile toward waypoint to avoid getting stuck.
++                var dx = Math.Sign((int)target.X - (int)pos.X);
++                var dy = Math.Sign((int)target.Y - (int)pos.Y);
++                var step = new Point((byte)(pos.X + dx), (byte)(pos.Y + dy));
++                if (this.CanWalkOn(step))
++                    await this.Monster.WalkToAsync(step).ConfigureAwait(false);
++                else
++                    await this.Monster.RandomMoveAsync().ConfigureAwait(false);
++            }
++            return;
++        }
++
++        // Inside altar zone — march toward nearest altar; never idle.
++        var nearestAltar = this._state.GetNearestAltar(this.Monster.Position, 255);
++        if (nearestAltar is not null)
++        {
++            if (!await this.Monster.WalkToAsync(nearestAltar.Position).ConfigureAwait(false))
++                await this.Monster.RandomMoveAsync().ConfigureAwait(false);
++            return;
++        }
++
++        await this.Monster.RandomMoveAsync().ConfigureAwait(false);
++    }
++}
++
++/// <summary>
++/// Same two-corridor routing as CrywolfMeleeIntelligence but ALTARS first, players as fallback.
++/// </summary>
++public class CrywolfAltarTargeterIntelligence : BasicMonsterIntelligence
++{
++    private static readonly Point[] WestWaypoints  = [new(88, 64), new(88, 52), new(91, 44), new(103, 37)];
++    private static readonly Point[] SouthWaypoints = [new(118, 78), new(115, 65), new(112, 54), new(107, 43), new(103, 37)];
++    private static readonly Point[] EastWaypoints  = [new(161, 50), new(153, 46), new(148, 38), new(135, 27)];
++
++    private readonly CrywolfGameServerState _state;
++    private readonly Point[] _waypoints;
++    private int _waypointIndex;
++
++    public CrywolfAltarTargeterIntelligence(CrywolfGameServerState state, CrywolfEntry entry = CrywolfEntry.West)
++    {
++        this._state = state;
++        this._waypoints = entry switch
++        {
++            CrywolfEntry.South => SouthWaypoints,
++            CrywolfEntry.East  => EastWaypoints,
++            _                  => WestWaypoints,
++        };
++        this.CanWalkOnSafezone = true;
++    }
++
++    public override bool CanWalkOn(Point target)
++    {
++        // Allow movement on safezone tiles (AIgrid=129) — outer field is always safezone.
++        return this.Monster.CurrentMap?.Terrain.AIgrid[target.X, target.Y] != 0;
++    }
++
++    protected override async ValueTask<IAttackable?> SearchNextTargetAsync()
++    {
++        // Altars first once inside the sanctuary (waypoints done).
++        if (this._waypointIndex >= this._waypoints.Length)
++        {
++            var altar = this._state.GetNearestAltar(this.Monster.Position, 255);
++            if (altar is not null) return altar;
++        }
++        // Only target Players — prevents attacking guards/NPCs.
++        var baseTarget = await base.SearchNextTargetAsync().ConfigureAwait(false);
++        return baseTarget is Player ? baseTarget : null;
++    }
++
++    protected override async ValueTask TickWithoutTargetAsync()
++    {
++        if (this.Monster.Attributes[Stats.IsFrozen] > 0) return;
++
++        if (this._waypointIndex < this._waypoints.Length)
++        {
++            var target = this._waypoints[this._waypointIndex];
++            var pos    = this.Monster.Position;
++            var dist   = Math.Abs((int)pos.X - (int)target.X) + Math.Abs((int)pos.Y - (int)target.Y);
++            if (dist <= 3) { this._waypointIndex++; return; }
++            if (!await this.Monster.WalkToAsync(target).ConfigureAwait(false))
++            {
++                var dx = Math.Sign((int)target.X - (int)pos.X);
++                var dy = Math.Sign((int)target.Y - (int)pos.Y);
++                var step = new Point((byte)(pos.X + dx), (byte)(pos.Y + dy));
++                if (this.CanWalkOn(step))
++                    await this.Monster.WalkToAsync(step).ConfigureAwait(false);
++                else
++                    await this.Monster.RandomMoveAsync().ConfigureAwait(false);
++            }
++            return;
++        }
++
++        // Altar zone — always chase nearest living altar with unlimited range.
++        var nearestAltar = this._state.GetNearestAltar(this.Monster.Position, 255);
++        if (nearestAltar is not null)
++        {
++            if (!await this.Monster.WalkToAsync(nearestAltar.Position).ConfigureAwait(false))
++                await this.Monster.RandomMoveAsync().ConfigureAwait(false);
++            return;
++        }
++
++        await this.Monster.RandomMoveAsync().ConfigureAwait(false);
++    }
++}
++
++/// <summary>
++/// Balgass boss. Spawns at (118,68) south of the temple and marches through waypoints
++/// into the sanctuary to attack the Wolf Statue, then altars, then players.
++/// </summary>
++public class CrywolfBossIntelligence : BasicMonsterIntelligence
++{
++    // Two waypoints guide Balgass from spawn (118,68) into the temple (Wolf Statue ~121,31).
++    // Each segment ≤16 tiles per axis (ScopedGridNetwork limit).
++    private static readonly Point[] BossWaypoints = [new(118, 55), new(120, 40)];
++
++    private readonly CrywolfGameServerState _state;
++    private int _waypointIndex;
++
++    public CrywolfBossIntelligence(CrywolfGameServerState state)
++    {
++        this._state = state;
++        this.CanWalkOnSafezone = true;
++    }
++
++    public override bool CanWalkOn(Point target)
++        => this.Monster.CurrentMap?.Terrain.AIgrid[target.X, target.Y] != 0;
++
++    protected override async ValueTask<IAttackable?> SearchNextTargetAsync()
++    {
++        // While still navigating, only engage Players — no NPCs.
++        if (this._waypointIndex < BossWaypoints.Length)
++        {
++            var t = await base.SearchNextTargetAsync().ConfigureAwait(false);
++            return t is Player ? t : null;
++        }
++
++        // Inside the temple — Wolf Statue first, then altars, then Players only.
++        var statue = this._state.WolfStatue;
++        if (statue is not null && statue.IsAlive) return statue;
++        var altar = this._state.GetNearestAltar(this.Monster.Position, this.Monster.Definition.ViewRange);
++        if (altar is not null) return altar;
++        var baseTarget = await base.SearchNextTargetAsync().ConfigureAwait(false);
++        return baseTarget is Player ? baseTarget : null;
++    }
++
++    protected override async ValueTask TickWithoutTargetAsync()
++    {
++        if (this._waypointIndex < BossWaypoints.Length)
++        {
++            var target = BossWaypoints[this._waypointIndex];
++            var pos    = this.Monster.Position;
++            var dist   = Math.Abs((int)pos.X - (int)target.X) + Math.Abs((int)pos.Y - (int)target.Y);
++            if (dist <= 3) { this._waypointIndex++; return; }
++            if (!await this.Monster.WalkToAsync(target).ConfigureAwait(false))
++            {
++                var dx   = Math.Sign((int)target.X - (int)pos.X);
++                var dy   = Math.Sign((int)target.Y - (int)pos.Y);
++                var step = new Point((byte)(pos.X + dx), (byte)(pos.Y + dy));
++                if (this.CanWalkOn(step))
++                    await this.Monster.WalkToAsync(step).ConfigureAwait(false);
++                else
++                    await this.Monster.RandomMoveAsync().ConfigureAwait(false);
++            }
++            return;
++        }
++
++        // Inside the temple — march toward Wolf Statue or altars.
++        var statue2 = this._state.WolfStatue;
++        if (statue2 is not null && statue2.IsAlive)
++        {
++            if (!await this.Monster.WalkToAsync(statue2.Position).ConfigureAwait(false))
++                await this.Monster.RandomMoveAsync().ConfigureAwait(false);
++            return;
++        }
++        var nearestAltar = this._state.GetNearestAltar(this.Monster.Position, 255);
++        if (nearestAltar is not null)
++        {
++            if (!await this.Monster.WalkToAsync(nearestAltar.Position).ConfigureAwait(false))
++                await this.Monster.RandomMoveAsync().ConfigureAwait(false);
++            return;
++        }
++        await this.Monster.RandomMoveAsync().ConfigureAwait(false);
++    }
++}
+diff --git a/GameLogic/PlugIns/InvasionEvents/CrywolfPeriodicConfiguration.cs b/GameLogic/PlugIns/InvasionEvents/CrywolfPeriodicConfiguration.cs
+deleted file mode 100644
+index be04195..0000000
+--- a/GameLogic/PlugIns/InvasionEvents/CrywolfPeriodicConfiguration.cs
++++ /dev/null
+@@ -1,26 +0,0 @@
+-// <copyright file="CrywolfPeriodicConfiguration.cs" company="MUnique">
+-// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+-// </copyright>
+-
+-namespace MUnique.OpenMU.GameLogic.PlugIns.InvasionEvents;
+-
+-/// <summary>
+-/// Crywolf-specific periodic configuration that restricts the timetable to a single UTC day of week.
+-/// Saturday 23:00 Chile (UTC-3) = Sunday 02:00 UTC — set UtcDayOfWeek = Sunday, Timetable = [02:00].
+-/// </summary>
+-public class CrywolfPeriodicConfiguration : PeriodicInvasionConfiguration
+-{
+-    /// <summary>
+-    /// Gets or sets the UTC day of week on which this event may start.
+-    /// Default: Sunday (= Saturday 23:xx Chile, UTC-3).
+-    /// </summary>
+-    public DayOfWeek UtcDayOfWeek { get; set; } = DayOfWeek.Sunday;
+-
+-    /// <inheritdoc />
+-    public override bool IsItTimeToStart(TimeZoneInfo serverTimeZone)
+-    {
+-        if (DateTime.UtcNow.DayOfWeek != this.UtcDayOfWeek)
+-            return false;
+-        return base.IsItTimeToStart(TimeZoneInfo.Utc);
+-    }
+-}
+diff --git a/GameLogic/PlugIns/InvasionEvents/InvasionConfigurationDefaults.cs b/GameLogic/PlugIns/InvasionEvents/InvasionConfigurationDefaults.cs
+index 1bb83c3..a22d5d9 100644
+--- a/GameLogic/PlugIns/InvasionEvents/InvasionConfigurationDefaults.cs
++++ b/GameLogic/PlugIns/InvasionEvents/InvasionConfigurationDefaults.cs
+@@ -88,19 +88,20 @@ internal static class InvasionConfigurationDefaults
+     };
+ 
+     /// <summary>
+-    /// Gets the default configuration for the full Crywolf Fortress defense event.
++    /// Gets the default configuration for the Crywolf event.
+     /// </summary>
+     public static PeriodicInvasionConfiguration Crywolf => new()
+     {
+-        TaskDuration = TimeSpan.FromMinutes(40),
++        TaskDuration = TimeSpan.FromMinutes(30),
+         PreStartMessageDelay = TimeSpan.FromSeconds(3),
+-        StartMessage = "[Crywolf] Balgass forces attack! Defend the Wolf Altars!",
+-        EndMessage = "[Crywolf] The Crywolf event has ended.",
+-        Timetable = PeriodicTaskConfiguration.GenerateTimeSequence(TimeSpan.FromHours(4)).ToList(),
++        StartMessage = "[Crywolf] Balgass forces invade! Defend the Wolf Altars!",
++        EndMessage = "[Crywolf] Balgass invasion has ended.",
++        // Scheduled in CrywolfEventPlugIn.IsItTimeToStart: Saturday 23:00 America/Santiago.
++        Timetable = [],
+         Mobs =
+         [
+-            new(InvasionMonsters.Balram, 10, [InvasionMaps.CrywolfFortress], SpawnMapStrategy.AllMaps),
+-            new(InvasionMonsters.Soram,  10, [InvasionMaps.CrywolfFortress], SpawnMapStrategy.AllMaps),
++            new(316, 10, [InvasionMaps.CrywolfFortress], SpawnMapStrategy.AllMaps),
++            new(317, 10, [InvasionMaps.CrywolfFortress], SpawnMapStrategy.AllMaps),
+         ],
+     };
+ 
+diff --git a/GameLogic/PlugIns/InvasionEvents/WolfAltarNpcPlugin.cs b/GameLogic/PlugIns/InvasionEvents/WolfAltarNpcPlugin.cs
+index 903ce88..a1a1868 100644
+--- a/GameLogic/PlugIns/InvasionEvents/WolfAltarNpcPlugin.cs
++++ b/GameLogic/PlugIns/InvasionEvents/WolfAltarNpcPlugin.cs
+@@ -10,10 +10,11 @@ using MUnique.OpenMU.GameLogic.PlugIns;
+ using MUnique.OpenMU.PlugIns;
+ 
+ /// <summary>
+-/// Intercepts Elf attacks on Wolf Altars (#205-#209) during Crywolf.
+-/// Non-Elf player attacks and Wolf Statue attacks are blocked upstream by AttackBlocker
+-/// (set in CrywolfEventPlugIn) before reaching this plugin.
+-/// Elf attacks restore dealt damage (altars never lose HP) and create activation contracts.
++/// Intercepts player attacks on Wolf Altars (#205-#209) during Crywolf.
++///
++/// Build P fixes:
++///   1. Elf attacks restore dealt damage — Elves never reduce altar HP.
++///   2. Wolf Statue current HP shown to Elf on successful contract.
+ /// </summary>
+ [Guid("F1E2D3C4-B5A6-9708-8160-504030201000")]
+ [PlugIn]
+@@ -23,7 +24,7 @@ public class WolfAltarGotHitPlugin : IAttackableGotHitPlugIn
+ {
+     private const int AltarNumberBase = 205;
+     private const int AltarNumberMax  = 209;
+-    private const int AltarMaxHealth  = 1_000_000;
++    private const int AltarMaxHealth  = 500_000;
+ 
+     private static readonly HashSet<int> ElfClasses = [8, 10, 11];
+ 
+@@ -41,8 +42,8 @@ public class WolfAltarGotHitPlugin : IAttackableGotHitPlugIn
+         if (!ElfClasses.Contains(classNum)) return;
+ 
+         // Restore HP — Elves activate contracts, they don't damage altars.
+-        // Check Health > 0 first: if the hit was fatal (TryHit already set killed=true)
+-        // we skip restoration; OnAltarDestroyed handles the edge case.
++        // Check Health > 0 first: if the hit was fatal (TryHit already set Health=0, IsAlive=false)
++        // we must NOT restore HP or the altar becomes unkillable.
+         var dmg = (int)hitInfo.HealthDamage;
+         if (dmg > 0 && altar.Health > 0)
+             altar.Health = Math.Min(AltarMaxHealth, altar.Health + dmg);
+diff --git a/GameServer/MessageHandler/CrywolfChaosRateBenefitHandlerPlugIn.cs b/GameServer/MessageHandler/CrywolfChaosRateBenefitHandlerPlugIn.cs
+deleted file mode 100644
+index ee04d82..0000000
+--- a/GameServer/MessageHandler/CrywolfChaosRateBenefitHandlerPlugIn.cs
++++ /dev/null
+@@ -1,54 +0,0 @@
+-// <copyright file="CrywolfChaosRateBenefitHandlerPlugIn.cs" company="MUnique">
+-// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+-// </copyright>
+-
+-namespace MUnique.OpenMU.GameServer.MessageHandler;
+-
+-using System.Runtime.InteropServices;
+-using MUnique.OpenMU.GameLogic;
+-using MUnique.OpenMU.GameLogic.PlugIns.InvasionEvents;
+-using MUnique.OpenMU.Network.Packets.ClientToServer;
+-using MUnique.OpenMU.Network.PlugIns;
+-using MUnique.OpenMU.PlugIns;
+-
+-/// <summary>
+-/// Handler for CrywolfChaosRateBenefitRequest (0xBD/0x09).
+-/// </summary>
+-[PlugIn]
+-[Display(Name = "CrywolfChaosRateBenefitHandler", Description = "Handles CrywolfChaosRateBenefitRequest (0xBD/0x09).")]
+-[Guid("A7B8C9D0-E1F2-4356-AB89-C0D1EF230007")]
+-[MinimumClient(3, 0, ClientLanguage.Invariant)]
+-[BelongsToGroup(CrywolfGroupHandlerPlugIn.GroupKey)]
+-internal class CrywolfChaosRateBenefitHandlerPlugIn : ISubPacketHandlerPlugIn
+-{
+-    /// <inheritdoc/>
+-    public bool IsEncryptionExpected => true;
+-
+-    /// <inheritdoc/>
+-    public byte Key => CrywolfChaosRateBenefitRequest.SubCode;
+-
+-    /// <inheritdoc/>
+-    public async ValueTask HandlePacketAsync(Player player, Memory<byte> packet)
+-    {
+-        var crywolf = player.GameContext.PlugInManager
+-            .GetActivePlugInsOf<CrywolfEventPlugIn>()
+-            .FirstOrDefault();
+-
+-        if (crywolf is null)
+-        {
+-            return;
+-        }
+-
+-        var state = crywolf.GetPublicState(player.GameContext);
+-        if (state is { CrywolfFailed: true })
+-        {
+-            await player.ShowLocalizedBlueMessageAsync(
+-                "[Crywolf] Chaos combination rate is reduced by 30% (Crywolf failure).").ConfigureAwait(false);
+-        }
+-        else
+-        {
+-            await player.ShowLocalizedBlueMessageAsync(
+-                "[Crywolf] Chaos combination rate is normal.").ConfigureAwait(false);
+-        }
+-    }
+-}
+diff --git a/GameServer/MessageHandler/CrywolfGroupHandlerPlugIn.cs b/GameServer/MessageHandler/CrywolfGroupHandlerPlugIn.cs
+deleted file mode 100644
+index b78cc9c..0000000
+--- a/GameServer/MessageHandler/CrywolfGroupHandlerPlugIn.cs
++++ /dev/null
+@@ -1,38 +0,0 @@
+-// <copyright file="CrywolfGroupHandlerPlugIn.cs" company="MUnique">
+-// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+-// </copyright>
+-
+-namespace MUnique.OpenMU.GameServer.MessageHandler;
+-
+-using System.Runtime.InteropServices;
+-using Microsoft.Extensions.Logging;
+-using MUnique.OpenMU.PlugIns;
+-
+-/// <summary>
+-/// Packet handler for Crywolf packets (0xBD identifier).
+-/// </summary>
+-[PlugIn]
+-[Display(Name = "CrywolfGroupHandler", Description = "Handles 0xBD Crywolf packets.")]
+-[Guid("E5F6A7B8-C9D0-4134-EF67-A8B9CD010005")]
+-internal class CrywolfGroupHandlerPlugIn : GroupPacketHandlerPlugIn
+-{
+-    /// <summary>The group packet code for Crywolf.</summary>
+-    internal const byte GroupKey = 0xBD;
+-
+-    /// <summary>
+-    /// Initializes a new instance of the <see cref="CrywolfGroupHandlerPlugIn"/> class.
+-    /// </summary>
+-    /// <param name="clientVersionProvider">The client version provider.</param>
+-    /// <param name="manager">The manager.</param>
+-    /// <param name="loggerFactory">The logger factory.</param>
+-    public CrywolfGroupHandlerPlugIn(IClientVersionProvider clientVersionProvider, PlugInManager manager, ILoggerFactory loggerFactory)
+-        : base(clientVersionProvider, manager, loggerFactory)
+-    {
+-    }
+-
+-    /// <inheritdoc/>
+-    public override byte Key => GroupKey;
+-
+-    /// <inheritdoc/>
+-    public override bool IsEncryptionExpected => true;
+-}
+diff --git a/GameServer/MessageHandler/CrywolfInfoHandlerPlugIn.cs b/GameServer/MessageHandler/CrywolfInfoHandlerPlugIn.cs
+deleted file mode 100644
+index 8089a32..0000000
+--- a/GameServer/MessageHandler/CrywolfInfoHandlerPlugIn.cs
++++ /dev/null
+@@ -1,63 +0,0 @@
+-// <copyright file="CrywolfInfoHandlerPlugIn.cs" company="MUnique">
+-// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+-// </copyright>
+-
+-namespace MUnique.OpenMU.GameServer.MessageHandler;
+-
+-using System.Runtime.InteropServices;
+-using MUnique.OpenMU.GameLogic;
+-using MUnique.OpenMU.GameLogic.PlugIns.InvasionEvents;
+-using MUnique.OpenMU.Network.Packets.ClientToServer;
+-using MUnique.OpenMU.Network.PlugIns;
+-using MUnique.OpenMU.PlugIns;
+-
+-/// <summary>
+-/// Handler for CrywolfInfoRequest (0xBD/0x00).
+-/// Sent by the client when entering the Crywolf map.
+-/// </summary>
+-[PlugIn]
+-[Display(Name = "CrywolfInfoHandler", Description = "Handles CrywolfInfoRequest (0xBD/0x00).")]
+-[Guid("F6A7B8C9-D0E1-4245-FA78-B9C0DE120006")]
+-[MinimumClient(3, 0, ClientLanguage.Invariant)]
+-[BelongsToGroup(CrywolfGroupHandlerPlugIn.GroupKey)]
+-internal class CrywolfInfoHandlerPlugIn : ISubPacketHandlerPlugIn
+-{
+-    /// <inheritdoc/>
+-    public bool IsEncryptionExpected => true;
+-
+-    /// <inheritdoc/>
+-    public byte Key => CrywolfInfoRequest.SubCode;
+-
+-    /// <inheritdoc/>
+-    public async ValueTask HandlePacketAsync(Player player, Memory<byte> packet)
+-    {
+-        var crywolf = player.GameContext.PlugInManager
+-            .GetActivePlugInsOf<CrywolfEventPlugIn>()
+-            .FirstOrDefault();
+-
+-        if (crywolf is null)
+-        {
+-            return;
+-        }
+-
+-        var state = crywolf.GetPublicState(player.GameContext);
+-        if (state is { } crywolfState)
+-        {
+-            string msg;
+-            if (crywolfState.AltarsAlive > 0)
+-            {
+-                msg = $"[Crywolf] Event active. Wolf Altars remaining: {crywolfState.AltarsAlive}";
+-            }
+-            else if (crywolfState.CrywolfFailed)
+-            {
+-                msg = "[Crywolf] Crywolf has fallen. Chaos rate is reduced by 30%.";
+-            }
+-            else
+-            {
+-                msg = "[Crywolf] No event currently running.";
+-            }
+-
+-            await player.ShowLocalizedBlueMessageAsync(msg).ConfigureAwait(false);
+-        }
+-    }
+-}
+diff --git a/Network/PacketTwister/PacketTwistRunner.cs b/Network/PacketTwister/PacketTwistRunner.cs
+index 078eb96..19e47be 100644
+--- a/Network/PacketTwister/PacketTwistRunner.cs
++++ b/Network/PacketTwister/PacketTwistRunner.cs
+@@ -59,7 +59,6 @@ public class PacketTwistRunner : ISpanDecryptor, ISpanEncryptor
+         this._twisters.Add(0xB2, new PacketTwister41());
+         this._twisters.Add(0xB3, new PacketTwister42());
+         this._twisters.Add(0xB7, new PacketTwisterOfCastleSiegeWeapon());
+-        this._twisters.Add(0xBD, new PacketTwisterOfCrywolf());
+         this._twisters.Add(0xE2, new PacketTwisterOfGuildAssign());
+         this._twisters.Add(0xE5, new PacketTwisterOfAllianceJoinRequest());
+         this._twisters.Add(0x71, new PacketTwister47());
+diff --git a/Network/PacketTwister/PacketTwisterOfCrywolf.cs b/Network/PacketTwister/PacketTwisterOfCrywolf.cs
+deleted file mode 100644
+index d54707e..0000000
+--- a/Network/PacketTwister/PacketTwisterOfCrywolf.cs
++++ /dev/null
+@@ -1,671 +0,0 @@
+-// <copyright file="PacketTwisterOfCrywolf.cs" company="MUnique">
+-// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+-// </copyright>
+-
+-namespace MUnique.OpenMU.Network.PacketTwister;
+-
+-/// <summary>
+-/// PacketTwister implementation for packets of 'Crywolf' type.
+-/// </summary>
+-internal class PacketTwisterOfCrywolf : IPacketTwister
+-{
+-    /// <inheritdoc/>
+-    public void Twist(Span<byte> data)
+-    {
+-        if (data.Length >= 4)
+-        {
+-            if (data.Length >= 8)
+-            {
+-                if (data.Length >= 16)
+-                {
+-                    if (data.Length >= 32)
+-                    {
+-                        data[24] ^= 0x16;
+-                        data[27] ^= 0x19;
+-                        var v16 = (byte)(data[11] >> 4);
+-                        data[11] *= 16;
+-                        data[11] |= v16;
+-                        data[24] ^= 0x4F;
+-                        var v17 = (byte)(data[0] >> 2);
+-                        data[0] <<= 6;
+-                        data[0] |= v17;
+-                        var v21 = (byte)((data[25] >> 4) & 1);
+-                        if (((data[25] >> 5) & 1) != 0)
+-                        {
+-                            data[25] |= 0x10;
+-                        }
+-                        else
+-                        {
+-                            data[25] &= 0xEF;
+-                        }
+-
+-                        if (v21 != 0)
+-                        {
+-                            data[25] |= 0x20;
+-                        }
+-                        else
+-                        {
+-                            data[25] &= 0xDF;
+-                        }
+-
+-                        var v20 = (byte)((data[30] >> 1) & 1);
+-                        if (((data[30] >> 4) & 1) != 0)
+-                        {
+-                            data[30] |= 2;
+-                        }
+-                        else
+-                        {
+-                            data[30] &= 0xFD;
+-                        }
+-
+-                        if (v20 != 0)
+-                        {
+-                            data[30] |= 0x10;
+-                        }
+-                        else
+-                        {
+-                            data[30] &= 0xEF;
+-                        }
+-
+-                        data[3] ^= 0x5C;
+-                        var v19 = (byte)((data[22] >> 2) & 1);
+-                        if (((data[22] >> 5) & 1) != 0)
+-                        {
+-                            data[22] |= 4;
+-                        }
+-                        else
+-                        {
+-                            data[22] &= 0xFB;
+-                        }
+-
+-                        if (v19 != 0)
+-                        {
+-                            data[22] |= 0x20;
+-                        }
+-                        else
+-                        {
+-                            data[22] &= 0xDF;
+-                        }
+-
+-                        var v18 = (byte)((data[23] >> 7) & 1);
+-                        if (((data[23] >> 6) & 1) != 0)
+-                        {
+-                            data[23] |= 0x80;
+-                        }
+-                        else
+-                        {
+-                            data[23] &= 0x7F;
+-                        }
+-
+-                        if (v18 != 0)
+-                        {
+-                            data[23] |= 0x40;
+-                        }
+-                        else
+-                        {
+-                            data[23] &= 0xBF;
+-                        }
+-
+-                        data[13] ^= 0x8C;
+-                    }
+-                    else
+-                    {
+-                        var v9 = data[7];
+-                        data[7] = data[13];
+-                        data[13] = v9;
+-                        var v10 = (byte)(data[14] >> 6);
+-                        data[14] *= 4;
+-                        data[14] |= v10;
+-                        var v11 = data[4];
+-                        data[4] = data[9];
+-                        data[9] = v11;
+-                        data[0] ^= 0x9B;
+-                        data[11] ^= 0xCA;
+-                        data[6] ^= 0x8F;
+-                        var v12 = (byte)(data[2] >> 7);
+-                        data[2] *= 2;
+-                        data[2] |= v12;
+-                        var v13 = data[11];
+-                        data[11] = data[6];
+-                        data[6] = v13;
+-                        var v14 = (byte)(data[13] >> 4);
+-                        data[13] *= 16;
+-                        data[13] |= v14;
+-                        var v15 = (byte)(data[11] >> 5);
+-                        data[11] *= 8;
+-                        data[11] |= v15;
+-                    }
+-                }
+-                else
+-                {
+-                    var v6 = (byte)(data[7] >> 4);
+-                    data[7] *= 16;
+-                    data[7] |= v6;
+-                    data[1] ^= 0x9D;
+-                    var v26 = (byte)((data[0] >> 6) & 1);
+-                    if (((data[0] >> 1) & 1) != 0)
+-                    {
+-                        data[0] |= 0x40;
+-                    }
+-                    else
+-                    {
+-                        data[0] &= 0xBF;
+-                    }
+-
+-                    if (v26 != 0)
+-                    {
+-                        data[0] |= 2;
+-                    }
+-                    else
+-                    {
+-                        data[0] &= 0xFD;
+-                    }
+-
+-                    var v25 = (byte)((data[1] >> 7) & 1);
+-                    if (((data[1] >> 4) & 1) != 0)
+-                    {
+-                        data[1] |= 0x80;
+-                    }
+-                    else
+-                    {
+-                        data[1] &= 0x7F;
+-                    }
+-
+-                    if (v25 != 0)
+-                    {
+-                        data[1] |= 0x10;
+-                    }
+-                    else
+-                    {
+-                        data[1] &= 0xEF;
+-                    }
+-
+-                    var v24 = (byte)((data[1] >> 6) & 1);
+-                    if (((data[1] >> 2) & 1) != 0)
+-                    {
+-                        data[1] |= 0x40;
+-                    }
+-                    else
+-                    {
+-                        data[1] &= 0xBF;
+-                    }
+-
+-                    if (v24 != 0)
+-                    {
+-                        data[1] |= 4;
+-                    }
+-                    else
+-                    {
+-                        data[1] &= 0xFB;
+-                    }
+-
+-                    var v23 = (byte)((data[5] >> 4) & 1);
+-                    if (((data[5] >> 4) & 1) != 0)
+-                    {
+-                        data[5] |= 0x10;
+-                    }
+-                    else
+-                    {
+-                        data[5] &= 0xEF;
+-                    }
+-
+-                    if (v23 != 0)
+-                    {
+-                        data[5] |= 0x10;
+-                    }
+-                    else
+-                    {
+-                        data[5] &= 0xEF;
+-                    }
+-
+-                    var v7 = (byte)(data[2] >> 4);
+-                    data[2] *= 16;
+-                    data[2] |= v7;
+-                    data[7] ^= 0xD;
+-                    var v8 = (byte)(data[2] >> 5);
+-                    data[2] *= 8;
+-                    data[2] |= v8;
+-                    var v22 = (byte)((data[5] >> 3) & 1);
+-                    if (((data[5] >> 1) & 1) != 0)
+-                    {
+-                        data[5] |= 8;
+-                    }
+-                    else
+-                    {
+-                        data[5] &= 0xF7;
+-                    }
+-
+-                    if (v22 != 0)
+-                    {
+-                        data[5] |= 2;
+-                    }
+-                    else
+-                    {
+-                        data[5] &= 0xFD;
+-                    }
+-                }
+-            }
+-            else
+-            {
+-                var v3 = (byte)(data[0] >> 6);
+-                data[0] *= 4;
+-                data[0] |= v3;
+-                data[0] ^= 0xC5;
+-                data[3] ^= 0xFA;
+-                var v2 = (byte)((data[2] >> 7) & 1);
+-                if (((data[2] >> 5) & 1) != 0)
+-                {
+-                    data[2] |= 0x80;
+-                }
+-                else
+-                {
+-                    data[2] &= 0x7F;
+-                }
+-
+-                if (v2 != 0)
+-                {
+-                    data[2] |= 0x20;
+-                }
+-                else
+-                {
+-                    data[2] &= 0xDF;
+-                }
+-
+-                var v4 = (byte)(data[2] >> 6);
+-                data[2] *= 4;
+-                data[2] |= v4;
+-                var v29 = (byte)((data[2] >> 2) & 1);
+-                if (((data[2] >> 4) & 1) != 0)
+-                {
+-                    data[2] |= 4;
+-                }
+-                else
+-                {
+-                    data[2] &= 0xFB;
+-                }
+-
+-                if (v29 != 0)
+-                {
+-                    data[2] |= 0x10;
+-                }
+-                else
+-                {
+-                    data[2] &= 0xEF;
+-                }
+-
+-                data[3] ^= 0xF7;
+-                var v5 = (byte)(data[1] >> 3);
+-                data[1] *= 32;
+-                data[1] |= v5;
+-                var v28 = (byte)((data[0] >> 3) & 1);
+-                if (((data[0] >> 3) & 1) != 0)
+-                {
+-                    data[0] |= 8;
+-                }
+-                else
+-                {
+-                    data[0] &= 0xF7;
+-                }
+-
+-                if (v28 != 0)
+-                {
+-                    data[0] |= 8;
+-                }
+-                else
+-                {
+-                    data[0] &= 0xF7;
+-                }
+-
+-                var v27 = (byte)((data[3] >> 3) & 1);
+-                if (((data[3] >> 3) & 1) != 0)
+-                {
+-                    data[3] |= 8;
+-                }
+-                else
+-                {
+-                    data[3] &= 0xF7;
+-                }
+-
+-                if (v27 != 0)
+-                {
+-                    data[3] |= 8;
+-                }
+-                else
+-                {
+-                    data[3] &= 0xF7;
+-                }
+-            }
+-        }
+-    }
+-
+-    /// <inheritdoc/>
+-    public void Correct(Span<byte> data)
+-    {
+-        if (data.Length >= 4)
+-        {
+-            if (data.Length >= 8)
+-            {
+-                if (data.Length >= 16)
+-                {
+-                    if (data.Length >= 32)
+-                    {
+-                        data[13] ^= 0x8C;
+-                        var v21 = (byte)((data[23] >> 7) & 1);
+-                        if (((data[23] >> 6) & 1) != 0)
+-                        {
+-                            data[23] |= 0x80;
+-                        }
+-                        else
+-                        {
+-                            data[23] &= 0x7F;
+-                        }
+-
+-                        if (v21 != 0)
+-                        {
+-                            data[23] |= 0x40;
+-                        }
+-                        else
+-                        {
+-                            data[23] &= 0xBF;
+-                        }
+-
+-                        var v20 = (byte)((data[22] >> 2) & 1);
+-                        if (((data[22] >> 5) & 1) != 0)
+-                        {
+-                            data[22] |= 4;
+-                        }
+-                        else
+-                        {
+-                            data[22] &= 0xFB;
+-                        }
+-
+-                        if (v20 != 0)
+-                        {
+-                            data[22] |= 0x20;
+-                        }
+-                        else
+-                        {
+-                            data[22] &= 0xDF;
+-                        }
+-
+-                        data[3] ^= 0x5C;
+-                        var v19 = (byte)((data[30] >> 1) & 1);
+-                        if (((data[30] >> 4) & 1) != 0)
+-                        {
+-                            data[30] |= 2;
+-                        }
+-                        else
+-                        {
+-                            data[30] &= 0xFD;
+-                        }
+-
+-                        if (v19 != 0)
+-                        {
+-                            data[30] |= 0x10;
+-                        }
+-                        else
+-                        {
+-                            data[30] &= 0xEF;
+-                        }
+-
+-                        var v18 = (byte)((data[25] >> 4) & 1);
+-                        if (((data[25] >> 5) & 1) != 0)
+-                        {
+-                            data[25] |= 0x10;
+-                        }
+-                        else
+-                        {
+-                            data[25] &= 0xEF;
+-                        }
+-
+-                        if (v18 != 0)
+-                        {
+-                            data[25] |= 0x20;
+-                        }
+-                        else
+-                        {
+-                            data[25] &= 0xDF;
+-                        }
+-
+-                        var v16 = (byte)(data[0] >> 6);
+-                        data[0] *= 4;
+-                        data[0] |= v16;
+-                        data[24] ^= 0x4F;
+-                        var v17 = (byte)(data[11] >> 4);
+-                        data[11] *= 16;
+-                        data[11] |= v17;
+-                        data[27] ^= 0x19;
+-                        data[24] ^= 0x16;
+-                    }
+-                    else
+-                    {
+-                        var v9 = (byte)(data[11] >> 3);
+-                        data[11] *= 32;
+-                        data[11] |= v9;
+-                        var v10 = (byte)(data[13] >> 4);
+-                        data[13] *= 16;
+-                        data[13] |= v10;
+-                        var v11 = data[11];
+-                        data[11] = data[6];
+-                        data[6] = v11;
+-                        var v12 = (byte)(data[2] >> 1);
+-                        data[2] <<= 7;
+-                        data[2] |= v12;
+-                        data[6] ^= 0x8F;
+-                        data[11] ^= 0xCA;
+-                        data[0] ^= 0x9B;
+-                        var v13 = data[4];
+-                        data[4] = data[9];
+-                        data[9] = v13;
+-                        var v14 = (byte)(data[14] >> 2);
+-                        data[14] <<= 6;
+-                        data[14] |= v14;
+-                        var v15 = data[7];
+-                        data[7] = data[13];
+-                        data[13] = v15;
+-                    }
+-                }
+-                else
+-                {
+-                    var v26 = (byte)((data[5] >> 3) & 1);
+-                    if (((data[5] >> 1) & 1) != 0)
+-                    {
+-                        data[5] |= 8;
+-                    }
+-                    else
+-                    {
+-                        data[5] &= 0xF7;
+-                    }
+-
+-                    if (v26 != 0)
+-                    {
+-                        data[5] |= 2;
+-                    }
+-                    else
+-                    {
+-                        data[5] &= 0xFD;
+-                    }
+-
+-                    var v6 = (byte)(data[2] >> 3);
+-                    data[2] *= 32;
+-                    data[2] |= v6;
+-                    data[7] ^= 0xD;
+-                    var v7 = (byte)(data[2] >> 4);
+-                    data[2] *= 16;
+-                    data[2] |= v7;
+-                    var v25 = (byte)((data[5] >> 4) & 1);
+-                    if (((data[5] >> 4) & 1) != 0)
+-                    {
+-                        data[5] |= 0x10;
+-                    }
+-                    else
+-                    {
+-                        data[5] &= 0xEF;
+-                    }
+-
+-                    if (v25 != 0)
+-                    {
+-                        data[5] |= 0x10;
+-                    }
+-                    else
+-                    {
+-                        data[5] &= 0xEF;
+-                    }
+-
+-                    var v24 = (byte)((data[1] >> 6) & 1);
+-                    if (((data[1] >> 2) & 1) != 0)
+-                    {
+-                        data[1] |= 0x40;
+-                    }
+-                    else
+-                    {
+-                        data[1] &= 0xBF;
+-                    }
+-
+-                    if (v24 != 0)
+-                    {
+-                        data[1] |= 4;
+-                    }
+-                    else
+-                    {
+-                        data[1] &= 0xFB;
+-                    }
+-
+-                    var v23 = (byte)((data[1] >> 7) & 1);
+-                    if (((data[1] >> 4) & 1) != 0)
+-                    {
+-                        data[1] |= 0x80;
+-                    }
+-                    else
+-                    {
+-                        data[1] &= 0x7F;
+-                    }
+-
+-                    if (v23 != 0)
+-                    {
+-                        data[1] |= 0x10;
+-                    }
+-                    else
+-                    {
+-                        data[1] &= 0xEF;
+-                    }
+-
+-                    var v22 = (byte)((data[0] >> 6) & 1);
+-                    if (((data[0] >> 1) & 1) != 0)
+-                    {
+-                        data[0] |= 0x40;
+-                    }
+-                    else
+-                    {
+-                        data[0] &= 0xBF;
+-                    }
+-
+-                    if (v22 != 0)
+-                    {
+-                        data[0] |= 2;
+-                    }
+-                    else
+-                    {
+-                        data[0] &= 0xFD;
+-                    }
+-
+-                    data[1] ^= 0x9D;
+-                    var v8 = (byte)(data[7] >> 4);
+-                    data[7] *= 16;
+-                    data[7] |= v8;
+-                }
+-            }
+-            else
+-            {
+-                var v2 = (byte)((data[3] >> 3) & 1);
+-                if (((data[3] >> 3) & 1) != 0)
+-                {
+-                    data[3] |= 8;
+-                }
+-                else
+-                {
+-                    data[3] &= 0xF7;
+-                }
+-
+-                if (v2 != 0)
+-                {
+-                    data[3] |= 8;
+-                }
+-                else
+-                {
+-                    data[3] &= 0xF7;
+-                }
+-
+-                var v29 = (byte)((data[0] >> 3) & 1);
+-                if (((data[0] >> 3) & 1) != 0)
+-                {
+-                    data[0] |= 8;
+-                }
+-                else
+-                {
+-                    data[0] &= 0xF7;
+-                }
+-
+-                if (v29 != 0)
+-                {
+-                    data[0] |= 8;
+-                }
+-                else
+-                {
+-                    data[0] &= 0xF7;
+-                }
+-
+-                var v3 = (byte)(data[1] >> 5);
+-                data[1] *= 8;
+-                data[1] |= v3;
+-                data[3] ^= 0xF7;
+-                var v28 = (byte)((data[2] >> 2) & 1);
+-                if (((data[2] >> 4) & 1) != 0)
+-                {
+-                    data[2] |= 4;
+-                }
+-                else
+-                {
+-                    data[2] &= 0xFB;
+-                }
+-
+-                if (v28 != 0)
+-                {
+-                    data[2] |= 0x10;
+-                }
+-                else
+-                {
+-                    data[2] &= 0xEF;
+-                }
+-
+-                var v4 = (byte)(data[2] >> 2);
+-                data[2] <<= 6;
+-                data[2] |= v4;
+-                var v27 = (byte)((data[2] >> 7) & 1);
+-                if (((data[2] >> 5) & 1) != 0)
+-                {
+-                    data[2] |= 0x80;
+-                }
+-                else
+-                {
+-                    data[2] &= 0x7F;
+-                }
+-
+-                if (v27 != 0)
+-                {
+-                    data[2] |= 0x20;
+-                }
+-                else
+-                {
+-                    data[2] &= 0xDF;
+-                }
+-
+-                data[3] ^= 0xFA;
+-                data[0] ^= 0xC5;
+-                var v5 = (byte)(data[0] >> 2);
+-                data[0] <<= 6;
+-                data[0] |= v5;
+-            }
+-        }
+-    }
+-}
+\ No newline at end of file
+diff --git a/Startup/Dockerfile b/Startup/Dockerfile
+index 147a201..96a8600 100644
+--- a/Startup/Dockerfile
++++ b/Startup/Dockerfile
+@@ -1,6 +1,7 @@
+ ARG BUILDPLATFORM=linux/amd64
+ FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS base
+ WORKDIR /app
++RUN apk add --no-cache tzdata
+ 
+ RUN apk add --no-cache icu-libs
+ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+-- 
+2.43.0
+
