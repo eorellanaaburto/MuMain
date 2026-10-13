@@ -3074,6 +3074,7 @@ void OpenSkills()
     gLoadData.AccessModel(MODEL_BALL, L"Data\\Skill\\", L"Ball", 1);//공
     Models[MODEL_BALL].Actions[0].PlaySpeed = 0.5f;
     gLoadData.AccessModel(MODEL_SKILL_BLAST, L"Data\\Skill\\", L"Blast", 1);
+    gLoadData.AccessModel(MODEL_SKILL_BLOOD_STORM, L"Data\\Skill\\", L"blood_storm_sword", 1);
     gLoadData.AccessModel(MODEL_SKILL_INFERNO, L"Data\\Skill\\", L"Inferno", 1);
     gLoadData.AccessModel(MODEL_ARROW_DOUBLE, L"Data\\Skill\\", L"ArrowDouble", 1);
 
